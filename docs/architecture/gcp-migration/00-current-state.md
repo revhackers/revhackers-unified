@@ -18,8 +18,8 @@ Contagens de SQL abaixo são ocorrências no histórico de migrações, não uma
 - O cliente é uma SPA com `BrowserRouter`. O build principal executa Vite e depois `scripts/prerender.js`.
 - O prerender inicia um servidor HTTP local, usa Puppeteer, consulta `blog_posts`, `cases` e `materials` no Supabase para obter rotas dinâmicas e grava HTML no diretório de build. Portanto, o build pode acessar o backend apontado pelas variáveis fornecidas ao processo.
 - `npm test` executa Vitest; `npm run test:e2e` executa Playwright. O repositório contém somente dois arquivos Playwright na pasta `tests`, com três casos básicos no total. Não há testes de isolamento de tenant inventariados.
-- A automação de CI instala dependências, verifica TypeScript e executa o build em pushes e pull requests para `develop` e `main`. Ela não executa os testes definidos no `package.json`.
-- O workflow de deploy roda em pushes para `develop` e `main`, constrói a aplicação e envia o artefato por FTP. O README identifica Hostinger como produção atual; scripts locais também implementam deploy por FTP e o `.htaccess` fornece redirecionamento HTTPS, fallback da SPA e políticas de cache.
+- A automação de CI instala dependências, verifica TypeScript e executa o build em pushes e pull requests para `develop` e `main`. Ela não executa os testes definidos no `package.json`. Nota (2026-10-13, OP-02 iii): `develop` arquivada em `archive/develop-a940b6c`; CI agora vale para `main`.
+- O workflow de deploy roda em pushes para `develop` e `main`, constrói a aplicação e envia o artefato por FTP. O README identifica Hostinger como produção atual; scripts locais também implementam deploy por FTP e o `.htaccess` fornece redirecionamento HTTPS, fallback da SPA e políticas de cache. Nota (2026-10-13, OP-02 iii): `develop` arquivada em `archive/develop-a940b6c`; deploy de produção por push em `main`, `deploy.yml` é `workflow_dispatch` sem deploy.
 - `@vercel/analytics` é carregado pela aplicação, mas isso não prova hospedagem na Vercel.
 - `experiments/polemic-led-growth` é um projeto Vite/React separado, não participa do build da raiz e deve permanecer fora do escopo da migração inicial.
 

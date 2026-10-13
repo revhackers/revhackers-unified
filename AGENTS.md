@@ -177,4 +177,4 @@ expect(response?.status).toBe(200);
 
 **Coverage:** Configured for `src/services/**`, `src/lib/**`, `src/utils/**`, `src/types/**` with text + json-summary reporters.
 
-**CI pipeline** (`.github/workflows/ci.yml`): On push/PR to develop/main — runs typecheck (frontend + API), unit tests, API build, frontend build. Node 22, `PUPPETEER_SKIP_DOWNLOAD=true`.
+**CI pipeline** (`.github/workflows/ci.yml`): On push/PR to main: runs typecheck (frontend + API), unit tests, API build, frontend build. Node 22, `PUPPETEER_SKIP_DOWNLOAD=true`. Branch `develop` arquivada em `archive/develop-a940b6c` (OP-02 iii).
