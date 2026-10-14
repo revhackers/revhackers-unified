@@ -19,7 +19,7 @@
 | Jobs/filas | replay, poison message, ação no tenant errado | funções encadeadas e cron existem | identity de workload, tenant obrigatório, idempotência, retry limitado e dead-letter |
 | Terceiros | exfiltração, custo, rate limit, supply-chain | IA, Google, ClickUp e GHL no código ativo | allowlist, data minimization, timeout, egress control, budgets e contratos/sandbox |
 | Logs/auditoria | segredo/PII em log ou ausência de prova | webhook registra payload; triggers de audit foram removidos | redaction, schemas de log, retenção, acesso mínimo e audit trail independente |
-| Pipeline/deploy | ambiente errado, artifact tampering, deploy não aprovado | build consulta Supabase; deploy roda em `develop` e `main` | environments protegidos, provenance, approvals, vars por ambiente, artifact promotion |
+| Pipeline/deploy | ambiente errado, artifact tampering, deploy não aprovado | build consulta Supabase; `develop` arquivada em `archive/develop-a940b6c`, deploy por push em `main` | environments protegidos, provenance, approvals, vars por ambiente, artifact promotion |
 
 ## Segredos e credenciais
 

@@ -121,7 +121,7 @@ O repositório usa hoje GitHub Actions para CI/deploy e FTP para entrega estáti
 9. Build/prerender usa fonte de conteúdo própria do ambiente; não pode consultar produção por variável herdada.
 10. A estratégia de IaC precisa definir ferramenta, bootstrap, state remoto, locking, import, drift detection, proteção contra destruição e procedimento break-glass antes do primeiro apply.
 
-Branch, tag e environment protections reais precisam ser inventariados. `develop` e `main` não são assumidos automaticamente como dev/staging/prod.
+Branch, tag e environment protections reais precisam ser inventariados. `main` não é assumida automaticamente como dev/staging/prod. `develop` foi arquivada na tag `archive/develop-a940b6c` (OP-02 iii, 2026-10-13) e não é ambiente ativo.
 
 ## Budgets, quotas e custo
 

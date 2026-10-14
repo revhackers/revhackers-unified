@@ -68,3 +68,6 @@ _youtube_transfer/
 
 # AI agent prompt tracking (not source)
 docs/PROMPTS/
+
+# OMP session scaffold (harness local, nao versionar)
+.omp/
