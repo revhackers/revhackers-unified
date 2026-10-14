@@ -140,6 +140,31 @@ export const TERMOS_META = new Set([
   'parte', 'pontos', 'contato', 'email',
 ]);
 
+/**
+ * Stopwords pt-BR mínimas para cluster de pilares.
+ * Porte literal de mvp-diagnostico/lib/stopwords.mjs (somente leitura).
+ * A comparação usa a versão normalizada abaixo (minúsculas, sem diacríticos),
+ * igual à normalização aplicada aos tokens em termosFrequentes().
+ */
+export const PT_STOPWORDS: string[] = [
+  'para', 'com', 'uma', 'como', 'mais', 'seus', 'suas', 'este', 'esta', 'isto',
+  'esse', 'essa', 'isso', 'aquele', 'aquela', 'são', 'foi', 'foram', 'ser',
+  'seu', 'sua', 'meu', 'minha', 'nossa', 'nosso', 'eles', 'elas', 'você',
+  'entre', 'sobre', 'desde', 'onde', 'quando', 'muito', 'muita', 'todo',
+  'toda', 'todos', 'todas', 'cada', 'qual', 'quais', 'isso', 'também',
+  'ainda', 'então', 'porque', 'pois', 'através', 'minha', 'dele', 'dela',
+  'eles', 'neste', 'nesta', 'deste', 'desta', 'seja', 'sejam', 'pode',
+  'podem', 'tem', 'têm', 'está', 'estão', 'pelo', 'pela', 'numa', 'nesse',
+  'nessa', 'daquilo', 'naquilo', 'aqui', 'hoje', 'meus', 'seus', 'quem',
+  'qualquer', 'coisa', 'algo', 'muito', 'pouco', 'pouca', 'seja', 'faz',
+  'fazer', 'vezes', 'sempre', 'nunca', 'depois', 'antes', 'durante',
+];
+
+/** Stopwords normalizadas (forma → true) para comparar com tokens já normalizados. */
+const STOPWORD_POR_FORMA: Record<string, true> = Object.fromEntries(
+  PT_STOPWORDS.map((s) => [normalizar(s), true] as const),
+);
+
 const RE_CTA =
   /(comente|comenta|salv[ea]|compartilh[ea]|me cham[ae]|fala comigo|link (no|nos)|qual .* (dói|falta)|já aconteceu|você já)/i;
 const RE_NUMERO = /\d+([.,]\d+)?\s?(%|k|mil|milh|meses|anos|dias|km|lojas)?/i;
@@ -194,7 +219,7 @@ export function termosFrequentes(textos: string[], top = 12): Array<[string, num
       .replace(/[^\p{L}\p{N}\s]/gu, ' ')
       .split(/\s+/);
     for (const w of palavras) {
-      if (w.length > 3 && !TERMOS_META.has(w)) freq.set(w, (freq.get(w) ?? 0) + 1);
+      if (w.length > 3 && !TERMOS_META.has(w) && !STOPWORD_POR_FORMA[w]) freq.set(w, (freq.get(w) ?? 0) + 1);
     }
   }
   return [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, top);

@@ -46,6 +46,7 @@ describe('isNoIndexPath', () => {
     '/public/growthmap/token',
     '/diagnostico/resultado/uuid',
     '/diagnostico/v2',
+    '/diagnostico/linkedin/r/qualquer-slug',
     '/agenda',
     '/agenda-giulliano',
     '/obrigado',
@@ -61,6 +62,8 @@ describe('isNoIndexPath', () => {
     '/servicos',
     '/servicos/ecossistema-crm',
     '/diagnostico',
+    '/diagnostico-growth',
+    '/diagnostico/linkedin',
     '/score',
     '/score-site',
     '/blog/qualquer-post',
@@ -102,6 +105,21 @@ describe('invariantes sitemap x robots x noindex', () => {
   it('robots.txt declara o sitemap e nao deixa o grupo "*" vazio', () => {
     expect(readPublic('robots.txt')).toMatch(/^Sitemap:\s*https:\/\/revhackers\.com\.br\/sitemap\.xml$/m);
     expect(robotsDisallow.length).toBeGreaterThan(10);
+  });
+
+  it('o sitemap lista as novas rotas de diagnostico', () => {
+    expect(sitemapPaths).toEqual(expect.arrayContaining(['/diagnostico-growth', '/diagnostico/linkedin']));
+  });
+
+  it('o share do diagnostico LinkedIn e noindex e bloqueado pelo robots.txt', () => {
+    expect(isNoIndexPath('/diagnostico/linkedin/r/qualquer-slug')).toBe(true);
+    expect(getRobotsContent('/diagnostico/linkedin/r/qualquer-slug')).toBe('noindex, nofollow');
+    expect(robotsDisallow).toContain('/diagnostico/linkedin/r/');
+  });
+
+  it('robots.txt nao tem Disallow duplicado', () => {
+    const duplicados = robotsDisallow.filter((rule, index) => robotsDisallow.indexOf(rule) !== index);
+    expect(duplicados).toEqual([]);
   });
 });
 

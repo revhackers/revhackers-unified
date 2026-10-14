@@ -171,7 +171,7 @@ const GrowthDiagnostic = () => {
                     <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 leading-snug">
                       {currentQData.text}
                     </h2>
-                    <p className="text-[11px] text-zinc-400">Fonte da pergunta: {currentQData.source}</p>
+                    {import.meta.env.DEV && (<p className="text-[11px] text-zinc-400">Fonte da pergunta: {currentQData.source}</p>)}
                   </div>
 
                   <div className="grid grid-cols-1 gap-3">
@@ -336,7 +336,7 @@ const GrowthDiagnostic = () => {
                     </div>
                     <p className="text-sm font-semibold text-zinc-800">{recommendation.title}</p>
                     <p className="text-xs text-zinc-500 leading-relaxed">{recommendation.text}</p>
-                    <p className="text-[11px] text-zinc-400">Fonte: {recommendation.source}</p>
+                    {import.meta.env.DEV && (<p className="text-[11px] text-zinc-400">Fonte: {recommendation.source}</p>)}
                   </div>
                 );
               })}

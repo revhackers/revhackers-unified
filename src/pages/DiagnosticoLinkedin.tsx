@@ -417,7 +417,11 @@ export default function DiagnosticoLinkedin() {
                 <input type="checkbox" checked={lgpd} onChange={(e) => setLgpd(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#00CC6A]" />
                 <span className="flex items-start gap-1.5">
                   <ShieldCheck size={15} className="shrink-0 mt-0.5 text-[#00CC6A]" />
-                  Autorizo o contato comercial da RevHackers e o uso destes dados para gerar o diagnóstico (LGPD).
+                  <span>
+                    Autorizo o contato comercial da RevHackers e o uso destes dados para gerar o diagnóstico (LGPD). Veja a{' '}
+                    <a href="/privacidade" className="underline underline-offset-2 hover:text-white">Política de Privacidade</a>{' '}
+                    e os <a href="/termos-de-uso" className="underline underline-offset-2 hover:text-white">Termos de Uso</a>.
+                  </span>
                 </span>
               </label>
               {erroGate && <p role="alert" className="rounded-xl bg-red-950/60 border border-red-900 px-4 py-3 text-xs font-bold text-red-300">{erroGate}</p>}

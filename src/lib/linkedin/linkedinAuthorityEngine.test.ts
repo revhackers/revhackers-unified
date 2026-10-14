@@ -9,6 +9,7 @@ import {
   detectarCliches,
   faixaDaMedia,
   prioridades30Dias,
+  termosFrequentes,
 } from './linkedinAuthorityEngine';
 
 const SOBRE_LONGO =
@@ -189,5 +190,34 @@ describe('regras da rubrica v3', () => {
     expect(faixaDaMedia(5)).toBe('base com vazamentos');
     expect(faixaDaMedia(7)).toBe('autoridade funcional');
     expect(faixaDaMedia(9)).toBe('referência do nicho');
+  });
+});
+
+describe('determinismo e stopwords PT', () => {
+  const ENTRADA = {
+    headline: 'CEO | Logística e revops para operações de frota',
+    sobre: `${SOBRE_LONGO} Rotina de frotas, manutenção preventiva e custo por rota.`,
+    posts: [
+      'Rotina de frotas: eu montei o checklist de manutenção preventiva que cortou o custo por rota em 12%.',
+      'Custo por rota e manutenção preventiva: visitei 5 garagens e documentei a rotina de frotas que funciona.',
+    ],
+    publico_alvo: 'diretores de operações',
+  };
+
+  it('mesma entrada em dupla execução gera saída idêntica', () => {
+    const primeira = analisarAutoridadeLinkedin({ ...ENTRADA });
+    const segunda = analisarAutoridadeLinkedin({ ...ENTRADA });
+    expect(segunda).toEqual(primeira);
+  });
+
+  it('stopwords PT comuns não aparecem em termosFrequentes', () => {
+    const termos = termosFrequentes([
+      'Para com de muito sobre entre desde quando cada qual porque fazer vezes sempre nunca depois antes durante',
+      'Para com de muito sobre entre desde quando cada qual porque fazer vezes sempre nunca depois antes durante',
+    ]);
+    const nomes = termos.map(([t]) => t);
+    for (const stop of ['de', 'para', 'com']) {
+      expect(nomes).not.toContain(stop);
+    }
   });
 });

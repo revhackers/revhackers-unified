@@ -34,8 +34,8 @@ Disallow: /legal/
 Disallow: /supabase-diagnostic
 Disallow: /diagnostico/resultado/
 Disallow: /diagnostico/v2
+Disallow: /diagnostico/linkedin/r/
 Disallow: /partners/datavoxx
-Disallow: /partners/datavoxx/
 
 # Pre-visualizacao de links em redes sociais precisa buscar as paginas compartilhadas
 User-agent: Twitterbot

@@ -47,6 +47,7 @@ export const NOINDEX_PATH_PREFIXES = [
   '/agenda',
   '/diagnostico/resultado',
   '/diagnostico/v2',
+  '/diagnostico/linkedin/r',
   '/partners/datavoxx',
   '/claude-partner-network/obrigado',
 ] as const;
