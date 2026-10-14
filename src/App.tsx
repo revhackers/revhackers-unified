@@ -74,6 +74,7 @@ const GrowthScore = lazy(() => import("./pages/GrowthScore"));
 const SiteScore = lazy(() => import("./pages/SiteScore"));
 const FounderScore = lazy(() => import("./pages/FounderScore"));
 const RevenueScore = lazy(() => import("./pages/RevenueScore"));
+const GrowthDiagnostic = lazy(() => import("./pages/GrowthDiagnostic"));
 const EnrichedDiagnostic = lazy(() => import("./pages/EnrichedDiagnostic"));
 
 // REI Workflows (Heavy - 15-38KB each)
@@ -230,6 +231,7 @@ const App = () => (
               <Route path="/score" element={<PageErrorBoundary><GrowthScore /></PageErrorBoundary>} />
               <Route path="/score-site" element={<PageErrorBoundary><SiteScore /></PageErrorBoundary>} />
               <Route path="/score-revenue" element={<PageErrorBoundary><RevenueScore /></PageErrorBoundary>} />
+              <Route path="/diagnostico-growth" element={<PageErrorBoundary><GrowthDiagnostic /></PageErrorBoundary>} />
               <Route path="/diagnostico/v2" element={<PageErrorBoundary><EnrichedDiagnostic /></PageErrorBoundary>} />
 
               <Route path="/diagnostico/resultado/:id" element={<PublicDiagnosticResult />} />
