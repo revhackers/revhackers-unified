@@ -1,4 +1,5 @@
 import { Helmet, HelmetProvider } from 'react-helmet-async';
+import { buildSeoTitle, getRobotsContent, resolveOgImage, stripHtml } from '@/lib/seo';
 
 interface SEOProps {
     title: string;
@@ -13,6 +14,8 @@ interface SEOProps {
     faq?: { question: string; answer: string }[];
     wordCount?: number;
     keywords?: string[];
+    /** Forca `noindex, nofollow` (alem das rotas privadas ja cobertas por isNoIndexPath). */
+    noindex?: boolean;
 }
 
 export const SEOProvider = ({ children }: { children: React.ReactNode }) => {
@@ -23,7 +26,7 @@ const SEO = ({
     title,
     description,
     canonical,
-    image = "https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/67f7fc91b95d208445a1317a.jpeg",
+    image,
     type = 'website',
     publishedTime,
     modifiedTime,
@@ -32,13 +35,13 @@ const SEO = ({
     faq,
     wordCount,
     keywords,
+    noindex = false,
 }: SEOProps) => {
 
-    const siteTitle = "RevHackers | Consultoria RevOps & Growth B2B";
-    const rawTitle = title === "Home" ? siteTitle : `${title} | RevHackers`;
-    // Garante que o título nunca passe de 60 caracteres no Google (sem corte ...)
-    const fullTitle = rawTitle.length > 60 ? rawTitle.substring(0, 57) + "..." : rawTitle;
     const currentUrl = canonical || (typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : '');
+    const fullTitle = buildSeoTitle(title);
+    const ogImage = resolveOgImage(currentUrl, image);
+    const robotsContent = getRobotsContent(typeof window !== 'undefined' ? window.location.pathname : '', noindex);
 
     // Schema.org: Person (Founder Authority - Giulliano Alves)
     const founderSchema = {
@@ -178,7 +181,7 @@ const SEO = ({
         ]
     };
 
-    // Schema.org: WebSite with SearchAction (sitelinks searchbox for Google)
+    // Schema.org: WebSite (sem SearchAction: o blog nao le o parametro ?q= da URL)
     const websiteSchema = {
         "@context": "https://schema.org",
         "@type": "WebSite",
@@ -187,27 +190,19 @@ const SEO = ({
         "name": "RevHackers",
         "description": "A primeira consultoria de Revenue Operations do Brasil.",
         "publisher": { "@id": "https://revhackers.com.br/#organization" },
-        "inLanguage": "pt-BR",
-        "potentialAction": {
-            "@type": "SearchAction",
-            "target": {
-                "@type": "EntryPoint",
-                "urlTemplate": "https://revhackers.com.br/blog?q={search_term_string}"
-            },
-            "query-input": "required name=search_term_string"
-        }
+        "inLanguage": "pt-BR"
     };
 
     // Schema.org: BlogPosting (for blog posts - more specific type, better SEO indexing)
     const articleSchema = type === 'article' ? {
         "@context": "https://schema.org",
         "@type": "BlogPosting",
-        "headline": title.substring(0, 110), // Google limits headline to 110 chars
-        "image": image ? [image] : [],
-        "datePublished": publishedTime || new Date().toISOString(),
-        "dateModified": modifiedTime || publishedTime || new Date().toISOString(),
+        "headline": stripHtml(title).substring(0, 110), // Google limits headline to 110 chars
+        "image": [ogImage],
+        ...(publishedTime ? { "datePublished": publishedTime } : {}),
+        ...((modifiedTime || publishedTime) ? { "dateModified": modifiedTime || publishedTime } : {}),
         "author": [{
-            "@type": "Person",
+            "@type": author === "RevHackers" ? "Organization" : "Person",
             "name": author,
             "url": "https://revhackers.com.br/quem-somos"
         }],
@@ -292,7 +287,8 @@ const SEO = ({
             <meta property="og:title" content={fullTitle} />
             <meta property="og:description" content={description} />
             <meta property="og:url" content={currentUrl} />
-            <meta property="og:image" content={image} />
+            <meta property="og:image" content={ogImage} />
+            <meta property="og:image:alt" content={fullTitle} />
             <meta property="og:image:width" content="1200" />
             <meta property="og:image:height" content="630" />
             <meta property="og:site_name" content="RevHackers" />
@@ -301,10 +297,10 @@ const SEO = ({
             <meta name="twitter:card" content="summary_large_image" />
             <meta name="twitter:title" content={fullTitle} />
             <meta name="twitter:description" content={description} />
-            <meta name="twitter:image" content={image} />
+            <meta name="twitter:image" content={ogImage} />
 
             {/* GEO / Local SEO Signals (Critical for GEO ranking) */}
-            <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+            <meta name="robots" content={robotsContent} />
             <meta name="geo.region" content="BR-SP" />
             <meta name="geo.placename" content="São Paulo" />
             <meta name="geo.position" content="-23.5505;-46.6333" />
