@@ -52,21 +52,26 @@ const Footer = () => {
           {/* Navigation Links */}
           <div className="lg:col-span-2 space-y-8">
             <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-300 mb-2">Navegação Core</h3>
-            <ul className="space-y-4 text-mini font-medium text-zinc-500">
+            <ul className="space-y-4 text-mini font-medium text-zinc-400">
               <li><Link to={APP_ROUTES.PUBLIC.HOME} className="hover:text-white transition-colors">Home (O Funil)</Link></li>
               <li><Link to={APP_ROUTES.PUBLIC.SERVICOS} className="hover:text-white transition-colors">Ecossistema IA + CRM</Link></li>
+              <li><Link to={APP_ROUTES.PUBLIC.METODOLOGIA} className="hover:text-white transition-colors">Metodologia</Link></li>
               <li><Link to={APP_ROUTES.PUBLIC.CASES} className="hover:text-white transition-colors">Clientes & Fechamentos</Link></li>
               <li><Link to="/quem-somos" className="hover:text-white transition-colors">Quem Somos</Link></li>
+              <li><Link to={APP_ROUTES.PUBLIC.BLOG} className="hover:text-white transition-colors">Blog</Link></li>
+              <li><Link to={APP_ROUTES.PUBLIC.MATERIAIS} className="hover:text-white transition-colors">Materiais</Link></li>
               <li><Link to={APP_ROUTES.PUBLIC.COMUNIDADE} className="hover:text-white transition-colors">Operações Fechadas</Link></li>
             </ul>
           </div>
 
           <div className="lg:col-span-2 space-y-8">
             <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-300 mb-2">Auditorias Rápidas</h3>
-            <ul className="space-y-4 text-mini font-medium text-zinc-500">
+            <ul className="space-y-4 text-mini font-medium text-zinc-400">
               <li><Link to="/score" className="hover:text-white transition-colors">Vazamento 360 do Crescimento</Link></li>
               <li><Link to="/score-revenue" className="hover:text-white transition-colors">Diagnóstico do CRM</Link></li>
               <li><Link to="/score-founder" className="hover:text-white transition-colors">Dependência do Founder</Link></li>
+              <li><Link to={APP_ROUTES.SCORES.SITE_SCORE} className="hover:text-white transition-colors">Diagnóstico de Site e LP</Link></li>
+              <li><Link to={APP_ROUTES.PUBLIC.DIAGNOSTICO} className="hover:text-white transition-colors">Todos os diagnósticos</Link></li>
               <li><Link to={APP_ROUTES.PUBLIC.BOOKING} className="hover:text-white transition-colors text-revgreen font-bold">Solicitar Auditoria</Link></li>
             </ul>
           </div>
@@ -122,14 +127,14 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="mt-8 pt-8 border-t border-zinc-900 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex flex-col md:flex-row items-center gap-2 md:gap-6">
-            <p className="text-zinc-500 text-[0.65rem] uppercase font-semibold tracking-[0.2em]">
+            <p className="text-zinc-400 text-[0.65rem] uppercase font-semibold tracking-[0.2em]">
               © {currentYear} RevHackers. Engineering Revenue for Scale.
             </p>
-            <address className="not-italic text-zinc-700 text-[0.6rem] uppercase tracking-[0.15em]">
+            <address className="not-italic text-zinc-400 text-[0.6rem] uppercase tracking-[0.15em]">
               São Paulo, SP · Brasil
             </address>
           </div>
-          <div className="flex gap-8 text-[0.65rem] uppercase font-semibold tracking-[0.2em] text-zinc-500">
+          <div className="flex gap-8 text-[0.65rem] uppercase font-semibold tracking-[0.2em] text-zinc-400">
             <Link to={APP_ROUTES.LEGAL_AND_FEEDBACK.PRIVACIDADE} className="hover:text-white transition-colors">Privacidade</Link>
             <Link to={APP_ROUTES.LEGAL_AND_FEEDBACK.TERMOS_DE_USO} className="hover:text-white transition-colors">Termos</Link>
           </div>

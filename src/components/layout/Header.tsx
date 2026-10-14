@@ -134,7 +134,7 @@ const Header = ({ variant = 'default' }: HeaderProps) => {
           </div>
 
           {/* Center: Navigation */}
-          <nav className="hidden xl:flex items-center justify-center flex-1">
+          <nav aria-label="Principal" className="hidden xl:flex items-center justify-center flex-1">
             <div className="flex items-center rounded-xl px-2 py-1 border border-zinc-800 bg-zinc-900/60 backdrop-blur-sm">
               <div className="flex items-center space-x-1">
                 <NavLink to="/">Home</NavLink>
@@ -253,6 +253,10 @@ const Header = ({ variant = 'default' }: HeaderProps) => {
           </div>
 
           <button
+            type="button"
+            aria-label={isMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-menu"
             onClick={toggleMenu}
             className={cn(
               "xl:hidden p-2 transition-colors ml-auto z-10",
@@ -266,7 +270,7 @@ const Header = ({ variant = 'default' }: HeaderProps) => {
         {/* Mobile menu */}
         {
           isMenuOpen && (
-            <div className="xl:hidden bg-white border-t border-zinc-200 absolute top-full left-0 w-full h-screen animate-fade-in z-50 p-6 overflow-y-auto pb-20">
+            <div id="mobile-menu" className="xl:hidden bg-white border-t border-zinc-200 absolute top-full left-0 w-full h-screen animate-fade-in z-50 p-6 overflow-y-auto pb-20">
               <div className="flex flex-col space-y-6">
                 <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
                   <Link to="/" onClick={scrollToTop} className="block">

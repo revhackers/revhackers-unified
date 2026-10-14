@@ -10,19 +10,17 @@ import ComparisonSection from '@/components/home/ComparisonSection';
 import TestimonialsSection from '@/components/home/TestimonialsSection';
 import ContactFormSection from '@/components/home/ContactFormSection';
 import SEO from '@/components/shared/SEO';
+import FAQSection from '@/components/home/FAQSection';
+import { HOME_FAQ } from '@/data/homeFaq';
 
 const Index = () => {
   return (
     <PageLayout>
       <SEO
         title="Home"
-        description="A primeira consultoria de Revenue Operations do Brasil. Integramos IA, CRM e automações para escalar operações B2B em São Paulo e todo o Brasil."
+        description="Instalamos sua máquina de receita B2B com ABM e IA em 90 dias. Engenharia de GTM dentro do seu CRM, não relatório em PDF."
         canonical="https://revhackers.com.br/"
-        faq={[
-          { question: "O que faz a RevHackers?", answer: "A RevHackers é uma consultoria de Revenue Operations que integra Marketing, Vendas e Customer Success através de IA, CRM e automações para escalar receita de empresas B2B no Brasil." },
-          { question: "O que é um Revenue Leak?", answer: "Revenue Leaks são falhas silenciosas na operação comercial - leads qualificados que se perdem, follow-ups esquecidos, dados desconectados entre CRM e marketing - que causam perda de receita sem que a empresa perceba." },
-          { question: "Como agendar uma auditoria gratuita?", answer: "Você pode agendar uma auditoria de receita gratuita diretamente pelo site em revhackers.com.br/booking. A auditoria mapeia vazamentos na operação B2B e apresenta um plano de ação personalizado." }
-        ]}
+        faq={HOME_FAQ}
       />
       <HeroSection />
       <PartnersSection />
@@ -31,6 +29,7 @@ const Index = () => {
       <JourneySection />
       <ComparisonSection />
       <TestimonialsSection />
+      <FAQSection items={HOME_FAQ} />
       <ContactFormSection />
     </PageLayout>
   );
