@@ -1,13 +1,11 @@
 import PageLayout from '@/components/layout/PageLayout';
 import Section from '@/components/ui/Section';
 import { ArrowUpRight, BarChart2, Globe, TrendingUp, User } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import SEO from '@/components/shared/SEO';
 import ModernTechnicalBackground from '@/components/shared/ModernTechnicalBackground';
 
 const DiagnosticoGateway = () => {
-  const navigate = useNavigate();
-
   const diagnostics = [
     {
       id: 'growth',
@@ -45,7 +43,15 @@ const DiagnosticoGateway = () => {
 
   return (
     <PageLayout>
-      <SEO title="Central de Diagnósticos" description="Descubra onde estão os vazamentos na sua operação B2B com diagnósticos gratuitos de Growth, CRM, Founder e Site." canonical="https://revhackers.com.br/diagnostico" />
+      <SEO
+        title="Central de Diagnósticos"
+        description="Descubra onde estão os vazamentos na sua operação B2B com diagnósticos gratuitos de Growth, CRM, Founder e Site."
+        canonical="https://revhackers.com.br/diagnostico"
+        breadcrumbs={[
+          { name: "Home", url: "https://revhackers.com.br/" },
+          { name: "Diagnósticos", url: "https://revhackers.com.br/diagnostico" }
+        ]}
+      />
       
       <section className="bg-black pt-28 pb-12 relative overflow-hidden">
         <ModernTechnicalBackground />
@@ -70,10 +76,10 @@ const DiagnosticoGateway = () => {
             {diagnostics.map((diag) => {
               const Icon = diag.icon;
               return (
-                <div
+                <Link
                   key={diag.id}
-                  onClick={() => navigate(diag.path)}
-                  className="group cursor-pointer bg-white border border-zinc-200/80 rounded-2xl p-6 hover:border-zinc-300 transition-all duration-300 shadow-xs hover:shadow-md flex flex-col justify-between space-y-5"
+                  to={diag.path}
+                  className="group bg-white border border-zinc-200/80 rounded-2xl p-6 hover:border-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00CC6A] transition-all duration-300 shadow-xs hover:shadow-md flex flex-col justify-between space-y-5"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -85,9 +91,9 @@ const DiagnosticoGateway = () => {
                       </span>
                     </div>
 
-                    <h3 className="text-lg font-bold text-zinc-900 group-hover:text-black tracking-tight leading-snug">
+                    <h2 className="text-lg font-bold text-zinc-900 group-hover:text-black tracking-tight leading-snug">
                       {diag.title}
-                    </h3>
+                    </h2>
 
                     <p className="text-xs text-zinc-500 font-normal leading-relaxed">
                       {diag.description}
@@ -100,10 +106,16 @@ const DiagnosticoGateway = () => {
                       <ArrowUpRight size={13} className="text-zinc-500 group-hover:text-[#00CC6A]" />
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
+          <p className="mt-8 text-center text-sm text-zinc-600">
+            Prefere falar direto com um especialista?{' '}
+            <Link to="/booking" className="font-semibold text-zinc-900 underline underline-offset-4 hover:text-black">
+              Agendar auditoria de receita
+            </Link>
+          </p>
         </div>
       </section>
     </PageLayout>

@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
+import RouteSeo from "@/components/shared/RouteSeo";
 import "./styles/article.css";
 
 // ─── Eager Imports (Critical Public Pages) ───────────────────────────
@@ -166,6 +167,7 @@ const App = () => (
             <Sonner />
             <ScrollToTop />
             <ChatbotManager />
+            <RouteSeo />
             <Suspense fallback={<PageLoader />}>
               <ErrorBoundary>
                 <Routes>
