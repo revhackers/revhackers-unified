@@ -4,14 +4,44 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Confirmacao manual: digite PUBLICAR (suspenso ate correcao dos valores de staging, OP-02)"
+        required: true
+        type: string
+      motivo:
+        description: "Motivo/registro da publicacao manual"
+        required: true
+        type: string
+
+concurrency:
+  group: hostinger-deploy
+  cancel-in-progress: false
 
 jobs:
   web-deploy:
     name: Build & Deploy para Hostinger
+    # Trava OP-02 (temporaria): job desabilitado em QUALQUER evento,
+    # inclusive dispatch manual com PUBLICAR.
+    # Reativacao (somente via PR, apos corrigir/validar valores de producao):
+    # trocar por: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    if: ${{ false }}
     runs-on: ubuntu-latest
     env:
       PUPPETEER_SKIP_DOWNLOAD: "true"
     steps:
+      - name: Validar confirmacao manual (fail-closed)
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          MOTIVO: ${{ inputs.motivo }}
+        run: |
+          if [ "$CONFIRM" != "PUBLICAR" ]; then
+            echo "Deploy manual BLOQUEADO: confirmacao invalida. Publicacao suspensa ate correcao dos valores de staging (OP-02)."
+            exit 1
+          fi
+          echo "Publicacao manual confirmada. Motivo: $MOTIVO"
+
       - name: Checkout Código
         uses: actions/checkout@v4
 
