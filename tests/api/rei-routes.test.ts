@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createREIRoutes } from '../../api/src/http/rei-routes';
 import type { REIOnboardingRecord } from '../../api/src/domains/rei/types';
+import type { InternalUser } from '../../api/src/contracts/tenant';
+import type { IdentityRepository } from '../../api/src/identity/postgres-identity-repository';
+import type { TokenVerifier } from '../../api/src/identity/verifier';
+import type { PostgresREIRepository } from '../../api/src/domains/rei/postgres-repository';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // In-memory repo mock — implements the public surface used by rei-routes
@@ -146,14 +150,43 @@ function createMockRepo() {
   };
 }
 
-function makeRoute(repo: ReturnType<typeof createMockRepo>) {
-  return createREIRoutes({ repository: repo as any });
+const TEST_TENANT_ID = 'tenant_a';
+
+function makeAuthStubs(tenantId: string = TEST_TENANT_ID): { verifier: TokenVerifier; identities: IdentityRepository } {
+  const verifier: TokenVerifier = {
+    verify: async () => ({
+      issuer: 'https://test.issuer',
+      subject: 'user_1',
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+    }),
+  };
+  const user: InternalUser = {
+    id: 'user_1',
+    globalRole: 'admin',
+    status: 'active',
+    memberships: [{ userId: 'user_1', tenantId, role: 'owner', status: 'active' }],
+  };
+  const identities: IdentityRepository = {
+    findUser: async () => user,
+    findOrCreateUser: async () => user,
+    resolveProjectTenant: async () => tenantId,
+  };
+  return { verifier, identities };
 }
 
-function jsonRequest(url: string, method: string, body?: unknown) {
+function makeRoute(repo: ReturnType<typeof createMockRepo>, tenantId: string = TEST_TENANT_ID) {
+  const { verifier, identities } = makeAuthStubs(tenantId);
+  // Mock in-memory implementa só a superfície usada pelas rotas.
+  const repository = repo as unknown as PostgresREIRepository;
+  return createREIRoutes({ repository, verifier, identities });
+}
+
+function jsonRequest(url: string, method: string, body?: unknown, withAuth = true) {
+  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  if (withAuth) headers.authorization = 'Bearer test-token';
   return new Request(url, {
     method,
-    headers: { 'content-type': 'application/json' },
+    headers,
     body: body !== undefined ? JSON.stringify(body) : null,
   });
 }
@@ -205,7 +238,7 @@ describe('POST /v1/rei/onboarding', () => {
   it('retorna 400 quando JSON é inválido', async () => {
     const req = new Request('https://api.test/v1/rei/onboarding', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', authorization: 'Bearer test-token' },
       body: 'not json',
     });
     const res = await route(req);
@@ -652,5 +685,87 @@ describe('routing edge cases', () => {
     expect(res?.status).toBe(405);
     const body = await res!.json();
     expect(body.error.code).toBe('method_not_allowed');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Gate de autenticação (401) e isolamento de tenant (403)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('auth gate /v1/rei', () => {
+  let repo: ReturnType<typeof createMockRepo>;
+  let route: ReturnType<typeof makeRoute>;
+
+  beforeEach(() => {
+    repo = createMockRepo();
+    route = makeRoute(repo);
+  });
+
+  it('retorna 401 sem Bearer em rota autenticada', async () => {
+    const res = await route(
+      jsonRequest('https://api.test/v1/rei/onboarding/active', 'GET', undefined, false),
+    );
+    expect(res?.status).toBe(401);
+    const body = await res!.json();
+    expect(body.error.code).toBe('unauthenticated');
+  });
+
+  it('retorna 401 sem Bearer em POST', async () => {
+    const res = await route(
+      jsonRequest('https://api.test/v1/rei/nps', 'POST', { onboarding_id: 'onb_1', score: 9 }, false),
+    );
+    expect(res?.status).toBe(401);
+  });
+
+  it('retorna 403 ao acessar onboarding de outro tenant (welcome)', async () => {
+    repo._seed(makeRecord({ id: 'onb_outro', tenant_id: 'tenant_b' }));
+    const res = await route(jsonRequest('https://api.test/v1/rei/welcome', 'POST', {
+      onboarding_id: 'onb_outro',
+      kickoff_link: 'https://example.com/kickoff',
+    }));
+    expect(res?.status).toBe(403);
+    const body = await res!.json();
+    expect(body.error.code).toBe('forbidden');
+    expect(repo.markWelcomeSent).not.toHaveBeenCalled();
+  });
+
+  it('retorna 403 ao registrar NPS em onboarding de outro tenant', async () => {
+    repo._seed(makeRecord({ id: 'onb_outro', tenant_id: 'tenant_b' }));
+    const res = await route(jsonRequest('https://api.test/v1/rei/nps', 'POST', {
+      onboarding_id: 'onb_outro',
+      score: 9,
+    }));
+    expect(res?.status).toBe(403);
+    expect(repo.recordNPS).not.toHaveBeenCalled();
+  });
+
+  it('retorna 403 no wrap-up de outro tenant', async () => {
+    repo._seed(makeRecord({ id: 'onb_outro', tenant_id: 'tenant_b' }));
+    const res = await route(jsonRequest('https://api.test/v1/rei/wrap-up', 'POST', {
+      onboarding_id: 'onb_outro',
+      milestone1Result: 'm1',
+      quickWinResult: 'm2',
+      metricResult: 'm3',
+      nextPhaseAligned: 'm4',
+      npsLink: 'https://example.com/nps',
+    }));
+    expect(res?.status).toBe(403);
+  });
+
+  it('retorna 403 em POST /v1/rei/expansion com tenant divergente', async () => {
+    const res = await route(jsonRequest('https://api.test/v1/rei/expansion', 'POST', {
+      tenant_id: 'tenant_b',
+      opportunity_type: 'upsell',
+      product_name: 'Premium Tier',
+      created_by: 'cs@revhackers.com',
+    }));
+    expect(res?.status).toBe(403);
+    expect(repo.createExpansionOpportunity).not.toHaveBeenCalled();
+  });
+
+  it('retorna 403 em GET /v1/rei/expansion com tenant divergente', async () => {
+    const res = await route(jsonRequest('https://api.test/v1/rei/expansion?tenant_id=tenant_b', 'GET'));
+    expect(res?.status).toBe(403);
+    expect(repo.listExpansionOpportunities).not.toHaveBeenCalled();
   });
 });

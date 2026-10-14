@@ -1,6 +1,38 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createREIRoutes } from '../../api/src/http/rei-routes';
 import type { REIOnboardingRecord } from '../../api/src/domains/rei/types';
+import type { InternalUser } from '../../api/src/contracts/tenant';
+import type { IdentityRepository } from '../../api/src/identity/postgres-identity-repository';
+import type { TokenVerifier } from '../../api/src/identity/verifier';
+import type { PostgresREIRepository } from '../../api/src/domains/rei/postgres-repository';
+
+const TEST_TENANT_ID = 'tenant_a';
+
+function makeAuthStubs(): { verifier: TokenVerifier; identities: IdentityRepository } {
+  const verifier: TokenVerifier = {
+    verify: async () => ({
+      issuer: 'https://test.issuer',
+      subject: 'user_1',
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+    }),
+  };
+  const user: InternalUser = {
+    id: 'user_1',
+    globalRole: 'admin',
+    status: 'active',
+    memberships: [{ userId: 'user_1', tenantId: TEST_TENANT_ID, role: 'owner', status: 'active' }],
+  };
+  const identities: IdentityRepository = {
+    findUser: async () => user,
+    findOrCreateUser: async () => user,
+    resolveProjectTenant: async () => TEST_TENANT_ID,
+  };
+  return { verifier, identities };
+}
+
+function authHeaders(): Record<string, string> {
+  return { authorization: 'Bearer test-token' };
+}
 
 function createMockRepository() {
   return {
@@ -63,13 +95,16 @@ describe('GET /v1/rei/onboarding/active — days_into_journey calculation', () =
 
   beforeEach(() => {
     mockRepo = createMockRepository();
-    route = createREIRoutes({ repository: mockRepo as any });
+    const { verifier, identities } = makeAuthStubs();
+    // Mock in-memory implementa só a superfície usada pelas rotas.
+    const repository = mockRepo as unknown as PostgresREIRepository;
+    route = createREIRoutes({ repository, verifier, identities });
   });
 
   it('returns days_into_journey = 0 when no dates are set (defaults to created_at today)', async () => {
     mockRepo.listActive.mockResolvedValueOnce([makeRecord({ created_at: new Date().toISOString() })]);
 
-    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET' });
+    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET', headers: authHeaders() });
     const res = await route(req);
     expect(res?.status).toBe(200);
     const body = (await res?.json()) as any;
@@ -83,7 +118,7 @@ describe('GET /v1/rei/onboarding/active — days_into_journey calculation', () =
       welcome_sent_at: new Date(Date.now() - 14 * 86400000).toISOString(),
     })]);
 
-    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET' });
+    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET', headers: authHeaders() });
     const res = await route(req);
     const body = (await res?.json()) as any;
     expect(body.data[0].days_into_journey).toBe(7);
@@ -96,7 +131,7 @@ describe('GET /v1/rei/onboarding/active — days_into_journey calculation', () =
       welcome_sent_at: threeDaysAgo,
     })]);
 
-    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET' });
+    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET', headers: authHeaders() });
     const res = await route(req);
     const body = (await res?.json()) as any;
     expect(body.data[0].days_into_journey).toBe(3);
@@ -106,7 +141,7 @@ describe('GET /v1/rei/onboarding/active — days_into_journey calculation', () =
     const futureDate = new Date(Date.now() + 5 * 86400000).toISOString();
     mockRepo.listActive.mockResolvedValueOnce([makeRecord({ kickoff_at: futureDate })]);
 
-    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET' });
+    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET', headers: authHeaders() });
     const res = await route(req);
     const body = (await res?.json()) as any;
     expect(body.data[0].days_into_journey).toBe(0);
@@ -120,7 +155,7 @@ describe('GET /v1/rei/onboarding/active — days_into_journey calculation', () =
       created_at: tenDaysAgo,
     })]);
 
-    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET' });
+    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET', headers: authHeaders() });
     const res = await route(req);
     const body = (await res?.json()) as any;
     expect(body.data[0].days_into_journey).toBe(10);
@@ -133,7 +168,7 @@ describe('GET /v1/rei/onboarding/active — days_into_journey calculation', () =
       makeRecord({ id: 'onb-3', kickoff_at: null, welcome_sent_at: null, created_at: new Date().toISOString() }),
     ]);
 
-    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET' });
+    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET', headers: authHeaders() });
     const res = await route(req);
     const body = (await res?.json()) as any;
     expect(body.count).toBe(3);
@@ -146,7 +181,7 @@ describe('GET /v1/rei/onboarding/active — days_into_journey calculation', () =
   it('handles empty list correctly', async () => {
     mockRepo.listActive.mockResolvedValueOnce([]);
 
-    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET' });
+    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET', headers: authHeaders() });
     const res = await route(req);
     const body = (await res?.json()) as any;
     expect(body.count).toBe(0);
@@ -159,7 +194,7 @@ describe('GET /v1/rei/onboarding/active — days_into_journey calculation', () =
       welcome_sent_at: null,
     })]);
 
-    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET' });
+    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET', headers: authHeaders() });
     const res = await route(req);
     expect(res?.status).toBe(200);
     const body = (await res?.json()) as any;

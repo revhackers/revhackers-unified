@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createIntelligenceRoutes } from '../../api/src/http/intelligence-routes';
 import type { CompetitorRecord, CompetitorIntelligenceRecord, MarketSignalRecord, IntelligenceJobRecord, IntelligenceFindingRecord, GrowthMapShareRecord, CreateShareParams } from '../../api/src/domains/intelligence/types';
+import type { TokenVerifier } from '../../api/src/identity/verifier';
+import type { IdentityRepository } from '../../api/src/identity/postgres-identity-repository';
+import type { InternalUser } from '../../api/src/contracts/tenant';
 
 function createMockRepository() {
   // Store em memória que emula a persistência de app.growthmap_shares
@@ -62,6 +65,38 @@ function createMockRepository() {
 
 function createMockConnector() {
   return { enrichCompetitorByCNPJ: vi.fn() };
+}
+
+// ─── Stubs de autenticação (AuthMiddleware: verifier + identities) ──────────
+// Contexto autenticado fixo no tenant TENANT-A; cross-tenant usa TENANT-B.
+const AUTH_TENANT = 'TENANT-A';
+const FOREIGN_TENANT = 'TENANT-B';
+const AUTH_HEADERS = { Authorization: 'Bearer test-token' };
+const JSON_AUTH_HEADERS = { 'Content-Type': 'application/json', Authorization: 'Bearer test-token' };
+
+function createAuthStubs() {
+  const mockUser: InternalUser = {
+    id: 'user-1',
+    globalRole: 'admin',
+    status: 'active',
+    memberships: [{ userId: 'user-1', tenantId: AUTH_TENANT, role: 'admin', status: 'active' }],
+  };
+  return {
+    verifier: { verify: vi.fn().mockResolvedValue({ issuer: 'test-issuer', subject: 'user-1', expiresAt: 9999999999 }) } as unknown as TokenVerifier,
+    identities: { findOrCreateUser: vi.fn().mockResolvedValue(mockUser) } as unknown as IdentityRepository,
+  };
+}
+
+function createTestRoute(
+  mockRepo: ReturnType<typeof createMockRepository>,
+  mockConnector: ReturnType<typeof createMockConnector>,
+) {
+  return createIntelligenceRoutes({
+    repository: mockRepo as any,
+    jobsRepository: mockRepo as any,
+    fonteDataConnector: mockConnector as any,
+    ...createAuthStubs(),
+  });
 }
 
 function makeCompetitor(overrides: Partial<CompetitorRecord> = {}): CompetitorRecord {
@@ -137,13 +172,13 @@ describe('Intelligence Routes — CRUD operations', () => {
   beforeEach(() => {
     mockRepo = createMockRepository();
     mockConnector = createMockConnector();
-    route = createIntelligenceRoutes({ repository: mockRepo as any, jobsRepository: mockRepo as any, fonteDataConnector: mockConnector as any });
+    route = createTestRoute(mockRepo, mockConnector);
   });
 
   it('lists competitors for a project with valid tenant_id', async () => {
     mockRepo.listCompetitorsByProject.mockResolvedValueOnce([makeCompetitor({ id: 'comp-1' }), makeCompetitor({ id: 'comp-2' })]);
     const projectId = '12345678-1234-1234-1234-123456789012';
-    const req = new Request(`https://api.test/v1/intelligence/competitors/${projectId}?tenant_id=tenant-1`, { method: 'GET' });
+    const req = new Request(`https://api.test/v1/intelligence/competitors/${projectId}?tenant_id=${AUTH_TENANT}`, { method: 'GET', headers: AUTH_HEADERS });
     const res = await route(req);
     expect(res?.status).toBe(200);
     const body = (await res?.json()) as any;
@@ -153,7 +188,7 @@ describe('Intelligence Routes — CRUD operations', () => {
 
   it('returns 400 when listing competitors without tenant_id', async () => {
     const projectId = '12345678-1234-1234-1234-123456789012';
-    const req = new Request(`https://api.test/v1/intelligence/competitors/${projectId}`, { method: 'GET' });
+    const req = new Request(`https://api.test/v1/intelligence/competitors/${projectId}`, { method: 'GET', headers: AUTH_HEADERS });
     const res = await route(req);
     expect(res?.status).toBe(400);
   });
@@ -161,8 +196,8 @@ describe('Intelligence Routes — CRUD operations', () => {
   it('creates a competitor with valid payload (no CNPJ)', async () => {
     mockRepo.createCompetitor.mockResolvedValueOnce(makeCompetitor({ id: 'new-comp' }));
     const req = new Request('https://api.test/v1/intelligence/competitors', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenant_id: 'tenant-1', project_id: 'proj-1', name: 'New Competitor', added_by: 'user@revhackers.com' }),
+      method: 'POST', headers: JSON_AUTH_HEADERS,
+      body: JSON.stringify({ tenant_id: AUTH_TENANT, project_id: 'proj-1', name: 'New Competitor', added_by: 'user@revhackers.com' }),
     });
     const res = await route(req);
     expect(res?.status).toBe(201);
@@ -176,8 +211,8 @@ describe('Intelligence Routes — CRUD operations', () => {
     mockConnector.enrichCompetitorByCNPJ.mockResolvedValueOnce(makeIntelligence());
     mockRepo.upsertIntelligence.mockResolvedValueOnce(makeIntelligence());
     const req = new Request('https://api.test/v1/intelligence/competitors', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenant_id: 'tenant-1', project_id: 'proj-1', name: 'Acme', cnpj: '12.345.678/0001-90', added_by: 'user@revhackers.com' }),
+      method: 'POST', headers: JSON_AUTH_HEADERS,
+      body: JSON.stringify({ tenant_id: AUTH_TENANT, project_id: 'proj-1', name: 'Acme', cnpj: '12.345.678/0001-90', added_by: 'user@revhackers.com' }),
     });
     const res = await route(req);
     expect(res?.status).toBe(201);
@@ -193,8 +228,8 @@ describe('Intelligence Routes — CRUD operations', () => {
     mockConnector.enrichCompetitorByCNPJ.mockResolvedValueOnce(null);
     mockRepo.markEnrichmentFailed.mockResolvedValueOnce(undefined);
     const req = new Request('https://api.test/v1/intelligence/competitors', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenant_id: 'tenant-1', project_id: 'proj-1', name: 'Acme', cnpj: '11.111.111/0001-11', added_by: 'user@revhackers.com' }),
+      method: 'POST', headers: JSON_AUTH_HEADERS,
+      body: JSON.stringify({ tenant_id: AUTH_TENANT, project_id: 'proj-1', name: 'Acme', cnpj: '11.111.111/0001-11', added_by: 'user@revhackers.com' }),
     });
     const res = await route(req);
     expect(res?.status).toBe(201);
@@ -204,7 +239,7 @@ describe('Intelligence Routes — CRUD operations', () => {
 
   it('returns 400 when creating competitor without required fields', async () => {
     const req = new Request('https://api.test/v1/intelligence/competitors', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: JSON_AUTH_HEADERS,
       body: JSON.stringify({ name: 'Missing Fields' }),
     });
     const res = await route(req);
@@ -214,7 +249,7 @@ describe('Intelligence Routes — CRUD operations', () => {
   it('returns competitor full data with intelligence and signals', async () => {
     mockRepo.getCompetitorWithIntelligence.mockResolvedValueOnce({ competitor: makeCompetitor(), intelligence: makeIntelligence(), recent_signals: [makeSignal()], comparison: null });
     const competitorId = '12345678-1234-1234-1234-123456789012';
-    const req = new Request(`https://api.test/v1/intelligence/competitors/${competitorId}/full?tenant_id=tenant-1`, { method: 'GET' });
+    const req = new Request(`https://api.test/v1/intelligence/competitors/${competitorId}/full?tenant_id=${AUTH_TENANT}`, { method: 'GET', headers: AUTH_HEADERS });
     const res = await route(req);
     expect(res?.status).toBe(200);
     const body = (await res?.json()) as any;
@@ -226,7 +261,7 @@ describe('Intelligence Routes — CRUD operations', () => {
   it('returns 404 when competitor full data is not found', async () => {
     mockRepo.getCompetitorWithIntelligence.mockResolvedValueOnce(null);
     const competitorId = '12345678-1234-1234-1234-123456789012';
-    const req = new Request(`https://api.test/v1/intelligence/competitors/${competitorId}/full?tenant_id=tenant-1`, { method: 'GET' });
+    const req = new Request(`https://api.test/v1/intelligence/competitors/${competitorId}/full?tenant_id=${AUTH_TENANT}`, { method: 'GET', headers: AUTH_HEADERS });
     const res = await route(req);
     expect(res?.status).toBe(404);
   });
@@ -234,8 +269,8 @@ describe('Intelligence Routes — CRUD operations', () => {
   it('creates a market signal with valid payload', async () => {
     mockRepo.createSignal.mockResolvedValueOnce(makeSignal({ id: 'new-sig' }));
     const req = new Request('https://api.test/v1/intelligence/signals', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenant_id: 'tenant-1', signal_type: 'funding', title: 'New round of funding' }),
+      method: 'POST', headers: JSON_AUTH_HEADERS,
+      body: JSON.stringify({ tenant_id: AUTH_TENANT, signal_type: 'funding', title: 'New round of funding' }),
     });
     const res = await route(req);
     expect(res?.status).toBe(201);
@@ -253,8 +288,8 @@ describe('Intelligence Routes — CRUD operations', () => {
   it('enqueues a new intelligence job', async () => {
     mockRepo.createJob.mockResolvedValueOnce(makeJob({ id: 'new-job' }));
     const req = new Request('https://api.test/v1/intelligence/jobs', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenant_id: 'tenant-1', job_type: 'competitor_enrichment', competitor_id: 'comp-1' }),
+      method: 'POST', headers: JSON_AUTH_HEADERS,
+      body: JSON.stringify({ tenant_id: AUTH_TENANT, job_type: 'competitor_enrichment', competitor_id: 'comp-1' }),
     });
     const res = await route(req);
     expect(res?.status).toBe(201);
@@ -266,8 +301,8 @@ describe('Intelligence Routes — CRUD operations', () => {
   it('enqueues a market_scan job with no competitor_id', async () => {
     mockRepo.createJob.mockResolvedValueOnce(makeJob({ id: 'scan-job', job_type: 'market_scan', competitor_id: null }));
     const req = new Request('https://api.test/v1/intelligence/jobs', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenant_id: 'tenant-1', job_type: 'market_scan' }),
+      method: 'POST', headers: JSON_AUTH_HEADERS,
+      body: JSON.stringify({ tenant_id: AUTH_TENANT, job_type: 'market_scan' }),
     });
     const res = await route(req);
     expect(res?.status).toBe(201);
@@ -278,7 +313,7 @@ describe('Intelligence Routes — CRUD operations', () => {
 
   it('returns 400 when creating job without required fields', async () => {
     const req = new Request('https://api.test/v1/intelligence/jobs', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: JSON_AUTH_HEADERS,
       body: JSON.stringify({ job_type: 'competitor_enrichment' }),
     });
     const res = await route(req);
@@ -291,7 +326,7 @@ describe('Intelligence Routes — CRUD operations', () => {
       makeJob({ id: 'job-1', status: 'pending' }),
       makeJob({ id: 'job-2', status: 'completed' }),
     ]);
-    const req = new Request('https://api.test/v1/intelligence/jobs?tenant_id=tenant-1', { method: 'GET' });
+    const req = new Request(`https://api.test/v1/intelligence/jobs?tenant_id=${AUTH_TENANT}`, { method: 'GET', headers: AUTH_HEADERS });
     const res = await route(req);
     expect(res?.status).toBe(200);
     const body = (await res?.json()) as any;
@@ -300,7 +335,7 @@ describe('Intelligence Routes — CRUD operations', () => {
   });
 
   it('returns 400 when listing jobs without tenant_id', async () => {
-    const req = new Request('https://api.test/v1/intelligence/jobs', { method: 'GET' });
+    const req = new Request('https://api.test/v1/intelligence/jobs', { method: 'GET', headers: AUTH_HEADERS });
     const res = await route(req);
     expect(res?.status).toBe(400);
   });
@@ -311,7 +346,7 @@ describe('Intelligence Routes — CRUD operations', () => {
       makeFinding({ id: 'find-1', severity: 'critical' }),
       makeFinding({ id: 'find-2', severity: 'medium' }),
     ]);
-    const req = new Request('https://api.test/v1/intelligence/findings?tenant_id=tenant-1', { method: 'GET' });
+    const req = new Request(`https://api.test/v1/intelligence/findings?tenant_id=${AUTH_TENANT}`, { method: 'GET', headers: AUTH_HEADERS });
     const res = await route(req);
     expect(res?.status).toBe(200);
     const body = (await res?.json()) as any;
@@ -321,7 +356,7 @@ describe('Intelligence Routes — CRUD operations', () => {
 
   it('returns empty list when no findings exist', async () => {
     mockRepo.listFindingsByTenant.mockResolvedValueOnce([]);
-    const req = new Request('https://api.test/v1/intelligence/findings?tenant_id=tenant-1', { method: 'GET' });
+    const req = new Request(`https://api.test/v1/intelligence/findings?tenant_id=${AUTH_TENANT}`, { method: 'GET', headers: AUTH_HEADERS });
     const res = await route(req);
     expect(res?.status).toBe(200);
     const body = (await res?.json()) as any;
@@ -330,7 +365,7 @@ describe('Intelligence Routes — CRUD operations', () => {
   });
 
   it('returns 400 when listing findings without tenant_id', async () => {
-    const req = new Request('https://api.test/v1/intelligence/findings', { method: 'GET' });
+    const req = new Request('https://api.test/v1/intelligence/findings', { method: 'GET', headers: AUTH_HEADERS });
     const res = await route(req);
     expect(res?.status).toBe(400);
   });
@@ -338,8 +373,8 @@ describe('Intelligence Routes — CRUD operations', () => {
   // POST /v1/intelligence/share
   it('creates a share token with valid fields', async () => {
     const req = new Request('https://api.test/v1/intelligence/share', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenant_id: 'tenant-1', project_id: 'proj-1', created_by: 'user@revhackers.com' }),
+      method: 'POST', headers: JSON_AUTH_HEADERS,
+      body: JSON.stringify({ tenant_id: AUTH_TENANT, project_id: 'proj-1', created_by: 'user@revhackers.com' }),
     });
     const res = await route(req);
     expect(res?.status).toBe(201);
@@ -351,8 +386,8 @@ describe('Intelligence Routes — CRUD operations', () => {
   it('creates a share token with custom expiration date', async () => {
     const expiresAt = '2027-01-01T00:00:00Z';
     const req = new Request('https://api.test/v1/intelligence/share', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenant_id: 'tenant-1', project_id: 'proj-1', created_by: 'user@revhackers.com', expires_at: expiresAt }),
+      method: 'POST', headers: JSON_AUTH_HEADERS,
+      body: JSON.stringify({ tenant_id: AUTH_TENANT, project_id: 'proj-1', created_by: 'user@revhackers.com', expires_at: expiresAt }),
     });
     const res = await route(req);
     expect(res?.status).toBe(201);
@@ -362,7 +397,7 @@ describe('Intelligence Routes — CRUD operations', () => {
 
   it('returns 400 when creating share without required fields', async () => {
     const req = new Request('https://api.test/v1/intelligence/share', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: JSON_AUTH_HEADERS,
       body: JSON.stringify({ project_id: 'proj-1' }),
     });
     const res = await route(req);
@@ -373,8 +408,8 @@ describe('Intelligence Routes — CRUD operations', () => {
   it('returns share data for valid token', async () => {
     mockRepo.listCompetitorsByProject.mockResolvedValueOnce([]);
     const createReq = new Request('https://api.test/v1/intelligence/share', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenant_id: 'tenant-1', project_id: 'proj-1', created_by: 'user@revhackers.com' }),
+      method: 'POST', headers: JSON_AUTH_HEADERS,
+      body: JSON.stringify({ tenant_id: AUTH_TENANT, project_id: 'proj-1', created_by: 'user@revhackers.com' }),
     });
     const createRes = await route(createReq);
     const createBody = (await createRes?.json()) as any;
@@ -396,8 +431,8 @@ describe('Intelligence Routes — CRUD operations', () => {
 
   it('returns 410 for expired share token', async () => {
     const createReq = new Request('https://api.test/v1/intelligence/share', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenant_id: 'tenant-1', project_id: 'proj-1', created_by: 'user@revhackers.com', expires_at: '2020-01-01T00:00:00Z' }),
+      method: 'POST', headers: JSON_AUTH_HEADERS,
+      body: JSON.stringify({ tenant_id: AUTH_TENANT, project_id: 'proj-1', created_by: 'user@revhackers.com', expires_at: '2020-01-01T00:00:00Z' }),
     });
     const createRes = await route(createReq);
     const createBody = (await createRes?.json()) as any;
@@ -411,8 +446,8 @@ describe('Intelligence Routes — CRUD operations', () => {
   // DELETE /v1/intelligence/share/:share_token
   it('revokes an existing share token', async () => {
     const createReq = new Request('https://api.test/v1/intelligence/share', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenant_id: 'tenant-1', project_id: 'proj-1', created_by: 'user@revhackers.com' }),
+      method: 'POST', headers: JSON_AUTH_HEADERS,
+      body: JSON.stringify({ tenant_id: AUTH_TENANT, project_id: 'proj-1', created_by: 'user@revhackers.com' }),
     });
     const createRes = await route(createReq);
     const createBody = (await createRes?.json()) as any;
@@ -439,13 +474,13 @@ describe('Intelligence Routes — CRUD operations', () => {
     // O mesmo repository emula o banco compartilhado entre duas instâncias.
     // Com o store em memória antigo (module-level Map), um novo processo perdia
     // todos os tokens — aqui o segundo handler precisa achar o token criado pelo primeiro.
-    const routeA = createIntelligenceRoutes({ repository: mockRepo as any, jobsRepository: mockRepo as any, fonteDataConnector: mockConnector as any });
-    const routeB = createIntelligenceRoutes({ repository: mockRepo as any, jobsRepository: mockRepo as any, fonteDataConnector: mockConnector as any });
+    const routeA = createTestRoute(mockRepo, mockConnector);
+    const routeB = createTestRoute(mockRepo, mockConnector);
     mockRepo.listCompetitorsByProject.mockResolvedValue([]);
 
     const createRes = await routeA(new Request('https://api.test/v1/intelligence/share', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenant_id: 'tenant-1', project_id: 'proj-1', created_by: 'user@revhackers.com' }),
+      method: 'POST', headers: JSON_AUTH_HEADERS,
+      body: JSON.stringify({ tenant_id: AUTH_TENANT, project_id: 'proj-1', created_by: 'user@revhackers.com' }),
     }));
     const { data: { share_token: shareToken } } = (await createRes?.json()) as any;
 
@@ -465,30 +500,30 @@ describe('Intelligence Routes — GET /v1/intelligence/insights/:project_id', ()
   beforeEach(() => {
     mockRepo = createMockRepository();
     mockConnector = createMockConnector();
-    route = createIntelligenceRoutes({ repository: mockRepo as any, jobsRepository: mockRepo as any, fonteDataConnector: mockConnector as any });
+    route = createTestRoute(mockRepo, mockConnector);
   });
 
   const PROJECT = '12345678-1234-1234-1234-123456789012';
-  const TENANT = 'tenant-1';
+  const TENANT = AUTH_TENANT;
   const url = (q?: string) =>
     `https://api.test/v1/intelligence/insights/${PROJECT}${q ? `?${q}` : ''}`;
 
   it('returns 400 when tenant_id is missing', async () => {
-    const res = await route(new Request(url(), { method: 'GET' }));
+    const res = await route(new Request(url(), { method: 'GET', headers: AUTH_HEADERS }));
     expect(res?.status).toBe(400);
     const body = (await res?.json()) as any;
     expect(body.error.code).toBe('validation');
   });
 
   it('returns 400 when project_id is not a UUID', async () => {
-    const res = await route(new Request(`https://api.test/v1/intelligence/insights/not-a-uuid?tenant_id=${TENANT}`, { method: 'GET' }));
+    const res = await route(new Request(`https://api.test/v1/intelligence/insights/not-a-uuid?tenant_id=${TENANT}`, { method: 'GET', headers: AUTH_HEADERS }));
     expect(res?.status).toBe(405); // path doesn't match any route, falls through to method-not-allowed
   });
 
   it('returns empty insights array when no competitors are registered', async () => {
     mockRepo.listCompetitorsFullByProject.mockResolvedValueOnce([]);
     mockRepo.listSignalsByTenant.mockResolvedValueOnce([]);
-    const res = await route(new Request(url(`tenant_id=${TENANT}`), { method: 'GET' }));
+    const res = await route(new Request(url(`tenant_id=${TENANT}`), { method: 'GET', headers: AUTH_HEADERS }));
     expect(res?.status).toBe(200);
     const body = (await res?.json()) as any;
     expect(body.data.insights).toEqual([{
@@ -516,7 +551,7 @@ describe('Intelligence Routes — GET /v1/intelligence/insights/:project_id', ()
     ]);
     mockRepo.listSignalsByTenant.mockResolvedValueOnce([makeSignal({ sentiment: 'positive' })]);
 
-    const res = await route(new Request(url(`tenant_id=${TENANT}`), { method: 'GET' }));
+    const res = await route(new Request(url(`tenant_id=${TENANT}`), { method: 'GET', headers: AUTH_HEADERS }));
     expect(res?.status).toBe(200);
     const body = (await res?.json()) as any;
     const labels = body.data.insights.map((i: any) => i.label);
@@ -536,7 +571,7 @@ describe('Intelligence Routes — GET /v1/intelligence/insights/:project_id', ()
       { competitor: makeCompetitor({ id: 'comp-2' }), intelligence: null, recent_signals: [], comparison: null },
     ]);
     mockRepo.listSignalsByTenant.mockResolvedValueOnce([]);
-    const res = await route(new Request(url(`tenant_id=${TENANT}`), { method: 'GET' }));
+    const res = await route(new Request(url(`tenant_id=${TENANT}`), { method: 'GET', headers: AUTH_HEADERS }));
     expect(res?.status).toBe(200);
     const body = (await res?.json()) as any;
     const labels = body.data.insights.map((i: any) => i.label);
@@ -549,13 +584,112 @@ describe('Intelligence Routes — GET /v1/intelligence/insights/:project_id', ()
   });
 
   it('returns 405 on POST to insights endpoint', async () => {
-    const res = await route(new Request(url(`tenant_id=${TENANT}`), { method: 'POST' }));
+    const res = await route(new Request(url(`tenant_id=${TENANT}`), { method: 'POST', headers: AUTH_HEADERS }));
     expect(res?.status).toBe(405);
   });
 
   it('returns 405 on PUT to insights endpoint', async () => {
-    const res = await route(new Request(url(`tenant_id=${TENANT}`), { method: 'PUT' }));
+    const res = await route(new Request(url(`tenant_id=${TENANT}`), { method: 'PUT', headers: AUTH_HEADERS }));
     expect(res?.status).toBe(405);
   });
 });
 
+describe('Intelligence Routes — autenticação e isolamento de tenant', () => {
+  let mockRepo: ReturnType<typeof createMockRepository>;
+  let mockConnector: ReturnType<typeof createMockConnector>;
+  let route: (req: Request) => Promise<Response | null>;
+
+  beforeEach(() => {
+    mockRepo = createMockRepository();
+    mockConnector = createMockConnector();
+    route = createTestRoute(mockRepo, mockConnector);
+  });
+
+  const PROJECT = '12345678-1234-1234-1234-123456789012';
+
+  it('retorna 401 sem header Authorization', async () => {
+    const req = new Request(`https://api.test/v1/intelligence/competitors/${PROJECT}?tenant_id=${AUTH_TENANT}`, { method: 'GET' });
+    const res = await route(req);
+    expect(res?.status).toBe(401);
+    const body = (await res?.json()) as any;
+    expect(body.error.code).toBe('unauthenticated');
+    expect(mockRepo.listCompetitorsByProject).not.toHaveBeenCalled();
+  });
+
+  it('retorna 401 com token inválido', async () => {
+    const rejectingRoute = createIntelligenceRoutes({
+      repository: mockRepo as any,
+      jobsRepository: mockRepo as any,
+      fonteDataConnector: mockConnector as any,
+      verifier: { verify: vi.fn().mockRejectedValue(new Error('bad token')) } as unknown as TokenVerifier,
+      identities: { findOrCreateUser: vi.fn() } as unknown as IdentityRepository,
+    });
+    const req = new Request(`https://api.test/v1/intelligence/competitors/${PROJECT}?tenant_id=${AUTH_TENANT}`, {
+      method: 'GET',
+      headers: { Authorization: 'Bearer token-invalido' },
+    });
+    const res = await rejectingRoute(req);
+    expect(res?.status).toBe(401);
+    const body = (await res?.json()) as any;
+    expect(body.error.code).toBe('unauthenticated');
+  });
+
+  it('retorna 403 para tenant_id de outro tenant no GET', async () => {
+    const req = new Request(`https://api.test/v1/intelligence/competitors/${PROJECT}?tenant_id=${FOREIGN_TENANT}`, { method: 'GET', headers: AUTH_HEADERS });
+    const res = await route(req);
+    expect(res?.status).toBe(403);
+    const body = (await res?.json()) as any;
+    expect(body.error.code).toBe('forbidden');
+    expect(body.error.message).toBe('Acesso negado para este tenant.');
+    expect(mockRepo.listCompetitorsByProject).not.toHaveBeenCalled();
+  });
+
+  it('retorna 403 para tenant_id divergente no POST sem tocar o repository', async () => {
+    const req = new Request('https://api.test/v1/intelligence/competitors', {
+      method: 'POST', headers: JSON_AUTH_HEADERS,
+      body: JSON.stringify({ tenant_id: FOREIGN_TENANT, project_id: 'proj-1', name: 'Invasor' }),
+    });
+    const res = await route(req);
+    expect(res?.status).toBe(403);
+    const body = (await res?.json()) as any;
+    expect(body.error.code).toBe('forbidden');
+    expect(mockRepo.createCompetitor).not.toHaveBeenCalled();
+  });
+
+  it('usa o tenant autenticado nas chamadas ao repository', async () => {
+    mockRepo.listCompetitorsByProject.mockResolvedValueOnce([makeCompetitor({ id: 'comp-1' })]);
+    const req = new Request(`https://api.test/v1/intelligence/competitors/${PROJECT}?tenant_id=${AUTH_TENANT}`, { method: 'GET', headers: AUTH_HEADERS });
+    const res = await route(req);
+    expect(res?.status).toBe(200);
+    expect(mockRepo.listCompetitorsByProject).toHaveBeenCalledWith(AUTH_TENANT, PROJECT);
+  });
+
+  it('mantém GET do share público sem auth (200)', async () => {
+    mockRepo.listCompetitorsByProject.mockResolvedValueOnce([]);
+    const createRes = await route(new Request('https://api.test/v1/intelligence/share', {
+      method: 'POST', headers: JSON_AUTH_HEADERS,
+      body: JSON.stringify({ tenant_id: AUTH_TENANT, project_id: 'proj-1', created_by: 'user@revhackers.com' }),
+    }));
+    expect(createRes?.status).toBe(201);
+    const { data: { share_token: shareToken } } = (await createRes?.json()) as any;
+
+    const res = await route(new Request(`https://api.test/v1/intelligence/share/${shareToken}`, { method: 'GET' }));
+    expect(res?.status).toBe(200);
+    const body = (await res?.json()) as any;
+    expect(body.data.share_token).toBe(shareToken);
+  });
+
+  it('mantém GET do share público sem auth (404 para token inválido)', async () => {
+    const res = await route(new Request('https://api.test/v1/intelligence/share/shr_token_inexistente', { method: 'GET' }));
+    expect(res?.status).toBe(404);
+  });
+
+  it('exige auth no POST do share (401 sem header)', async () => {
+    const req = new Request('https://api.test/v1/intelligence/share', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tenant_id: AUTH_TENANT, project_id: 'proj-1', created_by: 'user@revhackers.com' }),
+    });
+    const res = await route(req);
+    expect(res?.status).toBe(401);
+  });
+});

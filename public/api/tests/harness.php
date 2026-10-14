@@ -44,6 +44,7 @@ function ghl_send_mail($to, $subjectEncoded, $htmlBody, $headers) {
 }
 
 require __DIR__ . '/../ghl.php';
+require __DIR__ . '/../ghl-webhook.php';
 
 // ---- Mini framework ----
 $PASS = 0;
@@ -68,7 +69,7 @@ function reset_state() {
     if (!headers_sent()) {
         http_response_code(200);
     }
-    foreach (['GHL_PRIVATE_TOKEN','GHL_ALLOWED_ORIGIN','GHL_LOCATION_ID','GHL_RATE_LIMIT_MAX','GHL_RATE_LIMIT_WINDOW',
+    foreach (['GHL_PRIVATE_TOKEN','GHL_WEBHOOK_SECRET','GHL_ALLOWED_ORIGIN','GHL_LOCATION_ID','GHL_RATE_LIMIT_MAX','GHL_RATE_LIMIT_WINDOW',
               'GHL_RATELIMIT_DIR','GHL_RL_SALT','GHL_ABUSE_BACKEND','GHL_MAX_FIELDS',
               'GHL_MAX_FIELD_BYTES','GHL_IDEMPOTENCY_TTL','GHL_IDEMPOTENCY_DIR','GHL_TEMPLATE_DIR'] as $k) {
         putenv($k);
@@ -530,6 +531,49 @@ check('(k) expired idem entry pruned', !file_exists($pdir . '/ghl_v2_idem_' . $h
 check('(k) live idem entry kept', file_exists($pdir . '/ghl_v2_idem_' . $hex . '_fresh.json'), '');
 check('(k) non-v2 files untouched', file_exists($pdir . '/keep.txt'), '');
 check('(k) stale rate file pruned', !file_exists($rlOld), '');
+
+// ================= (l) webhook fail-closed por segredo compartilhado =================
+function run_webhook_request($method, $raw, $secretHeader = null) {
+    $_SERVER['REQUEST_METHOD'] = $method;
+    if ($secretHeader === null) {
+        unset($_SERVER['HTTP_X_RH_WEBHOOK_SECRET']);
+    } else {
+        $_SERVER['HTTP_X_RH_WEBHOOK_SECRET'] = $secretHeader;
+    }
+    $GLOBALS['__test_raw_input'] = $raw;
+    ob_start();
+    $status = handle_ghl_webhook_request();
+    $out = ob_get_clean();
+    return [(int) $status, $out];
+}
+function valid_won_raw($extra = []) {
+    return json_encode(array_merge(
+        ['status' => 'won', 'contact' => ['email' => 'won@example.com', 'name' => 'Vencedor'],
+         'companyName' => 'Acme', 'monetaryValue' => 1000],
+        $extra
+    ));
+}
+
+reset_state(); // segredo ausente => 500, sem ler o body
+list($st, $out) = run_webhook_request('POST', valid_won_raw(), 'qualquer-valor');
+check('(l) segredo ausente => 500', $st === 500, "got $st / $out");
+check('(l) corpo de erro genérico', is_generic_error_shape($out) && strpos($out, 'webhook_secret_not_configured') !== false, "got: $out");
+
+reset_state(); // segredo configurado, header errado => 401
+putenv('GHL_WEBHOOK_SECRET=segredo-teste-webhook');
+list($st, $out) = run_webhook_request('POST', valid_won_raw(), 'valor-errado');
+check('(l) header errado => 401', $st === 401, "got $st / $out");
+check('(l) corpo unauthorized genérico', is_generic_error_shape($out) && strpos($out, 'unauthorized') !== false, "got: $out");
+
+reset_state(); // header certo, evento não-won => segue o fluxo normal (ignorado)
+putenv('GHL_WEBHOOK_SECRET=segredo-teste-webhook');
+list($st, $out) = run_webhook_request('POST', json_encode(['status' => 'open']), 'segredo-teste-webhook');
+check('(l) header certo + evento comum => 200 ignorado', $st === 200 && strpos($out, 'ignored') !== false, "got $st / $out");
+
+reset_state(); // header certo, oportunidade ganha => sucesso normal
+putenv('GHL_WEBHOOK_SECRET=segredo-teste-webhook');
+list($st, $out) = run_webhook_request('POST', valid_won_raw(), 'segredo-teste-webhook');
+check('(l) header certo + won => 200 success', $st === 200 && strpos($out, '"success":true') !== false, "got $st / $out");
 
 echo "\nRESULT: $PASS passed, $FAIL failed\n";
 exit($FAIL > 0 ? 1 : 0);

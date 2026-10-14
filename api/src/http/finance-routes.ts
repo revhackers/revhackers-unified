@@ -20,6 +20,9 @@
 
 import { z } from 'zod';
 import { ApiError } from '../contracts/errors';
+import type { IdentityRepository } from '../identity/postgres-identity-repository';
+import type { TokenVerifier } from '../identity/verifier';
+import { AuthMiddleware } from './auth-middleware';
 import { InfinitePayConnector } from '../domains/finance/connectors/infinitepay-connector';
 import { PagBankConnector } from '../domains/finance/connectors/pagbank-connector';
 import { PluggyConnector } from '../domains/finance/connectors/pluggy-connector';
@@ -118,6 +121,8 @@ const ConnectorSyncSchema = z.object({
 
 export interface FinanceRouteDeps {
   repository: PostgresFinanceRepository;
+  verifier: TokenVerifier;
+  identities: IdentityRepository;
   /** Dependências opcionais — se ausentes, o connector roda com credenciais do env. */
   connectors?: {
     stripe?: StripeConnector;
@@ -205,6 +210,7 @@ function createWebhookHandlers(): Record<string, WebhookProvider> {
 }
 
 export function createFinanceRoutes(deps: FinanceRouteDeps) {
+  const auth = new AuthMiddleware(deps);
   const engine = new ReconciliationEngine();
   const webhookHandlers = createWebhookHandlers();
   const connectors = deps.connectors ?? {
@@ -242,6 +248,14 @@ export function createFinanceRoutes(deps: FinanceRouteDeps) {
     const url = new URL(req.url);
     const path = url.pathname;
     const method = req.method;
+
+    // Webhooks de provedores usam assinatura própria (handler.verify) — sem Bearer.
+    const isWebhookPost =
+      method === 'POST' && /^\/v1\/finance\/webhooks\/(stripe|infinitepay|pagbank|pluggy)$/.test(path);
+    if (!isWebhookPost && path.startsWith('/v1/finance')) {
+      const authResult = await auth.authenticate(req);
+      if (authResult instanceof Response) return authResult;
+    }
 
     // -------- ENTITIES --------
 

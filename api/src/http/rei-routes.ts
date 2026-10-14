@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { ApiError } from '../contracts/errors';
 import type { PostgresREIRepository } from '../domains/rei/postgres-repository';
+import type { IdentityRepository } from '../identity/postgres-identity-repository';
+import type { TokenVerifier } from '../identity/verifier';
+import { AuthMiddleware, type AuthContext } from './auth-middleware';
 import {
   buildWelcomeEmail,
   buildKickoffDoc,
@@ -87,6 +90,12 @@ const ExpansionSchema = z.object({
 
 interface REIRoutesDependencies {
   repository: PostgresREIRepository;
+  verifier: TokenVerifier;
+  identities: IdentityRepository;
+}
+
+function forbiddenTenant(): Response {
+  return json(403, { error: { code: 'forbidden', message: 'Acesso negado para este tenant.' } });
 }
 
 function json(status: number, value: unknown): Response {
@@ -121,9 +130,15 @@ function safeJsonParse(request: Request): Promise<unknown> {
 }
 
 export function createREIRoutes(deps: REIRoutesDependencies) {
+  const auth = new AuthMiddleware(deps);
+
   return async (request: Request): Promise<Response | null> => {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/v1/rei')) return null;
+
+    const authResult = await auth.authenticate(request);
+    if (authResult instanceof Response) return authResult;
+    const ctx: AuthContext = authResult;
 
     try {
       // POST /v1/rei/onboarding — Inicia o onboarding de um novo cliente REI
@@ -144,6 +159,7 @@ export function createREIRoutes(deps: REIRoutesDependencies) {
         const { onboarding_id, kickoff_link } = parsed.data;
         const record = await deps.repository.findById(onboarding_id);
         if (!record) throw ApiError.validation('Onboarding não encontrado.');
+        if (record.tenant_id !== ctx.tenantId) return forbiddenTenant();
 
         const email = buildWelcomeEmail({
           clientName: record.client_name,
@@ -174,6 +190,7 @@ export function createREIRoutes(deps: REIRoutesDependencies) {
         const { onboarding_id, goal_sentence } = parsed.data;
         const record = await deps.repository.findById(onboarding_id);
         if (!record) throw ApiError.validation('Onboarding não encontrado.');
+        if (record.tenant_id !== ctx.tenantId) return forbiddenTenant();
 
         const doc = buildKickoffDoc({
           clientName: record.client_name,
@@ -199,6 +216,8 @@ export function createREIRoutes(deps: REIRoutesDependencies) {
         const parsed = parseBody(raw, QuickWinSchema);
         if ('error' in parsed) return json(400, { error: parsed.error });
         const body = parsed.data;
+        const quickWinRecord = await deps.repository.findById(body.onboarding_id);
+        if (quickWinRecord && quickWinRecord.tenant_id !== ctx.tenantId) return forbiddenTenant();
         await deps.repository.deliverQuickWin(body.onboarding_id, {
           description: body.description,
           url: body.url,
@@ -215,6 +234,8 @@ export function createREIRoutes(deps: REIRoutesDependencies) {
         const parsed = parseBody(raw, NpsSchema);
         if ('error' in parsed) return json(400, { error: parsed.error });
         const { onboarding_id, score } = parsed.data;
+        const npsRecord = await deps.repository.findById(onboarding_id);
+        if (npsRecord && npsRecord.tenant_id !== ctx.tenantId) return forbiddenTenant();
         await deps.repository.recordNPS(onboarding_id, score);
         const churn_risk = score < 7 ? 'high' : score < 8 ? 'medium' : 'low';
         return json(200, {
@@ -247,6 +268,7 @@ export function createREIRoutes(deps: REIRoutesDependencies) {
         if (!record) {
           return json(404, { error: { code: 'not_found', message: 'Onboarding não encontrado.' } });
         }
+        if (record.tenant_id !== ctx.tenantId) return forbiddenTenant();
 
         const email = buildWrapUpEmail({
           clientName: record.client_name,
@@ -297,8 +319,10 @@ export function createREIRoutes(deps: REIRoutesDependencies) {
         if ('error' in parsed) return json(400, { error: parsed.error });
         const body = parsed.data;
 
+        if (body.tenant_id !== ctx.tenantId) return forbiddenTenant();
+
         await deps.repository.createExpansionOpportunity({
-          tenant_id: body.tenant_id,
+          tenant_id: ctx.tenantId,
           rei_onboarding_id: body.rei_onboarding_id || null,
           project_id: body.project_id || null,
           opportunity_type: body.opportunity_type,
@@ -310,7 +334,7 @@ export function createREIRoutes(deps: REIRoutesDependencies) {
         });
         return json(201, {
           data: {
-            tenant_id: body.tenant_id,
+            tenant_id: ctx.tenantId,
             opportunity_type: body.opportunity_type,
             product_name: body.product_name,
             status: 'identified',
@@ -328,12 +352,13 @@ export function createREIRoutes(deps: REIRoutesDependencies) {
         if (!tenantId) {
           return json(400, { error: { code: 'validation', message: 'tenant_id é obrigatório.' } });
         }
+        if (tenantId !== ctx.tenantId) return forbiddenTenant();
 
         const options: { onboarding_id?: string; status?: string } = {};
         if (onboardingId) options.onboarding_id = onboardingId;
         if (status) options.status = status;
 
-        const opportunities = await deps.repository.listExpansionOpportunities(tenantId, options);
+        const opportunities = await deps.repository.listExpansionOpportunities(ctx.tenantId, options);
         return json(200, { data: opportunities, count: opportunities.length });
       }
 

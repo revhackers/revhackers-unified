@@ -20,6 +20,39 @@ import { z } from 'zod';
 import { processLifecycleEvent, pollLifecycleHistory } from '../services/lifecycle-hook';
 import { handleMediaOrchestrator, orchestrateMedia } from '../services/media-orchestrator';
 import { sendEventToGHL } from '../services/ghl-service';
+import type { AuthMiddleware } from './auth-middleware';
+
+// Comparação em tempo constante para segredos compartilhados (mesmo padrão de verifyWebhookSignature).
+function secretsEqual(provided: string | null, expected: string): boolean {
+  if (provided === null) return false;
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  try {
+    return crypto.timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+}
+
+// Autentica via AuthMiddleware e resolve o tenant: query `tenant_id` ausente usa o
+// tenant do contexto autenticado; presente e divergente => 403.
+async function resolveLifecycleTenant(
+  request: Request,
+  url: URL,
+  options: { auth: AuthMiddleware },
+): Promise<{ tenantId: string } | Response> {
+  const authResult = await options.auth.authenticate(request);
+  if (authResult instanceof Response) return authResult;
+  const requested = url.searchParams.get('tenant_id');
+  if (requested !== null && requested !== '' && requested !== authResult.tenantId) {
+    return new Response(JSON.stringify({ success: false, error: 'forbidden' }), {
+      status: 403,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+  return { tenantId: requested !== null && requested !== '' ? requested : authResult.tenantId };
+}
 
 // ============================================================================
 // Type Definitions
@@ -117,6 +150,21 @@ export async function handleProcessLifecycle(
     return new Response('ok', { headers: corsHeaders });
   }
   if (request.method !== 'POST') return methodNotAllowed();
+  const triggerSecret = env.LIFECYCLE_TRIGGER_SECRET;
+  if (!triggerSecret) {
+    console.error('[LifecycleRoutes] LIFECYCLE_TRIGGER_SECRET não configurado. Rejeitando trigger por segurança.');
+    return new Response(
+      JSON.stringify({ success: false, error: 'trigger_secret_not_configured' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
+  }
+  if (!secretsEqual(request.headers.get('authorization'), `Bearer ${triggerSecret}`)) {
+    console.warn('[LifecycleRoutes] Lifecycle process sem Bearer válido rejeitado.');
+    return new Response(
+      JSON.stringify({ success: false, error: 'unauthorized' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
+  }
 
   let event;
   try {
@@ -155,6 +203,22 @@ export async function handleCalendarWebhook(
     return new Response('ok', { headers: corsHeaders });
   }
   if (request.method !== 'POST') return methodNotAllowed();
+  const calendarSecret = env.CALENDAR_WEBHOOK_SECRET;
+  if (!calendarSecret) {
+    console.error('[LifecycleRoutes] CALENDAR_WEBHOOK_SECRET não configurado. Rejeitando webhook por segurança.');
+    return new Response(
+      JSON.stringify({ success: false, error: 'calendar_secret_not_configured' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
+  }
+  const channelToken = request.headers.get('x-goog-channel-token') ?? url.searchParams.get('token');
+  if (!secretsEqual(channelToken, calendarSecret)) {
+    console.warn('[LifecycleRoutes] Calendar webhook com token inválido rejeitado.');
+    return new Response(
+      JSON.stringify({ success: false, error: 'unauthorized' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
+  }
 
   try {
     const payload = await request.json();
@@ -264,6 +328,7 @@ export async function handleListHooks(
   request: Request,
   env: Record<string, string>,
   pool: Pool,
+  options: { auth: AuthMiddleware },
 ): Promise<Response | null> {
   const url = matchPath(request, 'GET', '/v1/lifecycle/hooks');
   if (!url) return null;
@@ -272,14 +337,9 @@ export async function handleListHooks(
   }
   if (request.method !== 'GET') return methodNotAllowed();
 
-  const tenantId = url.searchParams.get('tenant_id');
-
-  if (!tenantId) {
-    return new Response(JSON.stringify({ success: false, error: 'tenant_id is required' }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
+  const tenant = await resolveLifecycleTenant(request, url, options);
+  if (tenant instanceof Response) return tenant;
+  const tenantId = tenant.tenantId;
 
   try {
     const result = await pool.query(
@@ -307,6 +367,7 @@ export async function handleCreateHook(
   request: Request,
   env: Record<string, string>,
   pool: Pool,
+  options: { auth: AuthMiddleware },
 ): Promise<Response | null> {
   const url = matchPath(request, 'POST', '/v1/lifecycle/hooks');
   if (!url) return null;
@@ -315,14 +376,9 @@ export async function handleCreateHook(
   }
   if (request.method !== 'POST') return methodNotAllowed();
 
-  const tenantId = url.searchParams.get('tenant_id');
-
-  if (!tenantId) {
-    return new Response(JSON.stringify({ success: false, error: 'tenant_id query param is required' }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
+  const tenant = await resolveLifecycleTenant(request, url, options);
+  if (tenant instanceof Response) return tenant;
+  const tenantId = tenant.tenantId;
 
   let body;
   try {
@@ -368,6 +424,7 @@ export async function handleContactJourney(
   request: Request,
   env: Record<string, string>,
   pool: Pool,
+  options: { auth: AuthMiddleware },
 ): Promise<Response | null> {
   const url = matchPath(request, 'GET', /^\/v1\/lifecycle\/contacts\/([0-9a-f-]{36})\/journey$/);
   if (!url) return null;
@@ -386,13 +443,16 @@ export async function handleContactJourney(
 
   const contactId = match[1];
 
+  const tenant = await resolveLifecycleTenant(request, url, options);
+  if (tenant instanceof Response) return tenant;
+
   try {
     const result = await pool.query(
       `SELECT id, from_stage, to_stage, triggered_by, metadata, transitioned_at
        FROM app.lifecycle_history
-       WHERE contact_id = $1
+       WHERE contact_id = $1 AND tenant_id = $2
        ORDER BY transitioned_at DESC`,
-      [contactId],
+      [contactId, tenant.tenantId],
     );
 
     return new Response(JSON.stringify({ success: true, data: result.rows }), {
