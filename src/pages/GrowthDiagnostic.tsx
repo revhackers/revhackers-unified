@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Command } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { submitPublicDiagnostic } from '@/api/publicDiagnostic';
+import { buildGrowthLead, validateDiagnosticPayload } from '@/lib/diagnosticLeadPayload';
 import { DiagnosticLayout } from '@/components/diagnostics/DiagnosticLayout';
 import { DiagnosticForm, DiagnosticFormData } from '@/components/diagnostics/DiagnosticForm';
 import { ScoreGauge } from '@/components/diagnostics/ScoreGauge';
@@ -107,6 +108,16 @@ const GrowthDiagnostic = () => {
         },
         'score_captured',
       );
+      // W6: validação do payload contra os contratos GHL em MODO MOCK (sem rede).
+      // O envio real continua via submitPublicDiagnostic acima; isto nunca bloqueia o fluxo.
+      const contractCheck = validateDiagnosticPayload(
+        'resultado',
+        buildGrowthLead(data, result.overall, bandMeta.title),
+        'score_captured',
+      );
+      if (contractCheck.errors.length > 0) {
+        console.warn('[growth] payload fora do contrato GHL (mock):', contractCheck.errors);
+      }
 
       toast({
         className: 'bg-white border-zinc-200 text-zinc-900',

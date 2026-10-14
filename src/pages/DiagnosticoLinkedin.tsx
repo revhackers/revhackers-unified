@@ -30,6 +30,7 @@ import {
   type PreviaDiagnostico,
   type RelatorioCompleto,
 } from '@/lib/linkedin/linkedinDiagnosticSession';
+import { buildLinkedinLead, validateDiagnosticPayload } from '@/lib/diagnosticLeadPayload';
 
 type Etapa = 'form' | 'processando' | 'previa' | 'liberado';
 
@@ -188,6 +189,12 @@ export default function DiagnosticoLinkedin() {
       return;
     }
     setRelatorio(saida.relatorio);
+    // W6: validação do payload contra os contratos GHL em MODO MOCK (sem rede).
+    // O lead continua sem sair do navegador; isto nunca bloqueia o fluxo.
+    const contractCheck = validateDiagnosticPayload('diagnostico', buildLinkedinLead(nome, email, empresa));
+    if (contractCheck.errors.length > 0) {
+      console.warn('[linkedin] payload fora do contrato GHL (mock):', contractCheck.errors);
+    }
     setEtapa('liberado');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }

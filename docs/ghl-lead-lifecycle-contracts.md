@@ -112,6 +112,11 @@ Entradas adicionais (mesmo contrato, fora da contagem de forms): pagina
 `REI-Founder.tsx` (`rei_completed`), motor `funnelsAutomationEngine.ts` e
 motor `googleDriveTranscriptEngine.ts` (`call_transcript_enrichment`).
 
+Fontes de diagnostico (campo `source`, validado em modo mock por
+`src/lib/diagnosticLeadPayload.ts`, sem rede): `growth-diagnostic`,
+`diagnostico_linkedin`. Tipos (`diagnostic_type`): `growth`, `linkedin`
+(demais tipos legados: `revenue`, `founder`, `site`).
+
 ## 5. LGPD: riscos conhecidos e mitigacoes desta frente
 
 1. `ContactForm.tsx` e `useDownloadForm.ts` enviam PII ao relay sem prova de
