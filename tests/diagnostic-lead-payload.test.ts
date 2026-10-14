@@ -34,6 +34,12 @@ describe('diagnosticLeadPayload (mock, sem rede)', () => {
     );
   });
 
+  test('resultado sem diagnosticEvent nao lanca: retorna evento_nao_mapeado', () => {
+    const lead = buildGrowthLead({ name: 'A', email: 'a@b.co', company: 'C' }, 50, 'X');
+    expect(() => validateDiagnosticPayload('resultado', lead)).not.toThrow();
+    expect(validateDiagnosticPayload('resultado', lead).errors).toContain('evento_nao_mapeado');
+  });
+
   test('score fora da faixa e barrado', () => {
     const lead = { ...buildGrowthLead({ name: 'A', email: 'a@b.co', company: 'C' }, 150, 'X') };
     const check = validateDiagnosticPayload('resultado', lead, 'score_captured');

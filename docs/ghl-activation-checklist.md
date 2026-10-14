@@ -43,7 +43,18 @@ todos os itens marcados e revisao da frente G (dona de `public/api/ghl.php`).
 10. [ ] CNPJ continua fora do payload GHL (assegurado por `sanitizeLeadForGHL`
       e coberto por teste). Qualquer excecao exige revisao LGPD previa.
 
-## Rollback
+## Segredos de webhook/trigger (integração W1 — fail-closed sem eles)
+
+- [ ] Hostinger (ambiente PHP): `GHL_PRIVATE_TOKEN` (novo PIT pós-rotação) e
+  `GHL_WEBHOOK_SECRET` (header `X-RH-Webhook-Secret` do `ghl-webhook.php`).
+  Sem eles o relay retorna 500 genérico e o webhook 500/401 — nenhum lead passa.
+- [ ] Cloud Run (env da API): `GHL_WEBHOOK_SECRET` (HMAC `x-ghl-signature`),
+  `LIFECYCLE_TRIGGER_SECRET` (Bearer de `POST /v1/lifecycle/process`) e
+  `CALENDAR_WEBHOOK_SECRET` (token `X-Goog-Channel-Token` configurado na
+  criação do channel do Google Calendar). Ausentes = 500 fail-closed.
+- [ ] Build Hostinger: `VITE_GHL_RELAY_URL=/api/ghl.php` (já no workflow de
+  deploy). Sem ela o front faz no-op e nenhum formulário entrega ao CRM.
+
 
 - [ ] Analytics: `resetAnalytics()` volta ao noop imediatamente, sem deploy
       de emergencia (nenhum dado sai do browser).

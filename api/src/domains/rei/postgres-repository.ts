@@ -166,11 +166,13 @@ export class PostgresREIRepository {
     return result.rows;
   }
 
-  async listActive(): Promise<REIOnboardingRecord[]> {
+  async listActive(tenantId: string): Promise<REIOnboardingRecord[]> {
     const result = await this.pool.query(
       `SELECT * FROM rei_onboarding
        WHERE current_milestone != 'COMPLETED'
-       ORDER BY kickoff_at DESC NULLS LAST, created_at DESC`
+         AND tenant_id = $1
+       ORDER BY kickoff_at DESC NULLS LAST, created_at DESC`,
+      [tenantId]
     );
     return result.rows.map((row) => this.mapRow(row));
   }

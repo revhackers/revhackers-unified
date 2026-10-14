@@ -27,19 +27,25 @@ export interface DiagnosticContractCheck {
 /**
  * Valida um payload de diagnóstico contra os contratos. Função pura:
  * nunca faz fetch, nunca lança — retorna os erros para log/teste.
+ * O try/catch cobre `stageToGHLEvent`, que lança para estágio `resultado` /
+ * `oportunidade` sem `diagnosticEvent` (contrato de `ghlLeadAdapter`).
  */
 export function validateDiagnosticPayload(
   stage: LifecycleStage,
   lead: LeadRecord,
   diagnosticEvent?: string,
 ): DiagnosticContractCheck {
-  const errors = validateLead(stage, lead);
-  if (errors.length > 0) return { eventType: '', payload: {}, errors };
-  return {
-    eventType: stageToGHLEvent(stage, diagnosticEvent ? { diagnosticEvent } : {}),
-    payload: sanitizeLeadForGHL(lead),
-    errors,
-  };
+  try {
+    const errors = validateLead(stage, lead);
+    if (errors.length > 0) return { eventType: '', payload: {}, errors };
+    return {
+      eventType: stageToGHLEvent(stage, diagnosticEvent ? { diagnosticEvent } : {}),
+      payload: sanitizeLeadForGHL(lead),
+      errors,
+    };
+  } catch {
+    return { eventType: '', payload: {}, errors: ['evento_nao_mapeado'] };
+  }
 }
 
 /** Monta o LeadRecord do Growth a partir do form + score calculado. */

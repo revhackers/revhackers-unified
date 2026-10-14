@@ -211,11 +211,14 @@ describe('determinismo e stopwords PT', () => {
   });
 
   it('stopwords PT comuns não aparecem em termosFrequentes', () => {
-    const termos = termosFrequentes([
-      'Para com de muito sobre entre desde quando cada qual porque fazer vezes sempre nunca depois antes durante',
-      'Para com de muito sobre entre desde quando cada qual porque fazer vezes sempre nunca depois antes durante',
-    ]);
+    const stops = 'para com de muito sobre entre desde quando cada qual porque fazer vezes sempre nunca depois antes durante'.split(' ');
+    const textos = [stops.join(' '), stops.join(' ')];
+    const termos = termosFrequentes(textos);
     const nomes = termos.map(([t]) => t);
+    // Palavras >3 chars só saem via PT_STOPWORDS (o filtro de tamanho não as pega).
+    for (const stop of stops.filter((w) => w.length > 3)) {
+      expect(nomes).not.toContain(stop);
+    }
     for (const stop of ['de', 'para', 'com']) {
       expect(nomes).not.toContain(stop);
     }

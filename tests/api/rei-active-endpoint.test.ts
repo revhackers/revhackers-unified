@@ -200,4 +200,13 @@ describe('GET /v1/rei/onboarding/active — days_into_journey calculation', () =
     const body = (await res?.json()) as any;
     expect(body.data[0].days_into_journey).toBe(0);
   });
+
+  it('escopa a listagem ao tenant autenticado (A1)', async () => {
+    mockRepo.listActive.mockResolvedValueOnce([]);
+
+    const req = new Request('https://api.test/v1/rei/onboarding/active', { method: 'GET', headers: authHeaders() });
+    const res = await route(req);
+    expect(res?.status).toBe(200);
+    expect(mockRepo.listActive).toHaveBeenCalledWith(TEST_TENANT_ID);
+  });
 });

@@ -211,7 +211,8 @@ function generateSecureToken(): string {
 
 const RESET_REDIRECT_DEFAULT = 'https://revhackers.com.br/reset-password';
 
-function allowResetRedirect(raw: unknown): string {
+// Exportada para testes diretos (evita log-scraping da URL com token).
+export function allowResetRedirect(raw: unknown): string {
   if (typeof raw !== 'string' || raw === '') return RESET_REDIRECT_DEFAULT;
   let parsed: URL;
   try {
@@ -345,5 +346,5 @@ async function sendBrandedResetEmail(email: string, resetUrl: string): Promise<v
     }
   }
 
-  console.warn('[auth-routes] NENHUM provedor de e-mail configurado. Reset URL:', resetUrl);
+  console.warn('[auth-routes] NENHUM provedor de e-mail configurado. Reset solicitado para:', email);
 }

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import type { QueryablePool } from '../../api/src/db/postgres';
-import { createAuthRoutes } from '../../api/src/http/auth-routes';
+import { allowResetRedirect, createAuthRoutes } from '../../api/src/http/auth-routes';
 
 const MASTER_EMAIL = 'giulliano@revhackers.com.br';
 
@@ -54,7 +54,22 @@ describe('POST /v1/auth/login master fail-closed', () => {
 });
 
 describe('POST /v1/auth/reset-password redirect allowlist', () => {
-  async function capturedResetUrl(redirectTo: unknown): Promise<string> {
+  test('redirectTo externo cai no default oficial', () => {
+    const base = allowResetRedirect('https://evil.example/phish');
+    expect(base).toBe('https://revhackers.com.br/reset-password');
+  });
+
+  test('redirectTo javascript: cai no default oficial', () => {
+    const base = allowResetRedirect('javascript:alert(1)');
+    expect(base).toBe('https://revhackers.com.br/reset-password');
+  });
+
+  test('redirectTo https no host oficial com path proprio e preservado sem query', () => {
+    const base = allowResetRedirect('https://revhackers.com.br/cliente/reset?x=1#frag');
+    expect(base).toBe('https://revhackers.com.br/cliente/reset');
+  });
+
+  test('reset sem provedor de e-mail nao vaza token em log', async () => {
     const warned: string[] = [];
     vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
       warned.push(args.map(String).join(' '));
@@ -64,30 +79,10 @@ describe('POST /v1/auth/reset-password redirect allowlist', () => {
       new Request('https://api.test/v1/auth/reset-password', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email: MASTER_EMAIL, redirectTo }),
+        body: JSON.stringify({ email: MASTER_EMAIL }),
       })
     );
     expect(response?.status).toBe(200);
-    const line = warned.find((w) => w.includes('Reset URL:'));
-    expect(line).toBeDefined();
-    return line!.split('Reset URL:')[1]!.trim();
-  }
-
-  test('redirectTo externo cai no default oficial', async () => {
-    const url = await capturedResetUrl('https://evil.example/phish');
-    expect(url.startsWith('https://revhackers.com.br/reset-password?')).toBe(true);
-    expect(url).not.toContain('evil.example');
-  });
-
-  test('redirectTo javascript: cai no default oficial', async () => {
-    const url = await capturedResetUrl('javascript:alert(1)');
-    expect(url.startsWith('https://revhackers.com.br/reset-password?')).toBe(true);
-  });
-
-  test('redirectTo https no host oficial com path proprio e preservado sem query', async () => {
-    const url = await capturedResetUrl('https://revhackers.com.br/cliente/reset?x=1#frag');
-    expect(url.startsWith('https://revhackers.com.br/cliente/reset?')).toBe(true);
-    expect(url).not.toContain('x=1');
-    expect(url).not.toContain('frag');
+    expect(warned.join('\n')).not.toContain('token=');
   });
 });

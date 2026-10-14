@@ -426,8 +426,8 @@ export default function DiagnosticoLinkedin() {
                   <ShieldCheck size={15} className="shrink-0 mt-0.5 text-[#00CC6A]" />
                   <span>
                     Autorizo o contato comercial da RevHackers e o uso destes dados para gerar o diagnóstico (LGPD). Veja a{' '}
-                    <a href="/privacidade" className="underline underline-offset-2 hover:text-white">Política de Privacidade</a>{' '}
-                    e os <a href="/termos-de-uso" className="underline underline-offset-2 hover:text-white">Termos de Uso</a>.
+                    <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-white">Política de Privacidade</a>{' '}
+                    e os <a href="/termos-de-uso" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-white">Termos de Uso</a>.
                   </span>
                 </span>
               </label>

@@ -64,7 +64,9 @@ jobs:
           VITE_GCP_ENABLED: "true"
           VITE_CLIENTS_GCP_ENABLED: "true"
           VITE_GROWTHMAP_GCP_ENABLED: "true"
-        run: npx vite build
+          # Relay GHL: URL relativa no mesmo origin (Hostinger). Sem ela o
+          # front vira no-op fail-closed e nenhum lead chega ao CRM.
+          VITE_GHL_RELAY_URL: "/api/ghl.php"
 
       - name: Deploy via SFTP para Hostinger
         env:
@@ -89,5 +91,6 @@ jobs:
           chmod 600 "$HOME/.ssh/known_hosts"
 
           rsync --archive --compress --human-readable --itemize-changes \
+            --exclude 'api/tests/' \
             -e "ssh -i $key_file -p $SSH_PORT -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" \
             ./dist/ "$SSH_USERNAME@$SSH_HOST:$SSH_REMOTE_DIR/"

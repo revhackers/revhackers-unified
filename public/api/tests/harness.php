@@ -1,4 +1,9 @@
 <?php
+// CLI-only: nunca executável por HTTP mesmo se publicado por engano.
+if (php_sapi_name() !== 'cli') {
+    http_response_code(404);
+    exit;
+}
 /**
  * tests/harness.php — CLI harness for /tmp/ghl-fix-v2/ghl.php (zero real network).
  *

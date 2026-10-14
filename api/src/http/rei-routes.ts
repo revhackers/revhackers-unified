@@ -245,7 +245,7 @@ export function createREIRoutes(deps: REIRoutesDependencies) {
 
       // GET /v1/rei/onboarding/active — Lista onboardings ativos (para dashboard)
       if (request.method === 'GET' && url.pathname === '/v1/rei/onboarding/active') {
-        const records = await deps.repository.listActive();
+        const records = await deps.repository.listActive(ctx.tenantId);
         const enriched = records.map((r) => {
           const startDate = r.kickoff_at ?? r.welcome_sent_at ?? r.created_at;
           const parsedTime = startDate ? new Date(startDate).getTime() : NaN;
