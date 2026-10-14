@@ -32,6 +32,8 @@ const PageLoader = () => (
 const PublicDealRoom = lazy(() => import("./pages/public/PublicDealRoom"));
 const ProposalPresentation = lazy(() => import("./pages/public/ProposalPresentation"));
 const Diagnostico = lazy(() => import("./pages/Diagnostico"));
+const DiagnosticoLinkedin = lazy(() => import("./pages/DiagnosticoLinkedin"));
+const DiagnosticoLinkedinShare = lazy(() => import("./pages/DiagnosticoLinkedinShare"));
 const SupabaseDiagnostic = lazy(() => import("./pages/SupabaseDiagnostic"));
 const QuemSomos = lazy(() => import("./pages/QuemSomos"));
 const Servicos = lazy(() => import("./pages/Servicos"));
@@ -235,6 +237,9 @@ const App = () => (
               <Route path="/diagnostico/v2" element={<PageErrorBoundary><EnrichedDiagnostic /></PageErrorBoundary>} />
 
               <Route path="/diagnostico/resultado/:id" element={<PublicDiagnosticResult />} />
+              {/* Diagnóstico LinkedIn (fluxo isolado, motor observável client-side) */}
+              <Route path="/diagnostico/linkedin" element={<PageErrorBoundary><DiagnosticoLinkedin /></PageErrorBoundary>} />
+              <Route path="/diagnostico/linkedin/r/:slug" element={<DiagnosticoLinkedinShare />} />
 
               {/* Auth Routes */}
               <Route path="/login" element={<Login />} />
