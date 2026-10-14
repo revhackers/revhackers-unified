@@ -4,6 +4,9 @@ import type { PostgresIntelligenceJobsRepository } from '../domains/intelligence
 import type { PostgresIntelligenceRepository } from '../domains/intelligence/postgres-repository';
 import type { FonteDataIntelligenceConnector } from '../domains/intelligence/fonte-data-connector';
 import { buildIndustryInsights } from '../domains/intelligence/insights-builder';
+import { AuthMiddleware } from './auth-middleware';
+import type { IdentityRepository } from '../identity/postgres-identity-repository';
+import type { TokenVerifier } from '../identity/verifier';
 
 // ============================================================================
 // ZOD SCHEMAS
@@ -70,6 +73,8 @@ interface IntelligenceRoutesDependencies {
   repository: PostgresIntelligenceRepository;
   jobsRepository: PostgresIntelligenceJobsRepository;
   fonteDataConnector: FonteDataIntelligenceConnector;
+  verifier: TokenVerifier;
+  identities: IdentityRepository;
 }
 
 function json(status: number, value: unknown): Response {
@@ -104,9 +109,23 @@ function safeJsonParse(request: Request): Promise<unknown> {
 }
 
 export function createIntelligenceRoutes(deps: IntelligenceRoutesDependencies) {
+  const auth = new AuthMiddleware(deps);
+
   return async (request: Request): Promise<Response | null> => {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/v1/intelligence')) return null;
+    // Rotas de capability por posse do token (leitura pública do share e
+    // revogação pelo portador) — sem Bearer auth, por desenho LinkCapability.
+    const shareCapabilityMatch = url.pathname.match(/^\/v1\/intelligence\/share\/([a-zA-Z0-9_-]+)$/);
+    const isShareCapabilityRoute =
+      shareCapabilityMatch !== null && (request.method === 'GET' || request.method === 'DELETE');
+
+    let authedTenantId = '';
+    if (!isShareCapabilityRoute) {
+      const authResult = await auth.authenticate(request);
+      if (authResult instanceof Response) return authResult;
+      authedTenantId = authResult.tenantId;
+    }
 
     try {
       // GET /v1/intelligence/competitors/:project_id
@@ -115,7 +134,8 @@ export function createIntelligenceRoutes(deps: IntelligenceRoutesDependencies) {
         const projectId = listMatch[1];
         const tenantId = url.searchParams.get('tenant_id');
         if (!tenantId) return json(400, { error: { code: 'validation', message: 'tenant_id é obrigatório.' } });
-        const competitors = await deps.repository.listCompetitorsByProject(tenantId, projectId);
+        if (tenantId !== authedTenantId) return json(403, { error: { code: 'forbidden', message: 'Acesso negado para este tenant.' } });
+        const competitors = await deps.repository.listCompetitorsByProject(authedTenantId, projectId);
         return json(200, { data: competitors, count: competitors.length });
       }
 
@@ -125,7 +145,8 @@ export function createIntelligenceRoutes(deps: IntelligenceRoutesDependencies) {
         const competitorId = fullMatch[1]!;
         const tenantId = url.searchParams.get('tenant_id');
         if (!tenantId) return json(400, { error: { code: 'validation', message: 'tenant_id é obrigatório.' } });
-        const result = await deps.repository.getCompetitorWithIntelligence(tenantId, competitorId);
+        if (tenantId !== authedTenantId) return json(403, { error: { code: 'forbidden', message: 'Acesso negado para este tenant.' } });
+        const result = await deps.repository.getCompetitorWithIntelligence(authedTenantId, competitorId);
         if (!result) return json(404, { error: { code: 'not_found', message: 'Concorrente não encontrado.' } });
         return json(200, { data: result });
       }
@@ -135,7 +156,8 @@ export function createIntelligenceRoutes(deps: IntelligenceRoutesDependencies) {
       if (request.method === 'GET' && signalsMatch) {
         const tenantId = url.searchParams.get('tenant_id');
         if (!tenantId) return json(400, { error: { code: 'validation', message: 'tenant_id é obrigatório.' } });
-        const signals = await deps.repository.listSignalsByTenant(tenantId, 50);
+        if (tenantId !== authedTenantId) return json(403, { error: { code: 'forbidden', message: 'Acesso negado para este tenant.' } });
+        const signals = await deps.repository.listSignalsByTenant(authedTenantId, 50);
         return json(200, { data: signals, count: signals.length });
       }
 
@@ -145,8 +167,11 @@ export function createIntelligenceRoutes(deps: IntelligenceRoutesDependencies) {
         const parsed = parseBody(raw, CreateCompetitorSchema);
         if ('error' in parsed) return json(400, { error: parsed.error });
         const body = parsed.data;
+        if (body.tenant_id !== authedTenantId) {
+          return json(403, { error: { code: 'forbidden', message: 'Acesso negado para este tenant.' } });
+        }
         const competitor = await deps.repository.createCompetitor({
-          tenant_id: body.tenant_id,
+          tenant_id: authedTenantId,
           project_id: body.project_id ?? null,
           name: body.name,
           cnpj: body.cnpj ?? null,
@@ -163,15 +188,15 @@ export function createIntelligenceRoutes(deps: IntelligenceRoutesDependencies) {
               const enriched = await deps.fonteDataConnector.enrichCompetitorByCNPJ(body.cnpj!);
               if (enriched) {
                 await deps.repository.upsertIntelligence({
-                  tenant_id: body.tenant_id,
+                  tenant_id: authedTenantId,
                   competitor_id: competitor.id,
                   ...enriched,
                 });
               } else {
-                await deps.repository.markEnrichmentFailed(body.tenant_id, competitor.id, 'FonteData enrichment retornou null');
+                await deps.repository.markEnrichmentFailed(authedTenantId, competitor.id, 'FonteData enrichment retornou null');
               }
             } catch (err) {
-              await deps.repository.markEnrichmentFailed(body.tenant_id, competitor.id, err instanceof Error ? err.message : 'Unknown error');
+              await deps.repository.markEnrichmentFailed(authedTenantId, competitor.id, err instanceof Error ? err.message : 'Unknown error');
             }
           });
         }
@@ -184,8 +209,11 @@ export function createIntelligenceRoutes(deps: IntelligenceRoutesDependencies) {
         const parsed = parseBody(raw, CreateSignalSchema);
         if ('error' in parsed) return json(400, { error: parsed.error });
         const body = parsed.data;
+        if (body.tenant_id !== authedTenantId) {
+          return json(403, { error: { code: 'forbidden', message: 'Acesso negado para este tenant.' } });
+        }
         const signal = await deps.repository.createSignal({
-          tenant_id: body.tenant_id,
+          tenant_id: authedTenantId,
           competitor_id: body.competitor_id ?? null,
           signal_type: body.signal_type,
           title: body.title,
@@ -205,8 +233,11 @@ export function createIntelligenceRoutes(deps: IntelligenceRoutesDependencies) {
         const parsed = parseBody(raw, CreateJobSchema);
         if ('error' in parsed) return json(400, { error: parsed.error });
         const body = parsed.data;
+        if (body.tenant_id !== authedTenantId) {
+          return json(403, { error: { code: 'forbidden', message: 'Acesso negado para este tenant.' } });
+        }
         const job = await deps.jobsRepository.createJob({
-          tenant_id: body.tenant_id,
+          tenant_id: authedTenantId,
           job_type: body.job_type,
           competitor_id: body.competitor_id ?? null,
           project_id: body.project_id ?? null,
@@ -223,7 +254,10 @@ export function createIntelligenceRoutes(deps: IntelligenceRoutesDependencies) {
         if (!tenantId) {
           return json(400, { error: { code: 'validation', message: 'tenant_id é obrigatório.' } });
         }
-        const jobs = await deps.jobsRepository.listJobsByTenant(tenantId, 50);
+        if (tenantId !== authedTenantId) {
+          return json(403, { error: { code: 'forbidden', message: 'Acesso negado para este tenant.' } });
+        }
+        const jobs = await deps.jobsRepository.listJobsByTenant(authedTenantId, 50);
         return json(200, { data: jobs, count: jobs.length });
       }
 
@@ -233,7 +267,10 @@ export function createIntelligenceRoutes(deps: IntelligenceRoutesDependencies) {
         if (!tenantId) {
           return json(400, { error: { code: 'validation', message: 'tenant_id é obrigatório.' } });
         }
-        const findings = await deps.jobsRepository.listFindingsByTenant(tenantId, 50);
+        if (tenantId !== authedTenantId) {
+          return json(403, { error: { code: 'forbidden', message: 'Acesso negado para este tenant.' } });
+        }
+        const findings = await deps.jobsRepository.listFindingsByTenant(authedTenantId, 50);
         return json(200, { data: findings, count: findings.length });
       }
 
@@ -243,9 +280,12 @@ export function createIntelligenceRoutes(deps: IntelligenceRoutesDependencies) {
         const parsed = parseBody(raw, CreateShareSchema);
         if ('error' in parsed) return json(400, { error: parsed.error });
         const body = parsed.data;
+        if (body.tenant_id !== authedTenantId) {
+          return json(403, { error: { code: 'forbidden', message: 'Acesso negado para este tenant.' } });
+        }
         const share = await deps.repository.createShare({
           share_token: generateShareToken(),
-          tenant_id: body.tenant_id,
+          tenant_id: authedTenantId,
           project_id: body.project_id,
           created_by: body.created_by,
           expires_at: body.expires_at ?? null,
@@ -260,9 +300,8 @@ export function createIntelligenceRoutes(deps: IntelligenceRoutesDependencies) {
       }
 
       // GET /v1/intelligence/share/:share_token — Visualizar dados compartilhados (PÚBLICO, sem auth)
-      const shareTokenMatch = url.pathname.match(/^\/v1\/intelligence\/share\/([a-zA-Z0-9_-]+)$/);
-      if (request.method === 'GET' && shareTokenMatch) {
-        const shareToken = shareTokenMatch[1]!;
+      if (request.method === 'GET' && shareCapabilityMatch) {
+        const shareToken = shareCapabilityMatch[1]!;
         const tokenData = await deps.repository.findShareByToken(shareToken);
         if (!tokenData || tokenData.revoked) {
           return json(404, { error: { code: 'not_found', message: 'Link de compartilhamento inválido ou revogado.' } });
@@ -286,8 +325,8 @@ export function createIntelligenceRoutes(deps: IntelligenceRoutesDependencies) {
       }
 
       // DELETE /v1/intelligence/share/:share_token — Revogar token (portador só revoga o próprio)
-      if (request.method === 'DELETE' && shareTokenMatch) {
-        const shareToken = shareTokenMatch[1]!;
+      if (request.method === 'DELETE' && shareCapabilityMatch) {
+        const shareToken = shareCapabilityMatch[1]!;
         const revoked = await deps.repository.revokeShareByToken(shareToken);
         if (!revoked) {
           return json(404, { error: { code: 'not_found', message: 'Link de compartilhamento não encontrado.' } });
@@ -303,9 +342,12 @@ export function createIntelligenceRoutes(deps: IntelligenceRoutesDependencies) {
         if (!tenantId) {
           return json(400, { error: { code: 'validation', message: 'tenant_id é obrigatório.' } });
         }
+        if (tenantId !== authedTenantId) {
+          return json(403, { error: { code: 'forbidden', message: 'Acesso negado para este tenant.' } });
+        }
         const [fullCompetitors, signals] = await Promise.all([
-          deps.repository.listCompetitorsFullByProject(tenantId, projectId),
-          deps.repository.listSignalsByTenant(tenantId, 100),
+          deps.repository.listCompetitorsFullByProject(authedTenantId, projectId),
+          deps.repository.listSignalsByTenant(authedTenantId, 100),
         ]);
         const insights = buildIndustryInsights(fullCompetitors, signals);
         return json(200, { data: { insights, source: 'rules-based', generated_at: new Date().toISOString() } });
@@ -319,8 +361,11 @@ export function createIntelligenceRoutes(deps: IntelligenceRoutesDependencies) {
         if (!tenantId) {
           return json(400, { error: { code: 'validation', message: 'tenant_id é obrigatório.' } });
         }
+        if (tenantId !== authedTenantId) {
+          return json(403, { error: { code: 'forbidden', message: 'Acesso negado para este tenant.' } });
+        }
 
-        const allFindings = await deps.jobsRepository.listFindingsByTenant(tenantId, 500);
+        const allFindings = await deps.jobsRepository.listFindingsByTenant(authedTenantId, 500);
         const finding = allFindings.find((f) => f.id === findingId);
         if (!finding) {
           return json(404, { error: { code: 'not_found', message: 'Finding não encontrado.' } });
@@ -328,12 +373,12 @@ export function createIntelligenceRoutes(deps: IntelligenceRoutesDependencies) {
 
         let job: any = null;
         if (finding.job_id) {
-          job = await deps.jobsRepository.findJobById(tenantId, finding.job_id);
+          job = await deps.jobsRepository.findJobById(authedTenantId, finding.job_id);
         }
 
         let competitor: any = null;
         if (finding.competitor_id) {
-          competitor = await deps.repository.findCompetitorById(tenantId, finding.competitor_id);
+          competitor = await deps.repository.findCompetitorById(authedTenantId, finding.competitor_id);
         }
 
         return json(200, {

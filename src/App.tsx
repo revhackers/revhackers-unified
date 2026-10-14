@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
+import RouteSeo from "@/components/shared/RouteSeo";
 import "./styles/article.css";
 
 // ─── Eager Imports (Critical Public Pages) ───────────────────────────
@@ -32,6 +33,8 @@ const PageLoader = () => (
 const PublicDealRoom = lazy(() => import("./pages/public/PublicDealRoom"));
 const ProposalPresentation = lazy(() => import("./pages/public/ProposalPresentation"));
 const Diagnostico = lazy(() => import("./pages/Diagnostico"));
+const DiagnosticoLinkedin = lazy(() => import("./pages/DiagnosticoLinkedin"));
+const DiagnosticoLinkedinShare = lazy(() => import("./pages/DiagnosticoLinkedinShare"));
 const SupabaseDiagnostic = lazy(() => import("./pages/SupabaseDiagnostic"));
 const QuemSomos = lazy(() => import("./pages/QuemSomos"));
 const Servicos = lazy(() => import("./pages/Servicos"));
@@ -74,6 +77,7 @@ const GrowthScore = lazy(() => import("./pages/GrowthScore"));
 const SiteScore = lazy(() => import("./pages/SiteScore"));
 const FounderScore = lazy(() => import("./pages/FounderScore"));
 const RevenueScore = lazy(() => import("./pages/RevenueScore"));
+const GrowthDiagnostic = lazy(() => import("./pages/GrowthDiagnostic"));
 const EnrichedDiagnostic = lazy(() => import("./pages/EnrichedDiagnostic"));
 
 // REI Workflows (Heavy - 15-38KB each)
@@ -163,6 +167,7 @@ const App = () => (
             <Sonner />
             <ScrollToTop />
             <ChatbotManager />
+            <RouteSeo />
             <Suspense fallback={<PageLoader />}>
               <ErrorBoundary>
                 <Routes>
@@ -230,9 +235,13 @@ const App = () => (
               <Route path="/score" element={<PageErrorBoundary><GrowthScore /></PageErrorBoundary>} />
               <Route path="/score-site" element={<PageErrorBoundary><SiteScore /></PageErrorBoundary>} />
               <Route path="/score-revenue" element={<PageErrorBoundary><RevenueScore /></PageErrorBoundary>} />
+              <Route path="/diagnostico-growth" element={<PageErrorBoundary><GrowthDiagnostic /></PageErrorBoundary>} />
               <Route path="/diagnostico/v2" element={<PageErrorBoundary><EnrichedDiagnostic /></PageErrorBoundary>} />
 
               <Route path="/diagnostico/resultado/:id" element={<PublicDiagnosticResult />} />
+              {/* Diagnóstico LinkedIn (fluxo isolado, motor observável client-side) */}
+              <Route path="/diagnostico/linkedin" element={<PageErrorBoundary><DiagnosticoLinkedin /></PageErrorBoundary>} />
+              <Route path="/diagnostico/linkedin/r/:slug" element={<DiagnosticoLinkedinShare />} />
 
               {/* Auth Routes */}
               <Route path="/login" element={<Login />} />

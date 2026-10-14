@@ -75,10 +75,14 @@ async function main(): Promise<void> {
     repository: intelligenceRepository,
     jobsRepository: intelligenceJobsRepository,
     fonteDataConnector,
+    verifier,
+    identities,
   });
-  const reiRoutes = createREIRoutes({ repository: reiRepository });
+  const reiRoutes = createREIRoutes({ repository: reiRepository, verifier, identities });
   const financeRoutes = createFinanceRoutes({
     repository: financeRepository,
+    verifier,
+    identities,
     connectors: {
       stripe: new StripeConnector(),
       infinitepay: new InfinitePayConnector(),
@@ -118,16 +122,15 @@ async function main(): Promise<void> {
   });
 
   const envVars = process.env as Record<string, string>;
+  const authMiddleware = new AuthMiddleware({ verifier, identities });
   const lifecycleRoute = async (request: Request) =>
     (await handleProcessLifecycle(request, envVars, postgres.pool as any)) ??
     (await handleCalendarWebhook(request, envVars, postgres.pool as any)) ??
     (await handleGHLWebhook(request, envVars, postgres.pool as any)) ??
-    (await handleListHooks(request, envVars, postgres.pool as any)) ??
-    (await handleCreateHook(request, envVars, postgres.pool as any)) ??
-    (await handleContactJourney(request, envVars, postgres.pool as any)) ??
+    (await handleListHooks(request, envVars, postgres.pool as any, { auth: authMiddleware })) ??
+    (await handleCreateHook(request, envVars, postgres.pool as any, { auth: authMiddleware })) ??
+    (await handleContactJourney(request, envVars, postgres.pool as any, { auth: authMiddleware })) ??
     null;
-
-  const authMiddleware = new AuthMiddleware({ verifier, identities });
 
   const authRoutes = createAuthRoutes({ pool: postgres.pool });
   const aiRoutes = createAiRoutes({ auth: authMiddleware, pool: postgres.pool });

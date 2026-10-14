@@ -1,0 +1,12 @@
+# Headers do preview Cloudflare (Workers Static Assets).
+# O Vite copia este arquivo para dist/ verbatim; o Workers aplica as regras.
+# Regras com host workers.dev valem SOMENTE no preview (X-Robots-Tag noindex).
+# O deploy Hostinger/nginx ignora este arquivo (headers la: ver Dockerfile.frontend).
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+https://:version.:subdomain.workers.dev/*
+  X-Robots-Tag: noindex

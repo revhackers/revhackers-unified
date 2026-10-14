@@ -4,6 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Share2, AlertTriangle, Rocket, CheckCircle2, ShieldCheck, BarChart2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import PageLayout from '@/components/layout/PageLayout';
+import SEO from '@/components/shared/SEO';
 import Section from '@/components/ui/Section';
 import { Button } from '@/components/ui/button';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
@@ -234,11 +235,13 @@ export default function PublicDiagnosticResult() {
                                 </div>
 
                                 <Button
-                                    onClick={() => window.open(`https://api.whatsapp.com/send?phone=5511999999999&text=Olá, vi o relatório de diagnósticos da ${result.empresa} com score ${score}. Gostaria de agendar o plano de correção.`, '_blank')}
+                                    asChild
                                     className="w-full sm:w-auto h-11 px-6 bg-[#00CC6A] hover:bg-[#00b35e] text-black font-semibold text-sm rounded-lg gap-2 shrink-0 transition-colors"
                                 >
-                                    <span>Agendar Diagnóstico</span>
-                                    <Rocket size={16} />
+                                    <Link to={result.id === 'demo-result' ? '/booking' : `/booking?company=${encodeURIComponent(result.empresa)}`}>
+                                        <span>Agendar Diagnóstico</span>
+                                        <Rocket size={16} />
+                                    </Link>
                                 </Button>
                             </div>
 

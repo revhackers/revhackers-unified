@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { apiBase } from '@/api/adapters/_base';
+import { requireGoogleIdToken } from '@/integrations/firebase/client';
 import { 
   DollarSign, 
   ArrowUpRight, 
@@ -65,6 +67,10 @@ interface FinancialEntity {
   parent_id?: string | null;
 }
 
+async function authHeaders(extra: Record<string, string> = {}): Promise<Record<string, string>> {
+  return { ...extra, Authorization: `Bearer ${await requireGoogleIdToken()}` };
+}
+
 export const FinanceCockpit: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [reconcilingId, setReconcilingId] = useState<string | null>(null);
@@ -129,7 +135,7 @@ export const FinanceCockpit: React.FC = () => {
 
   const fetchEntities = async () => {
     try {
-      const res = await fetch('/v1/finance/entities');
+      const res = await fetch(`${apiBase()}/v1/finance/entities`, { headers: await authHeaders() });
       if (res.ok) {
         const data = await res.json();
         setEntities(data.entities ?? []);
@@ -143,9 +149,9 @@ export const FinanceCockpit: React.FC = () => {
     setLoading(true);
     try {
       const url = selectedEntityId
-        ? `/v1/finance/statements/unreconciled?entity_id=${selectedEntityId}`
-        : '/v1/finance/statements/unreconciled';
-      const res = await fetch(url);
+        ? `${apiBase()}/v1/finance/statements/unreconciled?entity_id=${selectedEntityId}`
+        : `${apiBase()}/v1/finance/statements/unreconciled`;
+      const res = await fetch(url, { headers: await authHeaders() });
       if (res.ok) {
         const data = await res.json();
         if (data.statements && data.statements.length > 0) {
@@ -166,9 +172,9 @@ export const FinanceCockpit: React.FC = () => {
   const fetchDRE = async () => {
     try {
       const dreUrl = selectedEntityId
-        ? `/v1/finance/dre?start_date=2026-07-01&entity_id=${selectedEntityId}`
-        : '/v1/finance/dre?start_date=2026-07-01';
-      const dreRes = await fetch(dreUrl);
+        ? `${apiBase()}/v1/finance/dre?start_date=2026-07-01&entity_id=${selectedEntityId}`
+        : `${apiBase()}/v1/finance/dre?start_date=2026-07-01`;
+      const dreRes = await fetch(dreUrl, { headers: await authHeaders() });
       if (dreRes.ok) {
         const data = await dreRes.json();
         if (data.dre) {
@@ -180,7 +186,7 @@ export const FinanceCockpit: React.FC = () => {
     }
 
     try {
-      const byEntityRes = await fetch('/v1/finance/dre/by-entity?start_date=2026-07-01');
+      const byEntityRes = await fetch(`${apiBase()}/v1/finance/dre/by-entity?start_date=2026-07-01`, { headers: await authHeaders() });
       if (byEntityRes.ok) {
         const data = await byEntityRes.json();
         setDreByEntity(data.entities ?? []);
@@ -193,9 +199,9 @@ export const FinanceCockpit: React.FC = () => {
   const handleConnectorSync = async (provider: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`/v1/finance/connectors/${provider}/sync`, {
+      const res = await fetch(`${apiBase()}/v1/finance/connectors/${provider}/sync`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ entity_id: selectedEntityId || null }),
       });
       if (res.ok) {
@@ -218,9 +224,9 @@ export const FinanceCockpit: React.FC = () => {
   const handleOneClickReconcile = async (statementId: string) => {
     setReconcilingId(statementId);
     try {
-      const res = await fetch('/v1/finance/reconcile', {
+      const res = await fetch(`${apiBase()}/v1/finance/reconcile`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           statement_id: statementId,
           notes: 'Conciliação efetuada via Cockpit Financeiro (1-Clique)'

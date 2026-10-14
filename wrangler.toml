@@ -1,0 +1,14 @@
+# Preview estatico do site RevHackers (SPA) no Cloudflare Workers Static Assets.
+# Escopo: homologacao em *.workers.dev. Sem dominio custom, sem DNS, sem segredos,
+# sem Worker script (asset-only), sem bindings, sem [vars].
+# As envs VITE_* sao assadas no build: exportar antes de `vite build` (ver PR).
+# Publicar: npx vite build && node ./scripts/generate-page-og-html.mjs && wrangler deploy
+# Validar sem publicar: wrangler deploy --dry-run
+
+compatibility_date = "2026-08-11"
+# Pinada no maximo suportado pelo workerd local (wrangler 4.121.0); subir para a data
+# do deploy quando o wrangler for atualizado. Funcionalidade usada nao exige flags novas.
+
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"

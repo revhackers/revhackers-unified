@@ -2,7 +2,38 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ReconciliationEngine } from '../../api/src/domains/finance/reconciliation-engine';
 import { createFinanceRoutes } from '../../api/src/http/finance-routes';
 import type { BankStatementRecord, LedgerEntryRecord, DREPeriodStatement } from '../../api/src/domains/finance/types';
+import type { InternalUser } from '../../api/src/contracts/tenant';
+import type { IdentityRepository } from '../../api/src/identity/postgres-identity-repository';
+import type { TokenVerifier } from '../../api/src/identity/verifier';
+import type { PostgresFinanceRepository } from '../../api/src/domains/finance/postgres-repository';
 
+const TEST_TENANT_ID = 'tenant_a';
+
+function makeAuthStubs(): { verifier: TokenVerifier; identities: IdentityRepository } {
+  const verifier: TokenVerifier = {
+    verify: async () => ({
+      issuer: 'https://test.issuer',
+      subject: 'user_1',
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+    }),
+  };
+  const user: InternalUser = {
+    id: 'user_1',
+    globalRole: 'admin',
+    status: 'active',
+    memberships: [{ userId: 'user_1', tenantId: TEST_TENANT_ID, role: 'owner', status: 'active' }],
+  };
+  const identities: IdentityRepository = {
+    findUser: async () => user,
+    findOrCreateUser: async () => user,
+    resolveProjectTenant: async () => TEST_TENANT_ID,
+  };
+  return { verifier, identities };
+}
+
+function authHeaders(): Record<string, string> {
+  return { authorization: 'Bearer test-token' };
+}
 describe('Financial Reconciliation Engine - Matching Rules', () => {
   const engine = new ReconciliationEngine();
 
@@ -150,7 +181,10 @@ describe('Finance HTTP Routes - /v1/finance', () => {
 
   beforeEach(() => {
     mockRepo = createMockRepository();
-    route = createFinanceRoutes({ repository: mockRepo as any });
+    const { verifier, identities } = makeAuthStubs();
+    // Mock in-memory implementa só a superfície usada pelas rotas.
+    const repository = mockRepo as unknown as PostgresFinanceRepository;
+    route = createFinanceRoutes({ repository, verifier, identities });
   });
 
   describe('POST /v1/finance/statements/import', () => {
@@ -200,7 +234,7 @@ describe('Finance HTTP Routes - /v1/finance', () => {
 
       const req = new Request('https://api.test/v1/finance/statements/import', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           statements: [
             {
@@ -246,7 +280,7 @@ describe('Finance HTTP Routes - /v1/finance', () => {
 
       const req = new Request('https://api.test/v1/finance/statements/import', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           statements: [
             {
@@ -273,7 +307,7 @@ describe('Finance HTTP Routes - /v1/finance', () => {
     it('rejects when statements is not a valid format', async () => {
       const req = new Request('https://api.test/v1/finance/statements/import', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ statements: 'not-an-array' }),
       });
       // Zod throws ApiError when statements is not an array
@@ -312,7 +346,7 @@ describe('Finance HTTP Routes - /v1/finance', () => {
         },
       ]);
 
-      const req = new Request('https://api.test/v1/finance/statements/unreconciled', { method: 'GET' });
+      const req = new Request('https://api.test/v1/finance/statements/unreconciled', { method: 'GET', headers: authHeaders() });
       const res = await route(req);
       expect(res?.status).toBe(200);
       const body = (await res?.json()) as any;
@@ -326,7 +360,7 @@ describe('Finance HTTP Routes - /v1/finance', () => {
       mockRepo.findUnreconciledStatements.mockResolvedValueOnce([]);
       mockRepo.findOpenLedgerEntries.mockResolvedValueOnce([]);
 
-      const req = new Request('https://api.test/v1/finance/statements/unreconciled', { method: 'GET' });
+      const req = new Request('https://api.test/v1/finance/statements/unreconciled', { method: 'GET', headers: authHeaders() });
       const res = await route(req);
       expect(res?.status).toBe(200);
       const body = (await res?.json()) as any;
@@ -353,7 +387,7 @@ describe('Finance HTTP Routes - /v1/finance', () => {
 
       const req = new Request('https://api.test/v1/finance/reconcile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           statement_id: 'stmt-1',
           ledger_entry_id: 'ledger-1',
@@ -386,7 +420,7 @@ describe('Finance HTTP Routes - /v1/finance', () => {
 
       const req = new Request('https://api.test/v1/finance/reconcile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           statement_id: 'stmt-1',
           ledger_entry_id: null,
@@ -405,7 +439,7 @@ describe('Finance HTTP Routes - /v1/finance', () => {
     it('returns ApiError if statement_id is missing', async () => {
       const req = new Request('https://api.test/v1/finance/reconcile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ action: 'APPROVE' }),
       });
       // The current route throws ApiError on missing statement_id
@@ -429,7 +463,7 @@ describe('Finance HTTP Routes - /v1/finance', () => {
 
       const req = new Request('https://api.test/v1/finance/reconcile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           statement_id: 'stmt-1',
           action: 'APPROVE',
@@ -462,7 +496,7 @@ describe('Finance HTTP Routes - /v1/finance', () => {
 
       const req = new Request(
         'https://api.test/v1/finance/dre?startDate=2026-07-01&endDate=2026-07-31',
-        { method: 'GET' }
+        { method: 'GET', headers: authHeaders() }
       );
       const res = await route(req);
       expect(res?.status).toBe(200);
@@ -489,7 +523,7 @@ describe('Finance HTTP Routes - /v1/finance', () => {
 
       // The current route falls back to current month when year is provided without month,
       // and to current year when no params. Validate it accepts the request and returns valid data.
-      const req = new Request('https://api.test/v1/finance/dre', { method: 'GET' });
+      const req = new Request('https://api.test/v1/finance/dre', { method: 'GET', headers: authHeaders() });
       const res = await route(req);
       expect(res?.status).toBe(200);
       const body = (await res?.json()) as any;
@@ -499,7 +533,7 @@ describe('Finance HTTP Routes - /v1/finance', () => {
   });
 
   it('returns null for unsupported HTTP methods that do not match any branch', async () => {
-    const req = new Request('https://api.test/v1/finance/statements/import', { method: 'PATCH' });
+    const req = new Request('https://api.test/v1/finance/statements/import', { method: 'PATCH', headers: authHeaders() });
     const res = await route(req);
     // The current route returns null for unsupported methods, allowing the next router to handle it
     expect(res === null || (res !== null && [201, 405].includes(res.status))).toBe(true);
@@ -509,5 +543,35 @@ describe('Finance HTTP Routes - /v1/finance', () => {
     const req = new Request('https://api.test/v1/other-path', { method: 'GET' });
     const res = await route(req);
     expect(res).toBeNull();
+  });
+
+  it('retorna 401 sem Bearer em rota autenticada', async () => {
+    const req = new Request('https://api.test/v1/finance/statements/unreconciled', { method: 'GET' });
+    const res = await route(req);
+    expect(res?.status).toBe(401);
+    const body = await res?.json() as { error?: { code?: string } };
+    expect(body.error?.code).toBe('unauthenticated');
+  });
+
+  it('retorna 401 sem Bearer em POST', async () => {
+    const req = new Request('https://api.test/v1/finance/reconcile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ statement_id: 'stmt-1', notes: 'x' }),
+    });
+    const res = await route(req);
+    expect(res?.status).toBe(401);
+  });
+
+  it('webhook com assinatura inválida continua 401 invalid_signature (sem Bearer)', async () => {
+    const req = new Request('https://api.test/v1/finance/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'unknown.event', data: { object: {} } }),
+    });
+    const res = await route(req);
+    expect(res?.status).toBe(401);
+    const body = await res?.json() as { error?: string };
+    expect(body.error).toBe('invalid_signature');
   });
 });

@@ -2,6 +2,38 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createREIRoutes } from '../../api/src/http/rei-routes';
 import { buildWelcomeEmail, buildKickoffDoc, buildWrapUpEmail } from '../../api/src/domains/rei/templates';
 import type { CreateREIOnboardingParams, REIOnboardingRecord } from '../../api/src/domains/rei/types';
+import type { InternalUser } from '../../api/src/contracts/tenant';
+import type { IdentityRepository } from '../../api/src/identity/postgres-identity-repository';
+import type { TokenVerifier } from '../../api/src/identity/verifier';
+import type { PostgresREIRepository } from '../../api/src/domains/rei/postgres-repository';
+
+const TEST_TENANT_ID = 'tenant-1';
+
+function makeAuthStubs(): { verifier: TokenVerifier; identities: IdentityRepository } {
+  const verifier: TokenVerifier = {
+    verify: async () => ({
+      issuer: 'https://test.issuer',
+      subject: 'user_1',
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+    }),
+  };
+  const user: InternalUser = {
+    id: 'user_1',
+    globalRole: 'admin',
+    status: 'active',
+    memberships: [{ userId: 'user_1', tenantId: TEST_TENANT_ID, role: 'owner', status: 'active' }],
+  };
+  const identities: IdentityRepository = {
+    findUser: async () => user,
+    findOrCreateUser: async () => user,
+    resolveProjectTenant: async () => TEST_TENANT_ID,
+  };
+  return { verifier, identities };
+}
+
+function authHeaders(): Record<string, string> {
+  return { authorization: 'Bearer test-token' };
+}
 
 // Mock factory for the REI repository
 function createMockRepository() {
@@ -88,7 +120,7 @@ describe('REI HTTP Routes - /v1/rei', () => {
 
   const sampleOnboarding: REIOnboardingRecord = {
     id: 'onb-1',
-    tenant_id: 'test-tenant',
+    tenant_id: TEST_TENANT_ID,
     rei_project_id: 'rp-100',
     client_name: 'Acme Corp',
     client_email: 'cto@acme.com',
@@ -126,7 +158,10 @@ describe('REI HTTP Routes - /v1/rei', () => {
 
   beforeEach(() => {
     mockRepo = createMockRepository();
-    route = createREIRoutes({ repository: mockRepo as any });
+    const { verifier, identities } = makeAuthStubs();
+    // Mock in-memory implementa só a superfície usada pelas rotas.
+    const repository = mockRepo as unknown as PostgresREIRepository;
+    route = createREIRoutes({ repository, verifier, identities });
   });
 
   it('POST /v1/rei/onboarding creates a new onboarding record', async () => {
@@ -134,7 +169,7 @@ describe('REI HTTP Routes - /v1/rei', () => {
 
     const req = new Request('https://api.test/v1/rei/onboarding', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({
         rei_project_id: 'rp-100',
         client_name: 'Acme Corp',
@@ -159,7 +194,7 @@ describe('REI HTTP Routes - /v1/rei', () => {
 
     const req = new Request('https://api.test/v1/rei/welcome', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({
         onboarding_id: 'onb-1',
         kickoff_link: 'https://cal.example.com/kickoff',
@@ -180,7 +215,7 @@ describe('REI HTTP Routes - /v1/rei', () => {
 
     const req = new Request('https://api.test/v1/rei/kickoff', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({
         onboarding_id: 'onb-1',
         goal_sentence: 'Hit $50k MRR in 90 days',
@@ -201,7 +236,7 @@ describe('REI HTTP Routes - /v1/rei', () => {
 
     const req = new Request('https://api.test/v1/rei/quick-win', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({
         onboarding_id: 'onb-1',
         description: 'Personalized REI dashboard',
@@ -223,7 +258,7 @@ describe('REI HTTP Routes - /v1/rei', () => {
 
     const req = new Request('https://api.test/v1/rei/nps', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ onboarding_id: 'onb-1', score: 9 }),
     });
 
@@ -240,7 +275,7 @@ describe('REI HTTP Routes - /v1/rei', () => {
 
     const req = new Request('https://api.test/v1/rei/nps', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ onboarding_id: 'onb-1', score: 4 }),
     });
 
@@ -253,7 +288,7 @@ describe('REI HTTP Routes - /v1/rei', () => {
   it('POST /v1/rei/nps rejects out-of-range scores', async () => {
     const req = new Request('https://api.test/v1/rei/nps', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ onboarding_id: 'onb-1', score: 15 }),
     });
     const res = await route(req);
@@ -265,7 +300,7 @@ describe('REI HTTP Routes - /v1/rei', () => {
 
     const req = new Request('https://api.test/v1/rei/wrap-up', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({
         onboarding_id: 'onb-1',
         milestone1Result: 'Kickoff done day 1',
@@ -290,6 +325,7 @@ describe('REI HTTP Routes - /v1/rei', () => {
 
     const req = new Request('https://api.test/v1/rei/onboarding/active', {
       method: 'GET',
+      headers: authHeaders(),
     });
 
     const res = await route(req);
@@ -304,7 +340,7 @@ describe('REI HTTP Routes - /v1/rei', () => {
     mockRepo.createExpansionOpportunity.mockResolvedValueOnce(undefined);
 
     const req = new Request('https://api.test/v1/rei/expansion', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ tenant_id: 'tenant-1', opportunity_type: 'upsell', product_name: 'AI Agent for WhatsApp', estimated_value_brl: 5000, created_by: 'cs@revhackers.com' }),
     });
     const res = await route(req);
@@ -317,7 +353,7 @@ describe('REI HTTP Routes - /v1/rei', () => {
 
   it('returns 400 when creating expansion without required fields', async () => {
     const req = new Request('https://api.test/v1/rei/expansion', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ tenant_id: 'tenant-1' }),
     });
     const res = await route(req);
@@ -330,7 +366,7 @@ describe('REI HTTP Routes - /v1/rei', () => {
       { id: 'exp-1', tenant_id: 'tenant-1', product_name: 'AI Agent', opportunity_type: 'upsell', status: 'identified', estimated_value_brl: 5000, created_at: new Date().toISOString() },
     ]);
 
-    const req = new Request('https://api.test/v1/rei/expansion?tenant_id=tenant-1', { method: 'GET' });
+    const req = new Request('https://api.test/v1/rei/expansion?tenant_id=tenant-1', { method: 'GET', headers: authHeaders() });
     const res = await route(req);
     expect(res?.status).toBe(200);
     const body = (await res?.json()) as any;
@@ -339,7 +375,7 @@ describe('REI HTTP Routes - /v1/rei', () => {
   });
 
   it('returns 400 when listing expansion without tenant_id', async () => {
-    const req = new Request('https://api.test/v1/rei/expansion', { method: 'GET' });
+    const req = new Request('https://api.test/v1/rei/expansion', { method: 'GET', headers: authHeaders() });
     const res = await route(req);
     expect(res?.status).toBe(400);
   });
@@ -347,7 +383,7 @@ describe('REI HTTP Routes - /v1/rei', () => {
   it('passes onboarding_id filter to repository when listing', async () => {
     mockRepo.listExpansionOpportunities.mockResolvedValueOnce([]);
 
-    const req = new Request('https://api.test/v1/rei/expansion?tenant_id=tenant-1&onboarding_id=onb-123', { method: 'GET' });
+    const req = new Request('https://api.test/v1/rei/expansion?tenant_id=tenant-1&onboarding_id=onb-123', { method: 'GET', headers: authHeaders() });
     await route(req);
     expect(mockRepo.listExpansionOpportunities).toHaveBeenCalledWith('tenant-1', expect.objectContaining({ onboarding_id: 'onb-123' }));
   });
@@ -355,7 +391,7 @@ describe('REI HTTP Routes - /v1/rei', () => {
   it('passes status filter to repository when listing', async () => {
     mockRepo.listExpansionOpportunities.mockResolvedValueOnce([]);
 
-    const req = new Request('https://api.test/v1/rei/expansion?tenant_id=tenant-1&status=won', { method: 'GET' });
+    const req = new Request('https://api.test/v1/rei/expansion?tenant_id=tenant-1&status=won', { method: 'GET', headers: authHeaders() });
     await route(req);
     expect(mockRepo.listExpansionOpportunities).toHaveBeenCalledWith('tenant-1', expect.objectContaining({ status: 'won' }));
   });

@@ -13,6 +13,7 @@
     "start:api": "node api/dist/main.js",
     "dev": "vite",
     "build": "vite build && node ./scripts/generate-og-screenshots.mjs && node ./scripts/generate-page-og-html.mjs",
+    "build:cloudflare": "vite build && node ./scripts/generate-page-og-html.mjs && node ./scripts/strip-cloudflare-dist.mjs && node ./scripts/validate-deploy-artifact.mjs",
     "build:offline": "node ./scripts/build-offline.mjs",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",

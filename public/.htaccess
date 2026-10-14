@@ -18,6 +18,9 @@ RewriteRule ^$ /admin [L,R=301]
 # Prevent Apache 301 directory redirect so social crawlers (WhatsApp) get HTTP 200 directly on route URLs
 DirectorySlash Off
 
+# Nega acesso direto a logs de auditoria (contêm PII) dentro do webroot
+RewriteRule ^logs/ - [F,L]
+
 # Direct file match for pre-rendered route HTML files (prevents 301 redirect for social crawlers)
 RewriteCond %{DOCUMENT_ROOT}/$1.html -f
 RewriteRule ^([^/]+)$ $1.html [L]

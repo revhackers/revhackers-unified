@@ -1,0 +1,32 @@
+# RevHackers
+
+> Consultoria de Revenue Operations que integra Marketing, Vendas e Customer Success por meio de IA, CRM e automações para escalar a receita de empresas B2B no Brasil. Sede em São Paulo, SP. Idioma do site: português do Brasil.
+
+## Oferta
+
+- [Serviços](https://revhackers.com.br/servicos): ecossistema de soluções GTM e RevOps B2B (IA e automação, CRM e dados, tração e mídia paga, Founder-Led Growth).
+- [Metodologia](https://revhackers.com.br/metodologia): como funciona o ciclo de diagnóstico, fundação, growth loops e escala.
+- [Cases](https://revhackers.com.br/cases): estudos de caso publicados pela RevHackers.
+
+## Diagnósticos gratuitos
+
+- [Central de diagnósticos](https://revhackers.com.br/diagnostico): ponto de entrada dos diagnósticos.
+- [Diagnóstico 360 de Growth](https://revhackers.com.br/score)
+- [Diagnóstico de CRM e Revenue Ops](https://revhackers.com.br/score-revenue)
+- [Diagnóstico de autoridade do fundador](https://revhackers.com.br/score-founder)
+- [Diagnóstico de site e landing page](https://revhackers.com.br/score-site)
+
+## Conteúdo
+
+- [Blog](https://revhackers.com.br/blog): artigos sobre Revenue Operations, ABM, CRM e automação.
+- [Materiais gratuitos](https://revhackers.com.br/materiais): frameworks, checklists e templates.
+
+## Institucional
+
+- [Quem somos](https://revhackers.com.br/quem-somos)
+- [Política de privacidade](https://revhackers.com.br/privacidade)
+- [Termos de uso](https://revhackers.com.br/termos-de-uso)
+
+## Contato
+
+- [Agendar auditoria de receita](https://revhackers.com.br/booking)
