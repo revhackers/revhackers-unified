@@ -57,8 +57,9 @@ export function createAuthRoutes(deps: AuthRouteDependencies) {
           [email, token, expiresAt.toISOString()],
         );
 
-        // Monta URL de redefinição
-        const redirectBase = body.redirectTo || 'https://revhackers.com.br/reset-password';
+        // redirectTo allowlist: somente https no host oficial; qualquer outro
+        // valor cai no default (evita e-mail de reset com link de phishing).
+        const redirectBase = allowResetRedirect(body.redirectTo);
         const resetUrl = `${redirectBase}?token=${token}&email=${encodeURIComponent(email)}`;
 
         // Envia e-mail
@@ -147,8 +148,11 @@ export function createAuthRoutes(deps: AuthRouteDependencies) {
           const hashArray = Array.from(new Uint8Array(hashBuffer));
           const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-          const defaultHash = 'dd776b8961926c2e8d4c912a9eff8affef7a6d42c03ec252be5f898dd23b5f6c';
-          const expectedHash = process.env.MASTER_PASSWORD_HASH || defaultHash;
+          const expectedHash = process.env.MASTER_PASSWORD_HASH;
+          if (!expectedHash) {
+            console.error('[auth-routes] MASTER_PASSWORD_HASH ausente; login master desabilitado.');
+            return json(401, { error: 'E-mail ou senha inválidos.' });
+          }
 
           if (hashHex !== expectedHash) {
             return json(401, { error: 'E-mail ou senha inválidos.' });
@@ -203,6 +207,22 @@ function generateSecureToken(): string {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
   return Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+const RESET_REDIRECT_DEFAULT = 'https://revhackers.com.br/reset-password';
+
+function allowResetRedirect(raw: unknown): string {
+  if (typeof raw !== 'string' || raw === '') return RESET_REDIRECT_DEFAULT;
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return RESET_REDIRECT_DEFAULT;
+  }
+  if (parsed.protocol !== 'https:' || parsed.hostname !== 'revhackers.com.br') {
+    return RESET_REDIRECT_DEFAULT;
+  }
+  return `${parsed.origin}${parsed.pathname}`;
 }
 
 let tableEnsured = false;
