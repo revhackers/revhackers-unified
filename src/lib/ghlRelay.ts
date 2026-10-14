@@ -149,9 +149,15 @@ export async function sendToGHL(
     try {
         const contactPayload = buildContactPayload(eventType, payload);
 
-        const proxyEndpoint = typeof window !== 'undefined' && window.location.hostname.includes('revhackers.com.br')
-            ? '/api/ghl.php'
-            : 'https://revhackers.com.br/api/ghl.php';
+        // O destino do relay vem SOMENTE de VITE_GHL_RELAY_URL (ex.: `/api/ghl.php`
+        // na Hostinger). Ausente ou vazio => no-op fail-closed: nenhum POST é feito,
+        // nenhum fallback para produção. `false` = "não entregue", como nas falhas.
+        const relayUrl = (import.meta.env.VITE_GHL_RELAY_URL ?? '').trim();
+        if (!relayUrl) {
+            console.warn('[ghlRelay] VITE_GHL_RELAY_URL ausente — envio ao GHL ignorado (fail-closed).');
+            return false;
+        }
+        const proxyEndpoint = relayUrl;
 
         const response = await fetch(proxyEndpoint, {
             method: 'POST',
