@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Menu, X, ChevronDown, Activity, Users, TrendingUp, BarChart2, Lock, User, ArrowRight, Settings, Globe } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from "@/lib/utils";
@@ -22,10 +20,7 @@ const Header = ({ variant = 'default' }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const isMobile = useIsMobile();
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
 
   // Helper variables for styling based on variant/scroll state
   const isLightMode = variant === 'light' && !scrolled;
@@ -62,48 +57,6 @@ const Header = ({ variant = 'default' }: HeaderProps) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    if (!user) return;
-
-    // Initial fetch
-    const fetchProfile = async () => {
-      const { data } = await supabase
-        .from('profiles')
-        .select('avatar_url')
-        .eq('id', user.id)
-        .single();
-
-      if (data) {
-        setAvatarUrl(data.avatar_url);
-      }
-    };
-
-    fetchProfile();
-
-    // Realtime subscription for instant updates
-    const channel = supabase
-      .channel('profile-avatar-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'profiles',
-          filter: `id=eq.${user.id}`,
-        },
-        (payload) => {
-          if (payload.new && 'avatar_url' in payload.new) {
-            setAvatarUrl((payload.new as any).avatar_url);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
-
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
@@ -111,11 +64,6 @@ const Header = ({ variant = 'default' }: HeaderProps) => {
   const scrollToTop = () => {
     window.scrollTo(0, 0);
     setIsMenuOpen(false);
-  };
-
-  const handleLogout = async () => {
-    await signOut();
-    // Redirecionamento é feito automaticamente pelo signOut
   };
 
   return (
@@ -190,57 +138,6 @@ const Header = ({ variant = 'default' }: HeaderProps) => {
 
           {/* Right: Subtle CTA */}
           <div className="hidden xl:flex items-center justify-end gap-4 z-10 flex-shrink-0">
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-2 text-sm font-medium transition-colors focus:outline-none text-zinc-600 hover:text-zinc-900">
-                  {avatarUrl ? (
-                    <div className="w-8 h-8 rounded-full border border-zinc-200 overflow-hidden">
-                      <img src={avatarUrl} alt="User Avatar" className="w-full h-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-600 font-semibold text-xs">
-                      {user.email?.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <ChevronDown className="w-3 h-3 opacity-50" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-white border border-zinc-200 p-1.5 w-[200px] z-[70] rounded-xl shadow-lg">
-                  <DropdownMenuItem asChild className="focus:bg-zinc-50">
-                    <Link to="/admin/profile" className="flex items-center gap-2 text-zinc-600 cursor-pointer px-3 py-2 rounded-lg text-sm font-medium outline-none">
-                      <User className="w-4 h-4 text-zinc-400" /> Meu Perfil
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="focus:bg-zinc-50">
-                    <Link to="/admin" className="flex items-center gap-2 text-zinc-600 cursor-pointer px-3 py-2 rounded-lg text-sm font-medium outline-none">
-                      <Lock className="w-4 h-4 text-zinc-400" /> Admin Hub
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="focus:bg-zinc-50">
-                    <Link to="/admin/settings" className="flex items-center gap-2 text-zinc-600 cursor-pointer px-3 py-2 rounded-lg text-sm font-medium outline-none">
-                      <Settings className="w-4 h-4 text-zinc-400" /> Configurações
-                    </Link>
-                  </DropdownMenuItem>
-                  <div className="h-px bg-zinc-100 my-1" />
-                  <DropdownMenuItem
-                    className="flex items-center gap-2 text-red-500 hover:text-red-600 hover:bg-zinc-50 cursor-pointer px-3 py-2 rounded-lg text-sm font-medium"
-                    onClick={handleLogout}
-                  >
-                    <ArrowRight className="w-4 h-4" /> Sair
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Link to="/login"
-                className={cn(
-                  "text-sm font-medium transition-colors px-3 py-2",
-                  scrolled ? "text-zinc-500 hover:text-zinc-900" : "text-zinc-400 hover:text-white"
-                )}
-                onClick={scrollToTop}
-              >
-                Login
-              </Link>
-            )}
-
             <Button
               onClick={() => setIsLeadModalOpen(true)}
               variant="default"
@@ -302,16 +199,6 @@ const Header = ({ variant = 'default' }: HeaderProps) => {
                 <MobileNavLink to="/cases" onClick={scrollToTop}>Casos</MobileNavLink>
                 <MobileNavLink to="/materiais" onClick={scrollToTop}>Materiais</MobileNavLink>
                 <MobileNavLink to="/blog" onClick={scrollToTop}>Blog</MobileNavLink>
-
-                <div className="py-2 border-b border-white/5 mb-4">
-                  <Link
-                    to={user ? "/admin" : "/login"}
-                    onClick={scrollToTop}
-                    className="text-xl font-medium text-zinc-400 hover:text-white transition-colors block py-2"
-                  >
-                    {user ? "Acessar Admin" : "Login Membros"}
-                  </Link>
-                </div>
 
                 <Button
                   onClick={() => { scrollToTop(); setIsLeadModalOpen(true); }}
