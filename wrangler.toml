@@ -1,37 +1,13 @@
-# wrangler.toml - Cloudflare Pages Configuration
-# Documentation: https://developers.cloudflare.com/pages/configuration/project-configuration
-
-name = "revhackers-pages"
-type = "javascript"
-
-# Build configuration
-build = { command = "npm run build", cwd = "." }
-
-# Cloudflare Pages deployment output directory
-pages_build_output_dir = "dist"
-
-# Environment configurations
-[env.staging]
-name = "revhackers-pages-staging"
-routes = [
-  { pattern = "staging.revhackers.com.br", zone_id = "ENV_CLOUDFLARE_ZONE_ID" }
-]
-env = { ENVIRONMENT = "staging" }
+name = "revhackers-site"
+account_id = "2867b5a8c8fb96bdb5aa8ca0d2faf7e4"
+compatibility_date = "2026-08-11"
 
 [env.production]
-name = "revhackers-pages-production"
 routes = [
-  { pattern = "revhackers.com.br", zone_id = "ENV_CLOUDFLARE_ZONE_ID" },
-  { pattern = "www.revhackers.com.br", zone_id = "ENV_CLOUDFLARE_ZONE_ID" }
+  { pattern = "revhackers.com.br", custom_domain = true },
+  { pattern = "www.revhackers.com.br", custom_domain = true },
 ]
-env = { ENVIRONMENT = "production" }
 
-# Cloudflare Functions (if needed in future)
-[durable_objects]
-# Will be populated when Workers are added
-
-# Build watch directories
-watch_paths = ["src/**/*.{ts,tsx,jsx,js}"]
-
-# Exit code behavior
-exit_code = 0
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"

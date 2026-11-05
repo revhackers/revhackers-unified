@@ -71,3 +71,8 @@ docs/PROMPTS/
 
 # OMP session scaffold (harness local, nao versionar)
 .omp/
+# Cloudflare Workers local state
+.wrangler/
+
+# GHL migration tracking and local test data
+runs/
