@@ -34,6 +34,15 @@ async function runInventory() {
   }
 
   try {
+    // 0. Location details
+    console.log('⏳ Buscando detalhes da location...');
+    let locDetails = {};
+    try {
+      locDetails = await fetchGhl(`/locations/${LOCATION_ID}`);
+    } catch (e) {
+      console.log('   ⚠️ Aviso: Não foi possível buscar detalhes da location:', e.message);
+    }
+
     // 1. Workflows
     console.log('⏳ Buscando workflows...');
     const wfRes = await fetchGhl(`/workflows/?locationId=${LOCATION_ID}`);
@@ -53,13 +62,24 @@ async function runInventory() {
     console.log(`   Encontrados ${funnels.length} funis.`);
 
     // Gerar relatório markdown
+    const loc = locDetails.location || locDetails || {};
     const report = `# Inventário Read-Only · Location oFTw (${LOCATION_ID})
 Data: ${new Date().toISOString()}
 
+## Location
+- **Nome**: ${loc.name || 'N/A'}
+- **Domínio**: ${loc.domain || loc.email || 'N/A'}
+- **Timezone**: ${loc.timezone || 'N/A'}
+
 ## Workflows (${workflows.length})
-| Nome | Status | ID | Última Atualização |
-|---|---|---|---|
-${workflows.map(w => `| ${w.name || 'Sem nome'} | ${w.status || 'N/A'} | ${w.id} | ${w.updatedAt || 'N/A'} |`).join('\n')}
+| Nome | Status | ID | Última Atualização | Decisão |
+|---|---|---|---|---|
+${workflows.map(w => {
+  const isPublished = (w.status || '').toLowerCase() === 'published';
+  const isRecent = w.updatedAt && new Date(w.updatedAt) >= new Date('2026-08-07');
+  const decisao = (isPublished && isRecent) ? 'manter até recriar' : 'congelar';
+  return `| ${w.name || 'Sem nome'} | ${w.status || 'N/A'} | ${w.id} | ${w.updatedAt || 'N/A'} | ${decisao} |`;
+}).join('\n')}
 
 ## Calendários (${calendars.length})
 | Nome | ID | Ativo |
@@ -72,8 +92,8 @@ ${calendars.map(c => `| ${c.name || 'Sem nome'} | ${c.id} | ${c.isActive ?? true
 ${funnels.map(f => `| ${f.name || 'Sem nome'} | ${f.domain || f.path || 'N/A'} | ${f.id} |`).join('\n')}
 `;
 
-    const outDir = 'runs/ghl-migration';
-    fs.mkdirSync(outDir, { recursive: { mode: 0o755 } });
+    const outDir = 'runs/ghl-migration/20261105';
+    fs.mkdirSync(outDir, { recursive: true });
     const outPath = `${outDir}/oftw-inventario.md`;
     fs.writeFileSync(outPath, report);
     console.log(`\n✨ Inventário salvo com sucesso em ${outPath}`);
