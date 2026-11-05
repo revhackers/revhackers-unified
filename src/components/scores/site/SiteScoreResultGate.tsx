@@ -1,19 +1,18 @@
-import { DiagnosticForm, DiagnosticFormData } from '@/components/diagnostics/DiagnosticForm';
+import { GhlFormEmbed } from '@/components/shared/GhlFormEmbed';
+import { GHL_FORMS } from '@/config/ghl';
 
 interface SiteScoreResultGateProps {
   finalScore: number;
   psiResults: any;
   hasSubmittedLead: boolean;
-  onSubmit: (data: DiagnosticFormData) => Promise<void>;
-  isSubmitting: boolean;
+  onSubmitted: () => void;
 }
 
 export const SiteScoreResultGate = ({
   finalScore,
   psiResults,
   hasSubmittedLead,
-  onSubmit,
-  isSubmitting
+  onSubmitted
 }: SiteScoreResultGateProps) => {
   if (hasSubmittedLead) return null;
 
@@ -47,14 +46,12 @@ export const SiteScoreResultGate = ({
         </div>
 
         <div className="flex-1 w-full max-w-md flex flex-col justify-center">
-          <DiagnosticForm
-            onSubmit={onSubmit}
-            isSubmitting={isSubmitting}
+          <GhlFormEmbed
+            formId={GHL_FORMS.score}
             title="Receber Relatório"
-            subtitle="Obtenha o plano de ação técnico."
-            variant="dark"
-            diagnosticType="Site"
-            showLinkedin={false}
+            params={{ diagnostic_type: 'site', diagnostic_score: String(finalScore), diagnostic_category: 'Auditoria Técnica' }}
+            minHeight={620}
+            onSubmitted={onSubmitted}
           />
         </div>
       </div>

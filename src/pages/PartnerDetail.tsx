@@ -9,7 +9,6 @@ import { partners } from '@/data/partners'; // Updated import to use partners
 import ContactForm from '@/components/shared/ContactForm';
 import NotFound from './NotFound';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import BookingWidget from '@/components/shared/BookingWidget';
 
 const PartnerDetail = () => {
   const { slug } = useParams<{ slug: string }>();

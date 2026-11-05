@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Sparkles, CheckCircle2, Command } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { submitPublicDiagnostic } from "@/api/publicDiagnostic";
 import { DiagnosticLayout } from '@/components/diagnostics/DiagnosticLayout';
-import { DiagnosticForm, DiagnosticFormData } from '@/components/diagnostics/DiagnosticForm';
+import { GhlFormEmbed } from '@/components/shared/GhlFormEmbed';
+import { GHL_FORMS } from '@/config/ghl';
 import { ScoreGauge } from '@/components/diagnostics/ScoreGauge';
 import { DiagnosticActionSection } from '@/components/diagnostics/DiagnosticActionSection';
 import { BenchmarkBar } from '@/components/diagnostics/BenchmarkBar';
@@ -87,12 +86,10 @@ const QUESTIONS = [
 type Step = 'start' | 'questions' | 'lead-capture' | 'results';
 
 const GrowthScore = () => {
- const { toast } = useToast();
  const [step, setStep] = useState<Step>('questions');
  const [currentQ, setCurrentQ] = useState(0);
  const [score, setScore] = useState(0);
  const [answers, setAnswers] = useState<number[]>([]);
- const [isSubmitting, setIsSubmitting] = useState(false);
  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
  const [selectedOption, setSelectedOption] = useState<number | null>(null);
  const [showLog, setShowLog] = useState(false);
@@ -144,49 +141,15 @@ const GrowthScore = () => {
  }, 1200);
  };
 
- const handleFormSubmit = async (data: DiagnosticFormData) => {
- setIsSubmitting(true);
- try {
- const result = getResultMap(score);
-
- await submitPublicDiagnostic(
- { ...data, phone: '' },
- { answers, diagnostic_type: 'growth', source: 'growth-score', analysis: analysisResult },
- score,
- {
- level: result.title,
- description: result.msg,
- action: "Diagnóstico de Growth",
- color: "revgreen"
- },
- 'score_captured'
- );
-
- setHasSubmittedLead(true);
- toast({
- className: "bg-white border-zinc-200 text-zinc-900",
- title: "DIAGNÓSTICO PROCESSADO",
- description: "Seu relatório oficial foi gerado com sucesso."
- });
- 
- setIsAnalyzing(true);
- setStep('results');
- analyzeDiagnosticAI('growth', answers, score)
- .then(result => setAnalysisResult(result))
- .catch(() => {}) 
- .finally(() => setIsAnalyzing(false));
-
- } catch (error) {
- console.error(error);
- toast({
- variant: 'destructive',
- title: "Erro de Processamento",
- description: "Tente novamente."
- });
- } finally {
- setIsSubmitting(false);
- }
- };
+  const handleSubmitted = useCallback(() => {
+    setHasSubmittedLead(true);
+    setIsAnalyzing(true);
+    setStep('results');
+    analyzeDiagnosticAI('growth', answers, score)
+      .then(result => setAnalysisResult(result))
+      .catch(() => {})
+      .finally(() => setIsAnalyzing(false));
+  }, [answers, score]);
 
  const getResultMap = (s: number) => {
  if (s >= 80) return { title: "Blindagem Parcial", msg: "Operação sólida, mas subutilizando Automação." };
@@ -377,13 +340,12 @@ const GrowthScore = () => {
 
             {/* Lado Direito: Formulário Corporativo Expandido */}
             <div className="flex-1 w-full max-w-xl flex flex-col justify-start">
-              <DiagnosticForm
-                onSubmit={handleFormSubmit}
-                isSubmitting={isSubmitting}
+              <GhlFormEmbed
+                formId={GHL_FORMS.score}
                 title="Desbloquear Relatório Completo"
-                subtitle="Preencha os dados corporativos abaixo para liberar o plano de ação detalhado."
-                variant="light"
-                diagnosticType="Growth"
+                params={{ diagnostic_type: 'growth', diagnostic_score: String(score), diagnostic_category: getResultMap(score).title }}
+                minHeight={620}
+                onSubmitted={handleSubmitted}
               />
             </div>
 

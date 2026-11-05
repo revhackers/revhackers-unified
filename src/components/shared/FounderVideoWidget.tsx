@@ -4,9 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mic, MicOff, Volume2, VolumeX, Send, Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { submitPublicDiagnostic } from '@/api/publicDiagnostic';
-import { sendToGHL } from '@/lib/ghlRelay';
-import { captureUtmParams, getPersistedUtmParams } from '@/utils/utm';
+import { GhlFormEmbed } from '@/components/shared/GhlFormEmbed';
+import { GHL_FORMS } from '@/config/ghl';
 
 interface Message {
   sender: 'ai' | 'user';
@@ -32,8 +31,7 @@ const FounderVideoWidget = () => {
   const [isMicActive, setIsMicActive] = useState(false);
   
   const initialIdentity = getStoredIdentity();
-  const [email, setEmail] = useState<string>(initialIdentity?.email || '');
-  const [emailCaptured, setEmailCaptured] = useState<boolean>(!!initialIdentity?.email);
+  const [emailCaptured, setEmailCaptured] = useState<boolean>(!!initialIdentity?.capturedAt);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -210,59 +208,19 @@ const FounderVideoWidget = () => {
     }
   }, [messages, isTyping, isOpen]);
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !email.includes('@')) return;
-
-    setLoading(true);
-    const utmParams = { ...getPersistedUtmParams(), ...captureUtmParams() };
-    const extractedName = email.split('@')[0];
-    const firstName = extractedName.split('.')[0];
-
+  const handleLeadCaptured = () => {
     try {
-      localStorage.setItem('rev_lead_identity', JSON.stringify({
-        email,
-        name: extractedName,
-        firstName: firstName.charAt(0).toUpperCase() + firstName.slice(1),
-        capturedAt: new Date().toISOString()
-      }));
+      localStorage.setItem('rev_lead_identity', JSON.stringify({ capturedAt: new Date().toISOString() }));
     } catch (e) {}
-
-    try {
-      await submitPublicDiagnostic(
-        { email, name: extractedName, source: 'founder_ai_chat', company: '' },
-        { source: 'founder_video_widget', type: 'ai_chat_lead', ...utmParams },
-        0,
-        { level: "Lead", description: "Interação no Chat IA Founder", action: "Chat", color: "green" },
-        'lead_capture'
-      );
-
-      await sendToGHL('lead_capture', {
-        email,
-        name: extractedName,
-        source: 'founder_video_widget',
-        tags: ['founder_ai_chat', 'video_widget_lead', 'gtm_engineering'],
-        customFields: {
-          fonte_do_lead: 'Founder AI Video Widget',
-          ...utmParams
-        }
-      });
-
-    } catch (err) {
-      console.warn("GHL/GCP integration warning:", err);
-    } finally {
-      setEmailCaptured(true);
-      setMessages(prev => [
-        ...prev,
-        { sender: 'user', text: email, timestamp: 'Agora' },
-        {
-          sender: 'ai',
-          text: `Perfeito, e-mail registrado com sucesso! Como posso te ajudar a aprofundar sua estratégia de GTM hoje?`,
-          timestamp: 'Agora'
-        }
-      ]);
-      setLoading(false);
-    }
+    setEmailCaptured(true);
+    setMessages(prev => [
+      ...prev,
+      {
+        sender: 'ai',
+        text: 'Perfeito, dados registrados! Como posso te ajudar a aprofundar sua estratégia de GTM hoje?',
+        timestamp: 'Agora'
+      }
+    ]);
   };
 
   const handleSendMessage = (textToSend?: string) => {
@@ -513,25 +471,7 @@ const FounderVideoWidget = () => {
                 </form>
               ) : !emailCaptured && conversationalStep >= 2 ? (
                 <>
-                  <form onSubmit={handleEmailSubmit} className="space-y-2">
-                    <div className="relative flex items-center">
-                      <Input
-                        type="email"
-                        placeholder="Digite seu e-mail corporativo para liberar..."
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="bg-zinc-50 border-zinc-200 text-zinc-900 text-xs sm:text-sm h-10 pr-12 rounded-xl placeholder:text-zinc-400 focus:border-[#00CC6A]"
-                      />
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className="absolute right-1.5 top-1.5 h-7 w-8 bg-[#00CC6A] text-black hover:bg-[#00b35e] font-bold rounded-lg flex items-center justify-center transition-all disabled:opacity-50"
-                      >
-                        {loading ? <Sparkles className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </form>
+                  <GhlFormEmbed formId={GHL_FORMS.contato} title="Receber análise por e-mail" params={{ origem: 'founder_video_widget' }} minHeight={420} onSubmitted={handleLeadCaptured} />
                   <button
                     onClick={() => window.location.href = "/booking"}
                     className="w-full text-xs font-bold text-zinc-700 hover:text-zinc-950 py-2 flex items-center justify-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-xl hover:bg-zinc-100 transition-colors"

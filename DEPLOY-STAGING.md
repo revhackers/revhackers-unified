@@ -1,5 +1,7 @@
 # Guia de Deploy para Staging
 
+> **Fase 3 (frontend Hostinger) substituída.** O deploy do site agora é `deploy-cloudflare.yml` (manual, Cloudflare Workers). As Fases 1, 2 e 4 (API Cloud Run) seguem válidas.
+
 ## Pré-requisitos
 
 1. **Autenticação GCP**

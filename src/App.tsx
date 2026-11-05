@@ -38,12 +38,9 @@ const Servicos = lazy(() => import("./pages/Servicos"));
 const ServicosDetalhe = lazy(() => import("./pages/ServicosDetalhe"));
 const Cases = lazy(() => import("./pages/Cases"));
 const CasesDetalhe = lazy(() => import("./pages/CasesDetalhe"));
-const Downloads = lazy(() => import("./pages/Downloads"));
 const Materiais = lazy(() => import("./pages/Materiais"));
 const MaterialLanding = lazy(() => import("./pages/MaterialLanding"));
 const Metodologia = lazy(() => import("./pages/Metodologia"));
-const ClaudePartnerNetworkPage = lazy(() => import("./pages/ClaudePartnerNetworkPage"));
-const ClaudePartnerThankYouPage = lazy(() => import("./pages/ClaudePartnerThankYouPage"));
 const SetupPasswordPage = lazy(() => import("./pages/auth/SetupPasswordPage"));
 const Comunidade = lazy(() => import("./pages/Comunidade"));
 const Booking = lazy(() => import("./pages/Booking"));
@@ -54,20 +51,16 @@ const TermosDeUso = lazy(() => import("./pages/TermosDeUso"));
 const Privacidade = lazy(() => import("./pages/Privacidade"));
 const ThankYou = lazy(() => import("./pages/ThankYou"));
 
-const CadastroParceiro = lazy(() => import("./pages/CadastroParceiro"));
 const PesquisaNPS = lazy(() => import("./pages/PesquisaNPS"));
 const ObrigadoNPS = lazy(() => import("./pages/ObrigadoNPS"));
 const ClientOnboarding = lazy(() => import("./pages/public/ClientOnboarding"));
 const OnboardingSuccess = lazy(() => import("./pages/public/OnboardingSuccess"));
 const MaterialUpload = lazy(() => import("./pages/public/MaterialUpload"));
-const PublicDiagnosticResult = lazy(() => import("./pages/PublicDiagnosticResult"));
 const SchedulingSuccess = lazy(() => import("./pages/SchedulingSuccess"));
 const CertificateOfAuthenticity = lazy(() => import("./pages/public/CertificateOfAuthenticity"));
 const MagicApproval = lazy(() => import("./pages/public/MagicApproval"));
 const PublicKickoffValidation = lazy(() => import("./pages/public/PublicKickoffValidation"));
 
-// Specialized Agenda Pages (kept only real pages, others are redirects)
-const AgendaGiulliano = lazy(() => import("./pages/AgendaGiulliano"));
 
 // Score Pages (Heavy - 21-70KB each)
 const GrowthScore = lazy(() => import("./pages/GrowthScore"));
@@ -168,8 +161,6 @@ const App = () => (
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={<Index />} />
-                  <Route path="/claude-partner-network" element={<ClaudePartnerNetworkPage />} />
-                  <Route path="/claude-partner-network/obrigado" element={<ClaudePartnerThankYouPage />} />
                   <Route path="/public/growthmap/:share_token" element={<PublicGrowthMap />} />
                   <Route path="/p/:slug" element={<ProposalPresentation />} /> {/* Proposal Slide Presentation */}
               <Route path="/p/:slug/legacy" element={<PublicDealRoom />} /> {/* Legacy Deal Room Route */}
@@ -184,7 +175,6 @@ const App = () => (
               <Route path="/cases/:slug" element={<CasesDetalhe />} />
               <Route path="/partners/:slug" element={<PartnerDetail />} />
               <Route path="/partners/enics" element={<PartnerEnics />} />
-              <Route path="/downloads" element={<Downloads />} />
               <Route path="/materiais" element={<Materiais />} />
               <Route path="/materiais/:slug" element={<MaterialLanding />} />
               <Route path="/comunidade" element={<Comunidade />} />
@@ -212,12 +202,11 @@ const App = () => (
 
               {/* Specialized Pages - Consolidadas em /booking */}
               <Route path="/agenda/giulliano" element={<Navigate to="/booking" replace />} />
-              <Route path="/agenda-giulliano" element={<AgendaGiulliano />} />
+              <Route path="/agenda-giulliano" element={<Navigate to="/booking" replace />} />
               <Route path="/agenda-luna" element={<Navigate to="/booking" replace />} />
               <Route path="/agenda-linkedin" element={<Navigate to="/booking" replace />} />
               <Route path="/agenda-kickoff" element={<Navigate to="/booking" replace />} />
               
-              <Route path="/cadastro-parceiro" element={<CadastroParceiro />} />
 
               {/* REI System (Internal) - Unified */}
               <Route path="/rei" element={<ProtectedRoute><REICockpit /></ProtectedRoute>} />
@@ -231,8 +220,6 @@ const App = () => (
               <Route path="/score-site" element={<PageErrorBoundary><SiteScore /></PageErrorBoundary>} />
               <Route path="/score-revenue" element={<PageErrorBoundary><RevenueScore /></PageErrorBoundary>} />
               <Route path="/diagnostico/v2" element={<PageErrorBoundary><EnrichedDiagnostic /></PageErrorBoundary>} />
-
-              <Route path="/diagnostico/resultado/:id" element={<PublicDiagnosticResult />} />
 
               {/* Auth Routes */}
               <Route path="/login" element={<Login />} />

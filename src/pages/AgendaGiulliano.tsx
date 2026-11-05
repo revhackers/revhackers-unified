@@ -1,22 +1,9 @@
-import { useEffect } from 'react';
 import PageLayout from '@/components/layout/PageLayout';
 import SEO from '@/components/shared/SEO';
-
-const BOOKING_URL = 'https://pages.revhackers.com.br/widget/booking/frZ10gIRdS8iNvtlGq3q';
-const IFRAME_ID = 'frZ10gIRdS8iNvtlGq3q_1775165036136';
+import { GhlBookingEmbed } from '@/components/shared/GhlBookingEmbed';
+import { GHL_CALENDARS } from '@/config/ghl';
 
 const AgendaGiulliano = () => {
-    useEffect(() => {
-        const scriptId = "revhackers-booking-script";
-        if (!document.getElementById(scriptId)) {
-            const script = document.createElement("script");
-            script.id = scriptId;
-            script.src = "https://pages.revhackers.com.br/js/form_embed.js";
-            script.type = "text/javascript";
-            script.async = true;
-            document.body.appendChild(script);
-        }
-    }, []);
 
     return (
         <PageLayout>
@@ -51,13 +38,7 @@ const AgendaGiulliano = () => {
 
                 {/* Calendario embed */}
                 <div className="flex-1 w-full max-w-4xl mx-auto px-4 pb-8">
-                    <iframe
-                        src={BOOKING_URL}
-                        id={IFRAME_ID}
-                        style={{ width: '100%', border: 'none', overflow: 'hidden', minHeight: '700px' }}
-                        scrolling="no"
-                        title="Agendar horário com Giulliano Alves"
-                    />
+                    <GhlBookingEmbed calendarId={GHL_CALENDARS.diagnostico} title="Agendar horário com Giulliano Alves" minHeight={700} />
                 </div>
             </div>
         </PageLayout>

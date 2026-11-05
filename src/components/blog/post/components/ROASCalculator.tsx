@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { ArrowRight, CheckCircle2, Lock, RotateCcw, BarChart3, ChevronRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { sendToGHL } from '@/lib/ghlRelay';
-import { triggerFunnelsCampaign } from '@/lib/funnelsAutomationEngine';
+import { GhlFormEmbed } from '@/components/shared/GhlFormEmbed';
+import { GHL_FORMS } from '@/config/ghl';
 
 const ROASCalculator = () => {
     // Steps: intro -> spend -> revenue -> calculating -> gate -> result
@@ -18,11 +17,6 @@ const ROASCalculator = () => {
     // Results
     const [roas, setRoas] = useState<number>(0);
     const [profit, setProfit] = useState<number>(0);
-
-    // Gate
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [loading, setLoading] = useState(false);
 
     const nextStep = () => {
         if (step === 'intro') setStep('spend');
@@ -39,41 +33,10 @@ const ROASCalculator = () => {
         }
     };
 
-    const handleUnlock = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!name || !email) return;
-        setLoading(true);
-
-        try {
-          await sendToGHL('roi_calculator', {
-            name,
-            email,
-            customFields: {
-              metric_roas: String(roas),
-              metric_spend: String(spend),
-              metric_revenue: String(revenue),
-            }
-          });
-          await triggerFunnelsCampaign('roi_calculator', {
-            name,
-            email,
-            source: 'Blog ROAS Calculator',
-            tags: ['roas_calculator', 'roi_calculator', 'blog_lead']
-          });
-        } catch (err) {
-          console.warn('ROAS Calculator GHL warning:', err);
-        } finally {
-          setStep('result');
-          setLoading(false);
-        }
-    };
-
     const reset = () => {
         setStep('intro');
         setSpend(5000);
         setRevenue(25000);
-        setName('');
-        setEmail('');
     };
 
     const getStepNumber = () => {
@@ -230,36 +193,18 @@ const ROASCalculator = () => {
                             Desbloqueie o resultado da sua auditoria de mídia paga.
                         </p>
 
-                        <form onSubmit={handleUnlock} className="space-y-6 w-full max-w-sm">
-                            <div className="space-y-1">
-                                <label className="text-xxs font-bold uppercase tracking-widest text-zinc-400">Nome Completo</label>
-                                <Input
-                                    className="border-0 border-b-2 border-zinc-200 rounded-none px-0 py-2 h-auto text-xl font-bold focus:border-black focus:ring-0 placeholder:text-zinc-200 bg-transparent transition-colors"
-                                    required
-                                    value={name}
-                                    onChange={e => setName(e.target.value)}
-                                    placeholder="Comece a digitar..."
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xxs font-bold uppercase tracking-widest text-zinc-400">E-mail Corporativo</label>
-                                <Input
-                                    className="border-0 border-b-2 border-zinc-200 rounded-none px-0 py-2 h-auto text-xl font-bold focus:border-black focus:ring-0 placeholder:text-zinc-200 bg-transparent transition-colors"
-                                    required
-                                    type="email"
-                                    value={email}
-                                    onChange={e => setEmail(e.target.value)}
-                                    placeholder="seu@empresa.com"
-                                />
-                            </div>
-                            <Button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full h-14 bg-black text-white font-black text-lg uppercase rounded-none hover:bg-revgreen hover:text-black mt-4 transition-all"
-                            >
-                                {loading ? 'Gerando...' : 'Desbloquear Auditoria >'}
-                            </Button>
-                        </form>
+                        <div className="w-full max-w-sm">
+                            <GhlFormEmbed
+                                formId={GHL_FORMS.calculadora}
+                                title="Desbloquear Auditoria"
+                                params={{
+                                    calculadora: 'roas',
+                                    calculadora_resultado: JSON.stringify({ spend, revenue, roas, profit }),
+                                }}
+                                minHeight={320}
+                                onSubmitted={() => setStep('result')}
+                            />
+                        </div>
                     </div>
                 )}
 

@@ -153,22 +153,6 @@ const ReiFounderPage = () => {
         setShowDashboard(true);
         window.scrollTo(0, 0);
 
-        // -- Automação: Enviar payload para o Funnels (RevHackers / Própria Funnels) via Edge Function --
-        // A edge function `ghl-outbound-relay` escuta o evento `rei_completed`
-        try {
-            const { sendToGHL } = await import('@/lib/ghlRelay');
-            await sendToGHL('rei_completed', {
-                ...data,
-                scores: {
-                    total: calculated.score,
-                    radar: calculated.radarData
-                },
-                insights: calculated.insights,
-                origin: 'rei-founder-protocol'
-            });
-        } catch (error) {
-            console.error("Falha ao notificar o CRM Funnels:", error);
-        }
     };
 
     const variants = {

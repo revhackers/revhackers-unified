@@ -7,13 +7,6 @@ const distDir = path.resolve(__dirname, '../dist');
 
 const pages = [
   {
-    route: 'claude-partner-network',
-    title: 'Claude Partner Network 2026 | Seleção Oficial RevHackers & Anthropic',
-    description: 'Programa exclusivo de aceleração AI-Native, RevOps e automação avançada com Claude 3.5 Sonnet. Inscreva sua empresa para a seleção de parceiros.',
-    defaultImage: 'https://revhackers.com.br/brand/claude-partner-badge.png',
-    canonical: 'https://revhackers.com.br/claude-partner-network'
-  },
-  {
     route: 'booking',
     title: 'Agendar Sessão Estratégica de RevOps | RevHackers',
     description: 'Agende uma auditoria de receita gratuita. Mapeamos os vazamentos da sua operação B2B e apresentamos um plano de crescimento acelerado.',

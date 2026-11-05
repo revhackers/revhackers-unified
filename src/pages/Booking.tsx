@@ -4,8 +4,9 @@ import PageLayout from '@/components/layout/PageLayout';
 import { CheckCircle, Clock, FileText, Zap } from 'lucide-react';
 import SEO from '@/components/shared/SEO';
 import ModernTechnicalBackground from '@/components/shared/ModernTechnicalBackground';
+import { GhlBookingEmbed } from '@/components/shared/GhlBookingEmbed';
+import { GHL_CALENDARS } from '@/config/ghl';
 
-const BOOKING_BASE_URL = "https://pages.revhackers.com.br/widget/booking/frZ10gIRdS8iNvtlGq3q";
 
 const nextSteps = [
   {
@@ -26,7 +27,6 @@ const nextSteps = [
 ];
 
 const BookingPage = () => {
-  const [iframeLoaded, setIframeLoaded] = useState(false);
   const [leadContext, setLeadContext] = useState<{ company?: string; name?: string; material?: string }>({});
 
   useEffect(() => {
@@ -44,17 +44,6 @@ const BookingPage = () => {
         name: nameParam || undefined,
         material: materialParam || undefined
       });
-    }
-
-    // Load GHL form embed script
-    const scriptId = "revhackers-booking-script";
-    if (!document.getElementById(scriptId)) {
-      const script = document.createElement("script");
-      script.id = scriptId;
-      script.src = "https://pages.revhackers.com.br/js/form_embed.js";
-      script.type = "text/javascript";
-      script.async = true;
-      document.body.appendChild(script);
     }
   }, []);
 
@@ -130,14 +119,7 @@ const BookingPage = () => {
 
             {/* Coluna direita: calendário */}
             <div className="lg:col-span-3 bg-white overflow-hidden min-h-[680px] border border-zinc-200/80 rounded-xl shadow-xs">
-              <iframe
-                src={BOOKING_BASE_URL}
-                style={{ width: '100%', border: 'none', overflow: 'hidden', minHeight: '680px', background: '#ffffff' }}
-                scrolling="no"
-                id="frZ10gIRdS8iNvtlGq3q_1775165036136"
-                title="Auditoria de Receita"
-                onLoad={() => setIframeLoaded(true)}
-              />
+              <GhlBookingEmbed calendarId={GHL_CALENDARS.diagnostico} title="Auditoria de Receita" minHeight={680} />
             </div>
           </div>
 

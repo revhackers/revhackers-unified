@@ -1,0 +1,71 @@
+name: Deploy Cloudflare Workers (Revhackers Site)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Confirmação manual: digite PUBLICAR (fail-closed)"
+        required: true
+        type: string
+      motivo:
+        description: "Motivo/registro da publicação manual"
+        required: true
+        type: string
+
+concurrency:
+  group: cloudflare-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-cloudflare:
+    name: Build & Deploy para Cloudflare Workers
+    runs-on: ubuntu-latest
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: "true"
+    steps:
+      - name: Validar confirmação manual (fail-closed)
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          MOTIVO: ${{ inputs.motivo }}
+        run: |
+          if [ "$CONFIRM" != "PUBLICAR" ]; then
+            echo "Deploy manual BLOQUEADO: confirmação inválida."
+            exit 1
+          fi
+          echo "✅ Publicação manual confirmada. Motivo: $MOTIVO"
+
+      - name: Checkout Código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar Dependências
+        run: npm ci
+
+      - name: Compilar Build de Produção (GCP Native Stack)
+        env:
+          VITE_FIREBASE_API_KEY: "AIzaSyDrdt32oOHC86aXqGxm7QC1HpbmH4H2VJk"
+          VITE_FIREBASE_AUTH_DOMAIN: "revhackers-staging.firebaseapp.com"
+          VITE_FIREBASE_PROJECT_ID: "revhackers-staging"
+          VITE_GOOGLE_AUTH_ENABLED: "true"
+          VITE_GCP_API_URL: "https://revhackers-api-staging-3na73syj5a-rj.a.run.app"
+          VITE_GCP_ENABLED: "true"
+          VITE_CLIENTS_GCP_ENABLED: "true"
+          VITE_GROWTHMAP_GCP_ENABLED: "true"
+        run: npx vite build
+
+      - name: Gerar OG HTML
+        run: node ./scripts/generate-page-og-html.mjs
+
+      - name: Deploy para Cloudflare Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          : "${CLOUDFLARE_API_TOKEN:?Configure o Secret CLOUDFLARE_API_TOKEN}"
+          : "${CLOUDFLARE_ACCOUNT_ID:?Configure a Variable CLOUDFLARE_ACCOUNT_ID}"
+          npx wrangler deploy --env production

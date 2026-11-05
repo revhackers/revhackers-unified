@@ -1,17 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageLayout from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { FileText, Book, BookOpen, BarChart3, PlaySquare, FileSpreadsheet, Search, ArrowRight } from 'lucide-react';
 import DOMPurify from 'dompurify';
-import { useToast } from '@/components/ui/use-toast';
-import { contentGcpAdapter } from '@/api/adapters/content-gcp';
 import Section from '@/components/ui/Section';
 import { Input } from '@/components/ui/input';
-import MaterialModal from '@/components/shared/MaterialModal';
 import SEO from '@/components/shared/SEO';
 import DarkHeroSection from '@/components/shared/DarkHeroSection';
-import BookingModal from '@/components/shared/BookingModal';
 import { removeEmojis } from '@/utils/stringUtils';
 import { materialsData } from '@/data/materialsData';
 
@@ -26,65 +22,12 @@ const IconMap: Record<string, React.ElementType> = {
 };
 
 const Materiais = () => {
-  const [showForm, setShowForm] = useState(false);
-  const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [selectedMaterial, setSelectedMaterial] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todos');
-  const [loading, setLoading] = useState(true);
-  const [apiMaterials, setApiMaterials] = useState<any[]>([]);
-  const { toast } = useToast();
   const navigate = useNavigate();
 
-
-  // Buscar materiais do GCP (contentGcpAdapter) com timeout e fallback automatico para materialsData
-  useEffect(() => {
-    const fetchMaterials = async () => {
-      try {
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout de rede')), 5000)
-        );
-
-        const fetchPromise = contentGcpAdapter.getMaterials();
-        const data = await Promise.race([fetchPromise, timeoutPromise]);
-
-        if (data && data.length > 0) {
-          setApiMaterials(data);
-        } else {
-          setApiMaterials(materialsData);
-        }
-      } catch (err: any) {
-        console.warn('⚠️ [DATABASE] Usando materiais ricos locais (materialsData):', err.message);
-        setApiMaterials(materialsData);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMaterials();
-  }, []);
-  // Filter materials (use materialsData if apiMaterials yields 0 after filtering)
-  const rawMaterials = apiMaterials.length > 0 ? apiMaterials : materialsData;
-  const filteredDbMaterials = rawMaterials.filter(m => {
-    const link = (m.link_material || '').toLowerCase();
-    return !link.includes('docs.google.com') && !link.includes('drive.google.com');
-  });
-
   // Mais recentes primeiro: materiais novos entram no fim do array/fonte de dados
-  const materials = (filteredDbMaterials.length > 0 ? filteredDbMaterials : materialsData).slice().reverse();
-
-  const handleDownloadClick = (material: any) => {
-    setSelectedMaterial(material);
-    setShowForm(true);
-  };
-
-  const handleFormSubmit = () => {
-    toast({
-      title: "Material disponível!",
-      description: "Seu download está sendo preparado e foi enviado para seu email.",
-    });
-    setShowForm(false);
-  };
+  const materials = materialsData.slice().reverse();
 
   const categories = ['Todos', ...Array.from(new Set(materials.map(m => m.material_type || m.type).filter(Boolean)))];
 
@@ -134,12 +77,7 @@ const Materiais = () => {
 
         <div className="container-custom relative z-10 pt-12">
 
-          {loading ? (
-            <div className="text-center py-20">
-              <div className="mx-auto w-12 h-12 rounded-lg border-2 border-zinc-100 border-t-black animate-spin mb-4"></div>
-              <p className="text-xxs font-bold uppercase tracking-tight text-zinc-400">Carregando Hub...</p>
-            </div>
-          ) : filteredMaterials.length === 0 ? (
+          {filteredMaterials.length === 0 ? (
             <div className="text-center py-20 border border-dashed border-zinc-200 bg-zinc-50/50 max-w-2xl mx-auto">
               <div className="mx-auto w-16 h-16 bg-zinc-100 rounded-lg flex items-center justify-center mb-6">
                 <BookOpen className="h-8 w-8 text-zinc-300" />
@@ -234,18 +172,6 @@ const Materiais = () => {
           </div>
         </div>
       </div>
-
-      <MaterialModal
-        isOpen={showForm}
-        onClose={() => setShowForm(false)}
-        material={selectedMaterial}
-        onSuccess={handleFormSubmit}
-      />
-
-      <BookingModal
-        isOpen={isBookingOpen}
-        onClose={() => setIsBookingOpen(false)}
-      />
     </PageLayout>
   );
 };

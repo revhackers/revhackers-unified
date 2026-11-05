@@ -11,7 +11,6 @@ import MarketSection from './MarketSection';
 import SalesSection from './SalesSection';
 import ResourcesSection from './ResourcesSection';
 import ThankYouMessage from './ThankYouMessage';
-import { sendToGHL } from '@/lib/ghlRelay';
 
 const ReiForm = () => {
   const { toast } = useToast();
@@ -169,7 +168,6 @@ const ReiForm = () => {
     setIsSubmitting(true);
     
     try {
-      await sendToGHL('rei_completed', formData as unknown as Record<string, unknown>);
       setIsSubmitted(true);
     } catch (error) {
       console.error('Error submitting form:', error);

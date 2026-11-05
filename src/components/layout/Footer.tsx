@@ -84,17 +84,6 @@ const Footer = () => {
             Technology Partners
           </p>
           <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-            {/* Claude Partner Network */}
-            <a href="https://anthropic.com" target="_blank" rel="noopener noreferrer" className="h-7 flex items-center group">
-              <img
-                src="/brand/claude-partner-network.svg"
-                alt="Claude Partner Network"
-                className="h-5 w-auto object-contain opacity-75 group-hover:opacity-100 transition-opacity block"
-              />
-            </a>
-
-            <div className="w-px h-4 bg-zinc-800 hidden sm:block self-center" />
-
             {/* Google for Startups */}
             <a href="https://startup.google.com" target="_blank" rel="noopener noreferrer" className="h-7 flex items-center gap-2 opacity-75 hover:opacity-100 transition-opacity group select-none">
               <svg className="w-4 h-4 shrink-0 block" viewBox="0 0 24 24">

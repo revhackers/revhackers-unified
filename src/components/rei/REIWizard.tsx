@@ -10,7 +10,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { saveReiDiagnostic } from '@/api/reiProjects';
 import { REIType } from '@/types/rei';
 import { ReiScoringService } from '@/services/ReiScoringService';
-import { sendToGHL } from '@/lib/ghlRelay';
 
 // Import dos Steps
 import Step1Identificacao from './steps/Step1Identificacao';
@@ -291,61 +290,9 @@ export default function REIWizard({ projectId, type, onComplete }: REIWizardProp
             // 1. Calculate Score based on Protocol Type (Logic Extracted!)
             const scoreResult = ReiScoringService.calculateScore(type, data);
 
-            // Enrich with Project Data (Needs import getReiProjectById if not passed as prop, but for now we rely on pure data or passed props)
-            // We'll fetch it simply here to be safe
-            let projectDetails: any = {};
-            try {
-                const { getReiProjectById } = await import('@/api/reiProjects');
-                projectDetails = await getReiProjectById(projectId);
-            } catch (err) {
-                console.warn("Could not fetch extra project details for webhook", err);
-            }
-
             // 2. Save to DB with 4 arguments: projectId, type, formData, analysisResult
             const responseId = await saveReiDiagnostic(projectId, type, data, scoreResult);
 
-            // 3. Webhook Trigger (Internal REI)
-            try {
-                // Prepare a formatted summary for GHL/Email/Notion
-                const formattedSummary = Object.entries(data)
-                    .map(([key, value]) => {
-                        const label = key.replace(/_/g, ' ').toUpperCase();
-
-                        // Handle complex arrays (like pipeline stages or loss reasons mapped in Step 4)
-                        if (Array.isArray(value)) {
-                            // Arrays of primitive strings
-                            if (value.length > 0 && typeof value[0] === 'string') {
-                                return `* ${label}:\n  - ${value.join('\n  - ')}`;
-                            }
-
-                            // Arrays of Objects (like CRM stages, loss reasons mappings)
-                            if (value.length > 0 && typeof value[0] === 'object') {
-                                const listDesc = value.map(v => JSON.stringify(v).replace(/["{}]/g, '').replace(/:/g, ': ')).join('\n  - ');
-                                return `* ${label}:\n  - ${listDesc}`;
-                            }
-
-                            return `* ${label}: (vazio)`;
-                        }
-
-                        // Handle simple strings
-                        return `* ${label}: ${value || 'Não informado'}`;
-                    })
-                    .join('\n\n');
-
-                await sendToGHL('rei_completed', {
-                    projectId,
-                    type,
-                    scoreResult,
-                    client_name: projectDetails?.client_name || '',
-                    client_company: projectDetails?.client_company || '',
-                    client_email: projectDetails?.client_email || data.email || '',
-                    formatted_summary: formattedSummary,
-                    ...data,
-                    submittedAt: new Date().toISOString()
-                }, projectDetails?.organization_id);
-            } catch (webhookError) {
-                console.error("Webhook failed:", webhookError);
-            }
 
             // 4. TRIGGER AUTO-ENRICHMENT (Living Documents)
             // Generates: Benchmark, Personas, Market Data, Draft Strategic Plan
