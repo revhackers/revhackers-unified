@@ -10,6 +10,12 @@ blog, materiais, cases, administração, REI e o hub de clientes.
 - Produção atual: Hostinger.
 - Google Cloud: planejado, ainda não implantado para este projeto.
 
+## Formulários e CRM
+
+- Formulários nativos GHL na subconta S7HE; IDs em `src/config/ghl.ts`.
+- Leads do site recebem a tag `origem:revhackers`; o e-mail de material sai pelo workflow GHL `RH · Entrega de material`.
+- Deploy do site: Cloudflare Workers via `deploy-cloudflare.yml` (manual, confirmação `PUBLICAR`).
+
 ## Estrutura
 
 ```text

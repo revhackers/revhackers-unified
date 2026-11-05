@@ -1,0 +1,15 @@
+Assunto: {{contact.first_name}}, seu acesso ao {{contact.material_title}}
+
+{{contact.first_name}}, tudo bem?
+
+Aqui está o material que você pediu, {{contact.material_title}}:
+{{contact.material_link}}
+
+Se tiver alguma dúvida ou quiser trocar uma ideia sobre como aplicar isso na sua operação, é só responder este e-mail.
+
+Abraço,
+
+Giulliano Alves
+Founder | RevHackers
+giulliano@revhackers.com.br
+revhackers.com.br
