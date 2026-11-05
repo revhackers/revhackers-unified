@@ -1,65 +1,43 @@
-/**
- * src/components/shared/GhlBookingEmbed.tsx
- *
- * GHL native booking/calendar embed component.
- * Loads the booking calendar iframe from api.leadconnectorhq.com.
- *
- * Pattern: https://github.com/usefunnels/usefunnels/blob/main/components/booking/BookingCard.tsx
- *
- * Props:
- *   - calendarId: GHL calendar ID (get from GHL › Calendars › [calendar name])
- *   - title: accessibility title (default "Agendar")
- *   - params: query string params to pass (utm_campaign, etc.)
- *   - minHeight: iframe min-height in px (default 650)
- */
+import React, { useEffect } from 'react';
+import { GHL_EMBED_BASE, GHL_FORM_EMBED_SCRIPT, GHL_CALENDARS } from '../../config/ghl';
+import { getPersistedUtmParams } from '../../utils/utm';
 
-import { useMemo } from 'react';
-import { GHL_EMBED_BASE } from '@/config/ghl';
-import { getPersistedUtmParams } from '@/utils/utm';
-
-export interface GhlBookingEmbedProps {
-  calendarId: string;
-  title?: string;
-  params?: Record<string, string>;
+interface GhlBookingEmbedProps {
+  calendarId?: string;
   minHeight?: number;
 }
 
-export function GhlBookingEmbed({
-  calendarId,
-  title = 'Agendar',
-  params = {},
+export const GhlBookingEmbed: React.FC<GhlBookingEmbedProps> = ({
+  calendarId = GHL_CALENDARS.diagnostico,
   minHeight = 650,
-}: GhlBookingEmbedProps) {
-  // Build the iframe src with UTM and custom params
-  const iframeSrc = useMemo(() => {
-    if (!calendarId) return '';
+}) => {
+  useEffect(() => {
+    if (!document.getElementById('ghl-form-embed-script')) {
+      const script = document.createElement('script');
+      script.id = 'ghl-form-embed-script';
+      script.src = GHL_FORM_EMBED_SCRIPT;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
 
-    const utmParams = getPersistedUtmParams();
-    const allParams = new URLSearchParams({
-      ...utmParams,
-      ...params,
-    });
+  const utmParams = getPersistedUtmParams();
+  const searchParams = new URLSearchParams({
+    ...utmParams,
+  });
 
-    return `${GHL_EMBED_BASE}/widget/booking/${calendarId}?${allParams.toString()}`;
-  }, [calendarId, params]);
-
-  if (!calendarId) {
-    console.error('[GhlBookingEmbed] calendarId is missing. Calendar will not render.');
-    return null;
-  }
+  const iframeSrc = `${GHL_EMBED_BASE}/widget/booking/${calendarId}?${searchParams.toString()}`;
+  const iframeId = `booking-${calendarId}`;
 
   return (
-    <iframe
-      id={`${calendarId}_embed`}
-      src={iframeSrc}
-      title={title}
-      scrolling="no"
-      style={{
-        width: '100%',
-        border: 'none',
-        overflow: 'hidden',
-        minHeight: `${minHeight}px`,
-      }}
-    />
+    <div style={{ width: '100%' }}>
+      <iframe
+        id={iframeId}
+        src={iframeSrc}
+        scrolling="no"
+        style={{ width: '100%', border: 'none', overflow: 'hidden', minHeight: `${minHeight}px` }}
+        title="Agendamento Diagnóstico RevHackers"
+      />
+    </div>
   );
-}
+};
