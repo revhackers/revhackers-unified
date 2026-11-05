@@ -12,6 +12,20 @@ import { useNavigate } from 'react-router-dom';
 import { uploadImageToSupabase } from '@/utils/uploadImageToSupabase';
 import { useAI } from '@/contexts/AIContext';
 import { Card, CardContent } from "@/components/ui/card";
+import { GHL_EMBED_BASE, GHL_CALENDARS } from '@/config/ghl';
+import { useForm } from 'react-hook-form';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/use-toast';
+import { Loader2, Wand2, ArrowLeft, RefreshCw, Save, ExternalLink, Upload, FileText, Video, X, ShieldAlert, ListTree, CheckCircle2, AlertCircle, Code, ChevronDown, Presentation } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { uploadImageToSupabase } from '@/utils/uploadImageToSupabase';
+import { useAI } from '@/contexts/AIContext';
+import { Card, CardContent } from "@/components/ui/card";
 import {
     Tabs,
     TabsContent,
@@ -102,7 +116,7 @@ const ProposalForm = ({ initialData, isEditing = false, isModal = false, opportu
             proposal_source: initialData?.proposal_source || 'call',
             bid_document_url: initialData?.bid_document_url || '',
             call_detail_summary: initialData?.call_detail_summary || '', // Registered new field
-            booking_url: initialData?.booking_url || 'https://pages.revhackers.com.br/widget/booking/MmyRuRPox3ZComQA3jJ1',
+            booking_url: initialData?.booking_url || `${GHL_EMBED_BASE}/widget/booking/${GHL_CALENDARS.diagnostico}`,
             crm_data: initialData?.crm_data || {
                 pain_points: [],
                 budget_range: '',

@@ -1,77 +1,141 @@
-import React, { useEffect } from 'react';
-import { GHL_EMBED_BASE, GHL_FORM_EMBED_SCRIPT } from '../../config/ghl';
-import { getPersistedUtmParams } from '../../utils/utm';
+/**
+ * src/components/shared/GhlFormEmbed.tsx
+ *
+ * GHL native form embed component using postMessage for event communication.
+ * Loads the form iframe from api.leadconnectorhq.com and handles submission events.
+ *
+ * Pattern: https://github.com/usefunnels/usefunnels/blob/main/components/booking/BookingCard.tsx
+ *
+ * Props:
+ *   - formId: GHL form ID (get from GHL › Sites › Forms › Integrate)
+ *   - title: accessibility title
+ *   - params: query string params to pass (material_slug, material_link, etc.)
+ *   - minHeight: iframe min-height in px (default 620)
+ *   - onSubmitted: callback fired when form emits FORM_SUBMITTED event
+ */
 
-interface GhlFormEmbedProps {
+import { useEffect, useRef, useCallback } from 'react';
+import { GHL_EMBED_BASE, GHL_FORM_EMBED_SCRIPT } from '@/config/ghl';
+import { getPersistedUtmParams } from '@/utils/utm';
+
+export interface GhlFormEmbedProps {
   formId: string;
-  params?: Record<string, string>;
   title: string;
+  params?: Record<string, string>;
   minHeight?: number;
   onSubmitted?: () => void;
 }
 
-export const GhlFormEmbed: React.FC<GhlFormEmbedProps> = ({
+/**
+ * Injects the GHL form embed script once globally.
+ * Safe to call multiple times; script loads only once.
+ */
+function injectGhlFormScript(): void {
+  if (typeof window === 'undefined') return;
+  
+  // Check if script already loaded
+  const existing = document.getElementById('ghl-form-embed-script');
+  if (existing) return;
+  
+  const script = document.createElement('script');
+  script.id = 'ghl-form-embed-script';
+  script.src = GHL_FORM_EMBED_SCRIPT;
+  script.async = true;
+  document.head.appendChild(script);
+}
+
+export function GhlFormEmbed({
   formId,
-  params = {},
   title,
+  params = {},
   minHeight = 620,
   onSubmitted,
-}) => {
-  if (!formId || formId.startsWith('PLACEHOLDER')) {
-    console.error('[GhlFormEmbed] formId ausente ou inválido');
-    return null;
-  }
+}: GhlFormEmbedProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const listenerRef = useRef<((ev: MessageEvent) => void) | null>(null);
+
+  // Build the iframe src with UTM and form-specific params
+  const buildIframeSrc = useCallback(() => {
+    if (!formId) return '';
+    
+    // Merge persisted UTMs with provided params
+    const utmParams = getPersistedUtmParams();
+    const allParams = new URLSearchParams({
+      ...utmParams,
+      ...params,
+    });
+    
+    return `${GHL_EMBED_BASE}/widget/form/${formId}?${allParams.toString()}`;
+  }, [formId, params]);
 
   useEffect(() => {
-    if (!document.getElementById('ghl-form-embed-script')) {
-      const script = document.createElement('script');
-      script.id = 'ghl-form-embed-script';
-      script.src = GHL_FORM_EMBED_SCRIPT;
-      script.async = true;
-      document.body.appendChild(script);
+    // Inject global GHL script once
+    injectGhlFormScript();
+
+    if (!formId) {
+      console.error('[GhlFormEmbed] formId is missing. Form will not render.');
+      return;
     }
 
+    // Set up postMessage listener for FORM_SUBMITTED event
     const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== GHL_EMBED_BASE) return;
-      const data = event.data;
-      const isSubmitted =
-        (Array.isArray(data) && data[0] === 'FORM_SUBMITTED') ||
-        data?.type === 'FORM_SUBMITTED';
+      // Security: verify origin matches GHL embed base
+      if (!event.origin.includes(GHL_EMBED_BASE.replace('https://', ''))) {
+        return;
+      }
 
-      if (isSubmitted && onSubmitted) {
-        onSubmitted();
+      // GHL emits as array [0] === 'FORM_SUBMITTED' or as object { type: 'FORM_SUBMITTED' }
+      const isFormSubmitted =
+        (Array.isArray(event.data) && event.data[0] === 'FORM_SUBMITTED') ||
+        event.data?.type === 'FORM_SUBMITTED';
+
+      if (isFormSubmitted) {
+        // Ignore if from different form (if event.data contains form ID, check it matches)
+        if (event.data?.formId && event.data.formId !== formId) {
+          return;
+        }
+
+        // Fire callback if provided
+        if (onSubmitted) {
+          onSubmitted();
+        }
       }
     };
 
+    listenerRef.current = handleMessage;
     window.addEventListener('message', handleMessage);
+
     return () => {
-      window.removeEventListener('message', handleMessage);
+      if (listenerRef.current) {
+        window.removeEventListener('message', listenerRef.current);
+      }
     };
-  }, [onSubmitted]);
+  }, [formId, onSubmitted]);
 
-  const utmParams = getPersistedUtmParams();
-  const searchParams = new URLSearchParams({
-    ...utmParams,
-    ...params,
-  });
+  const iframeSrc = buildIframeSrc();
 
-  const iframeSrc = `${GHL_EMBED_BASE}/widget/form/${formId}?${searchParams.toString()}`;
-  const iframeId = `inline-${formId}`;
+  if (!formId) {
+    return null;
+  }
 
   return (
-    <div style={{ width: '100%' }}>
-      <iframe
-        id={iframeId}
-        src={iframeSrc}
-        data-form-id={formId}
-        data-layout-iframe-id={iframeId}
-        data-layout="{'id':'INLINE'}"
-        data-trigger-type="alwaysShow"
-        data-activation-type="alwaysActivated"
-        data-deactivation-type="neverDeactivate"
-        style={{ width: '100%', border: 'none', minHeight: `${minHeight}px` }}
-        title={title}
-      />
-    </div>
+    <iframe
+      ref={iframeRef}
+      id={`inline-${formId}`}
+      data-form-id={formId}
+      data-layout-iframe-id={`inline-${formId}`}
+      data-layout="{'id':'INLINE'}"
+      data-trigger-type="alwaysShow"
+      data-activation-type="alwaysActivated"
+      data-deactivation-type="neverDeactivate"
+      src={iframeSrc}
+      title={title}
+      style={{
+        width: '100%',
+        border: 'none',
+        minHeight: `${minHeight}px`,
+      }}
+      scrolling="no"
+    />
   );
-};
+}

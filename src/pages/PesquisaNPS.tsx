@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import PageLayout from '@/components/layout/PageLayout';
 import { Card } from '@/components/ui/card';
+import { GHL_EMBED_BASE, GHL_SURVEYS } from '@/config/ghl';
 
 const PesquisaNPS = () => {
   useEffect(() => {
@@ -9,7 +10,7 @@ const PesquisaNPS = () => {
     
     // Dynamically load the external script
     const script = document.createElement('script');
-    script.src = 'https://pages.revhackers.com.br/js/form_embed.js';
+    script.src = `${GHL_EMBED_BASE}/js/form_embed.js`;
     script.async = true;
     document.body.appendChild(script);
     
@@ -37,14 +38,14 @@ const PesquisaNPS = () => {
           <Card className="max-w-4xl mx-auto border-border/20 bg-card/50 backdrop-blur-sm shadow-soft">
             <div className="relative w-full">
               <iframe 
-                src="https://pages.revhackers.com.br/widget/survey/4G2jjpQtGCrUqrSFMj3y" 
+                src={`${GHL_EMBED_BASE}/widget/survey/${GHL_SURVEYS.nps}`} 
                 style={{
                   border: 'none',
                   width: '100%',
                   minHeight: '600px'
                 }} 
                 scrolling="no" 
-                id="4G2jjpQtGCrUqrSFMj3y" 
+                id={GHL_SURVEYS.nps} 
                 title="Pesquisa de Satisfação NPS"
                 className=""
               />
