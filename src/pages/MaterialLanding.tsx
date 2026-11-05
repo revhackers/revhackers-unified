@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import DOMPurify from 'dompurify';
-import DownloadForm from '@/components/shared/download-form';
-import { contentGcpAdapter } from '@/api/adapters/content-gcp';
+import { GhlFormEmbed } from '@/components/shared/GhlFormEmbed';
+import { GHL_FORMS } from '@/config/ghl';
 import PageLayout from '@/components/layout/PageLayout';
 import SEO from '@/components/shared/SEO';
 import { Button } from '@/components/ui/button';
@@ -43,77 +43,23 @@ const formatHeadlineWithGreen = (text: string) => {
 
 export default function MaterialLanding() {
     const { slug } = useParams<{ slug: string }>();
-    const [showForm, setShowForm] = useState(false);
-    const [material, setMaterial] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         window.scrollTo(0, 0);
-
-        const fetchFromDatabase = async () => {
-            try {
-                // GCP /v1/materials já retorna apenas publicados por padrão
-                const data = await contentGcpAdapter.getMaterials();
-
-                let foundMaterial: any = null;
-
-                if (data && data.length > 0) {
-                    foundMaterial = data.find((m: any) => {
-                        const materialSlug = (m.slug || getSlugFromTitle(m.title || m.material_name || ''))
-                        return materialSlug === slug;
-                    });
-                }
-
-                // Fallback to local materialsData if not found in DB
-                if (!foundMaterial) {
-                    foundMaterial = materialsData.find((m: any) => m.slug === slug || getSlugFromTitle(m.title) === slug);
-                }
-
-                if (foundMaterial) {
-                    const rawTitle = foundMaterial.title || foundMaterial.material_name || '';
-                    const cleanTitle = rawTitle.replace(/<[^>]*>/g, '');
-                    setMaterial({
-                        id: foundMaterial.id,
-                        title: cleanTitle,
-                        headline: cleanTitle,
-                        subheadline: (foundMaterial.description || '').replace(/<[^>]*>/g, '').substring(0, 160),
-                        description: foundMaterial.description,
-                        type: foundMaterial.type || foundMaterial.material_type || 'Material',
-                        downloadLink: foundMaterial.link_material || foundMaterial.material_url || ''
-                    });
-                }
-            } catch (err) {
-                console.warn('Fallback to materialsData for slug:', slug);
-                const localMatch = materialsData.find((m: any) => m.slug === slug || getSlugFromTitle(m.title) === slug);
-                if (localMatch) {
-                    const cleanTitle = (localMatch.title || '').replace(/<[^>]*>/g, '');
-                    setMaterial({
-                        id: localMatch.id,
-                        title: cleanTitle,
-                        headline: cleanTitle,
-                        subheadline: (localMatch.description || '').replace(/<[^>]*>/g, '').substring(0, 160),
-                        description: localMatch.description,
-                        type: localMatch.type || localMatch.material_type || 'Material',
-                        downloadLink: localMatch.link_material || ''
-                    });
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchFromDatabase();
     }, [slug]);
 
-    if (loading) {
-        return (
-            <PageLayout>
-                <div className="min-h-[70vh] bg-black flex flex-col items-center justify-center">
-                    <div className="w-8 h-8 border-2 border-zinc-800 border-t-[#00CC6A] rounded-full animate-spin"></div>
-                </div>
-            </PageLayout>
-        );
-    }
+    const foundMaterial = materialsData.find((m) => m.slug === slug || getSlugFromTitle(m.title) === slug);
+    const material = foundMaterial && {
+        slug: foundMaterial.slug,
+        title: foundMaterial.title.replace(/<[^>]*>/g, ''),
+        headline: foundMaterial.title.replace(/<[^>]*>/g, ''),
+        subheadline: foundMaterial.description.replace(/<[^>]*>/g, '').substring(0, 160),
+        description: foundMaterial.description,
+        type: foundMaterial.type || foundMaterial.material_type || 'Material',
+        linkMaterial: foundMaterial.link_material,
+    };
+
+    if (material && !material.linkMaterial) console.error('[MaterialLanding] link_material ausente', material.slug);
 
     if (!material) {
         return (
@@ -213,13 +159,16 @@ export default function MaterialLanding() {
                                 <p className="text-xs sm:text-sm text-zinc-500">Preencha com seus dados corporativos para liberar o acesso imediato.</p>
                             </div>
                             
-                            <DownloadForm
-                                materialId={material.id}
-                                materialType={material.type}
-                                materialTitle={material.title}
-                                onSubmit={() => {}}
-                                linkMaterial={material.downloadLink}
-                            />
+                            {material.linkMaterial ? (
+                                <GhlFormEmbed
+                                    formId={GHL_FORMS.materiais}
+                                    title="Baixar material"
+                                    params={{ material_slug: material.slug, material_title: material.title, material_link: material.linkMaterial }}
+                                    minHeight={520}
+                                />
+                            ) : (
+                                <p className="text-sm text-zinc-500">Material indisponível no momento.</p>
+                            )}
                         </div>
 
                     </div>

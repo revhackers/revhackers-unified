@@ -214,33 +214,6 @@ export default function PublicDealRoom() {
         return () => clearInterval(interval);
     }, [proposal]);
 
-    // Injecao do widget de formulario externo
-    // SEGURANCA: adicionar SRI (Subresource Integrity) assim que o hash do arquivo estiver disponivel:
-    // script.integrity = "sha384-<HASH_DO_ARQUIVO>";
-    // script.crossOrigin = "anonymous";
-    // Para gerar: openssl dgst -sha384 -binary form_embed.js | openssl base64 -A
-    useEffect(() => {
-        const script = document.createElement('script');
-        script.src = "https://pages.revhackers.com.br/js/form_embed.js";
-        script.async = true;
-        script.type = "text/javascript";
-
-        // Silencia falhas de carregamento sem quebrar a pagina
-        script.onerror = () => {
-            console.warn('[DealRoom] Widget externo nao carregou. A pagina continua funcional.');
-            if (document.body.contains(script)) {
-                try { document.body.removeChild(script); } catch { /* noop */ }
-            }
-        };
-
-        document.body.appendChild(script);
-        return () => {
-            if (document.body.contains(script)) {
-                try { document.body.removeChild(script); } catch { /* noop */ }
-            }
-        };
-    }, []);
-
     if (loading) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-white">

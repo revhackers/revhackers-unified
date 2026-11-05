@@ -12,7 +12,6 @@ const distOgDir = path.resolve(distDir, 'og');
 
 const routes = [
   { route: '', file: 'home.png' },
-  { route: 'claude-partner-network', file: 'claude-partner-network.png' },
   { route: 'booking', file: 'booking.png' },
   { route: 'diagnostico', file: 'diagnostico.png' },
   { route: 'servicos', file: 'servicos.png' },

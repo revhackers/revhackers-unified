@@ -1,5 +1,4 @@
 import { DiagnosticLayout } from '@/components/diagnostics/DiagnosticLayout';
-import { DiagnosticFormData } from '@/components/diagnostics/DiagnosticForm';
 import { SiteScoreResultGate } from './SiteScoreResultGate';
 import { SiteScoreResultDashboard } from './SiteScoreResultDashboard';
 import { SiteScoreResultBenchmark } from './SiteScoreResultBenchmark';
@@ -10,8 +9,7 @@ interface SiteScoreResultProps {
   finalScore: number;
   psiResults: any;
   hasSubmittedLead: boolean;
-  onSubmitLead: (data: DiagnosticFormData) => Promise<void>;
-  isSubmitting: boolean;
+  onSubmitted: () => void;
   viewMode: 'mobile' | 'desktop';
   setViewMode: (mode: 'mobile' | 'desktop') => void;
   currentScore: number;
@@ -28,8 +26,7 @@ export const SiteScoreResult = ({
   finalScore,
   psiResults,
   hasSubmittedLead,
-  onSubmitLead,
-  isSubmitting,
+  onSubmitted,
   viewMode,
   setViewMode,
   currentScore,
@@ -56,8 +53,7 @@ export const SiteScoreResult = ({
         finalScore={finalScore}
         psiResults={psiResults}
         hasSubmittedLead={hasSubmittedLead}
-        onSubmit={onSubmitLead}
-        isSubmitting={isSubmitting}
+        onSubmitted={onSubmitted}
       />
 
       <div className={`space-y-8 transition-all duration-700 w-full ${!hasSubmittedLead ? 'blur-sm opacity-60 pointer-events-none' : ''}`}>

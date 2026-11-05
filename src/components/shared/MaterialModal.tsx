@@ -6,7 +6,8 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog';
-import DownloadForm from './download-form';
+import { GhlFormEmbed } from './GhlFormEmbed';
+import { GHL_FORMS } from '@/config/ghl';
 import { removeEmojis } from '@/utils/stringUtils';
 
 interface MaterialModalProps {
@@ -19,6 +20,7 @@ interface MaterialModalProps {
         material_type?: string;
         materialId?: string;
         id?: string;
+        slug?: string;
         link_material?: string;
         material_url?: string;
     } | null;
@@ -27,6 +29,7 @@ interface MaterialModalProps {
 
 const MaterialModal = ({ isOpen, onClose, material, onSuccess }: MaterialModalProps) => {
     if (!material) return null;
+    if (!material.link_material) console.error('[MaterialModal] link_material ausente', material.slug ?? material.title);
 
     const cleanTitle = (html: string) => {
         const div = document.createElement('div');
@@ -48,13 +51,20 @@ const MaterialModal = ({ isOpen, onClose, material, onSuccess }: MaterialModalPr
                 </DialogHeader>
 
                 <div className="text-left">
-                    <DownloadForm
-                        materialId={material.materialId || material.id || 'unknown'}
-                        materialType={material.type || material.material_type || 'material'}
-                        materialTitle={cleanTitle(material.title || material.material_name || '')}
-                        linkMaterial={material.link_material || material.material_url}
-                        onSubmit={onSuccess}
-                    />
+                    {material.link_material ? (
+                        <GhlFormEmbed
+                            formId={GHL_FORMS.materiais}
+                            title="Receber material"
+                            params={{
+                                material_slug: material.slug || '',
+                                material_title: cleanTitle(material.title || material.material_name || ''),
+                                material_link: material.link_material,
+                            }}
+                            onSubmitted={onSuccess}
+                        />
+                    ) : (
+                        <p className="text-sm text-zinc-500">Material indisponível no momento.</p>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>

@@ -1,0 +1,164 @@
+name: Deploy Cloudflare Pages (Fail-Closed)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment: staging or production"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      confirm:
+        description: "PRODUCTION ONLY: type DEPLOY_REVHACKERS to confirm"
+        required: false
+        type: string
+      reason:
+        description: "Deployment reason (for audit log)"
+        required: true
+        type: string
+
+concurrency:
+  group: cloudflare-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  pre-flight-checks:
+    name: "Pre-Flight Checks (Fail-Closed)"
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.gate.outputs.proceed }}
+    steps:
+      # Production must have explicit confirmation
+      - name: "Validate Production Gate (Fail-Closed)"
+        id: gate
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          if [ "$ENVIRONMENT" = "production" ]; then
+            if [ "$CONFIRM" != "DEPLOY_REVHACKERS" ]; then
+              echo "❌ PRODUCTION DEPLOYMENT BLOCKED: Invalid or missing confirmation"
+              echo "   Required: DEPLOY_REVHACKERS"
+              echo "   Received: $CONFIRM"
+              exit 1
+            fi
+            echo "✅ Production confirmation validated"
+          fi
+          echo "proceed=true" >> $GITHUB_OUTPUT
+
+  build-and-deploy:
+    name: "Build & Deploy to Cloudflare Pages"
+    needs: pre-flight-checks
+    if: ${{ needs.pre-flight-checks.outputs.proceed == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+    env:
+      VITE_GCP_API_URL: ${{ secrets.VITE_GCP_API_URL }}
+      VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+      VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+      VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+      VITE_GCP_ENABLED: "true"
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci --frozen-lockfile
+
+      - name: Build Production Distribution
+        run: npm run build
+
+      - name: Verify Build Artifacts
+        run: |
+          if [ ! -d "dist" ] || [ -z "$(ls -A dist)" ]; then
+            echo "❌ Build failed: dist/ is empty or missing"
+            exit 1
+          fi
+          echo "✅ Build artifacts verified"
+          ls -lh dist/ | head -20
+
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+          ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          
+          # Validate secrets
+          : "${CLOUDFLARE_API_TOKEN:?Missing CLOUDFLARE_API_TOKEN secret}"
+          : "${CLOUDFLARE_ACCOUNT_ID:?Missing CLOUDFLARE_ACCOUNT_ID secret}"
+          : "${CLOUDFLARE_PROJECT_NAME:?Missing CLOUDFLARE_PROJECT_NAME secret}"
+          
+          echo "🚀 Deploying to Cloudflare Pages..."
+          echo "   Account: $CLOUDFLARE_ACCOUNT_ID"
+          echo "   Project: $CLOUDFLARE_PROJECT_NAME"
+          echo "   Environment: $ENVIRONMENT"
+          
+          # Publish to Cloudflare Pages
+          npx wrangler pages publish dist/ \
+            --project-name "$CLOUDFLARE_PROJECT_NAME" \
+            --branch "$ENVIRONMENT" \
+            2>&1 | tee deploy.log
+          
+          # Extract deployment URL from output
+          if grep -q "Deployment complete" deploy.log; then
+            DEPLOY_URL=$(grep -oP '(?<=URL: )\S+' deploy.log | head -1 || echo "https://$ENVIRONMENT.revhackers.com.br")
+            echo "deploy_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+            echo "✅ Deployment complete: $DEPLOY_URL"
+          else
+            echo "❌ Deployment failed or output unexpected"
+            cat deploy.log
+            exit 1
+          fi
+
+      - name: Post-Deployment Validation
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.deploy_url }}
+        run: |
+          echo "Waiting for deployment to be live..."
+          sleep 5
+          
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$DEPLOY_URL" || echo "000")
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "✅ Deployment live: HTTP $HTTP_STATUS"
+          else
+            echo "⚠️ HTTP $HTTP_STATUS (may be normal during propagation)"
+          fi
+
+      - name: Audit Log
+        if: always()
+        run: |
+          cat > deploy-audit.log <<EOF
+          Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          Environment: ${{ inputs.environment }}
+          Reason: ${{ inputs.reason }}
+          Commit: ${{ github.sha }}
+          Actor: ${{ github.actor }}
+          Status: ${{ job.status }}
+          EOF
+          cat deploy-audit.log
+
+      - name: Upload Audit Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-audit-${{ inputs.environment }}-${{ github.run_id }}
+          path: deploy-audit.log
+          retention-days: 90

@@ -1,12 +1,9 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useToast } from '@/hooks/use-toast';
-import { submitPublicDiagnostic } from "@/api/publicDiagnostic";
 import { analyzeFounderProfileAI, FounderAnalysisResult } from "@/api/founderAnalysis";
 import { Brain, ArrowRight, Users, Loader2, AlertTriangle, Command } from 'lucide-react';
 import { DiagnosticLayout } from '@/components/diagnostics/DiagnosticLayout';
-import { DiagnosticForm, DiagnosticFormData } from '@/components/diagnostics/DiagnosticForm';
 import { ScoreGauge } from '@/components/diagnostics/ScoreGauge';
 import { MetricCard } from '@/components/diagnostics/MetricCard';
 import { DiagnosticActionSection } from '@/components/diagnostics/DiagnosticActionSection';
@@ -15,6 +12,8 @@ import DiagnosticBookingEmbed from '@/components/diagnostics/DiagnosticBookingEm
 import { getDiagnosticInsights } from '@/utils/diagnosticMapping';
 import { QuestionProgressBar } from '@/components/diagnostics/QuestionProgressBar';
 import SEO from '@/components/shared/SEO';
+import { GhlFormEmbed } from '@/components/shared/GhlFormEmbed';
+import { GHL_FORMS } from '@/config/ghl';
 
 // Questions centered on "Founder Authority & Bottleneck" - 4 dimensões, total = 100pts
 const QUESTIONS = [
@@ -67,12 +66,10 @@ const QUESTIONS = [
 type Step = 'questions' | 'lead-capture' | 'results';
 
 const FounderScore = () => {
-  const { toast } = useToast();
   const [step, setStep] = useState<Step>('questions');
   const [currentQ, setCurrentQ] = useState(0);
   const [score, setScore] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [hasSubmittedLead, setHasSubmittedLead] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -126,54 +123,15 @@ const FounderScore = () => {
     }, 1200);
   };
 
-  const handleFormSubmit = async (data: DiagnosticFormData) => {
-    setIsSubmitting(true);
-    try {
-      const result = getResultMap(score);
-
-      const enrichedData = {
-        ...data,
-        linkedin: linkedinUrl,
-        ...(analysisResult || {})
-      };
-
-      await submitPublicDiagnostic(
-        { ...enrichedData, phone: '' },
-        { answers, diagnostic_type: 'founder', analysis: analysisResult, source: 'founder-score' },
-        score,
-        {
-          level: result.title,
-          description: result.msg,
-          action: "Agendar Call de Diagnóstico",
-          color: "revgreen"
-        },
-        'score_captured'
-      );
-
-      setHasSubmittedLead(true);
-      toast({
-        className: "bg-white border-zinc-200 text-zinc-900",
-        title: "DIAGNÓSTICO PROCESSADO",
-        description: "Análise de perfil Founder gerada."
-      });
-
-      setIsAnalyzing(true);
-      setStep('results');
-
-      analyzeFounderProfileAI(linkedinUrl, answers, score)
-        .then(result => {
-          setAnalysisResult(result);
-        })
-        .catch(err => console.error(err))
-        .finally(() => setIsAnalyzing(false));
-
-    } catch (error) {
-      console.error(error);
-      toast({ variant: 'destructive', title: "Erro", description: "Tente novamente." });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const handleSubmitted = useCallback(() => {
+    setHasSubmittedLead(true);
+    setIsAnalyzing(true);
+    setStep('results');
+    analyzeFounderProfileAI(linkedinUrl, answers, score)
+      .then(result => setAnalysisResult(result))
+      .catch(err => console.error(err))
+      .finally(() => setIsAnalyzing(false));
+  }, [linkedinUrl, answers, score]);
 
   const getResultMap = (s: number) => {
     if (s >= 80) return { title: "CEO Estrategista", msg: "Você opera como um CEO de verdade, focado no futuro e na cultura." };
@@ -321,14 +279,16 @@ const FounderScore = () => {
 
             {/* Coluna Direita: Formulário */}
             <div className="flex-1 w-full max-w-md flex flex-col justify-center">
-              <DiagnosticForm
-                onSubmit={handleFormSubmit}
-                isSubmitting={isSubmitting}
+              <GhlFormEmbed
+                formId={GHL_FORMS.score}
                 title="Liberar Diagnóstico"
-                subtitle="Score Blended: Respostas + Autoridade Founder."
-                variant="dark"
-                showLinkedin={false}
-                diagnosticType="Founder"
+                params={{
+                  diagnostic_type: 'founder',
+                  diagnostic_score: String(score),
+                  diagnostic_category: getResultMap(score).title,
+                }}
+                minHeight={620}
+                onSubmitted={handleSubmitted}
               />
             </div>
           </div>

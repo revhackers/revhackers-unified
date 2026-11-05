@@ -1,11 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-import { useToast } from '@/hooks/use-toast';
-import { submitPublicDiagnostic } from "@/api/publicDiagnostic";
 import { runCompetitiveBenchmark, BenchmarkResult } from "@/api/cruxApi";
 import { getDiagnosticInsights } from '@/utils/diagnosticMapping';
 import SEO from '@/components/shared/SEO';
-import { DiagnosticFormData } from '@/components/diagnostics/DiagnosticForm';
 
 import { SiteScoreQuiz, QUESTIONS } from '@/components/scores/site/SiteScoreQuiz';
 import { SiteScoreResult } from '@/components/scores/site/SiteScoreResult';
@@ -13,12 +10,10 @@ import { SiteScoreResult } from '@/components/scores/site/SiteScoreResult';
 type Step = 'questions' | 'lead-capture' | 'results';
 
 const SiteScore = () => {
-  const { toast } = useToast();
   const [step, setStep] = useState<Step>('questions');
   const [currentQ, setCurrentQ] = useState(0);
   const [score, setScore] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmittedLead, setHasSubmittedLead] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const insights = getDiagnosticInsights('site', score);
@@ -54,30 +49,9 @@ const SiteScore = () => {
     }, 1500);
   };
 
-  const handleFormSubmit = async (data: DiagnosticFormData) => {
-    setIsSubmitting(true);
-    try {
-      await submitPublicDiagnostic(
-        { ...data, phone: '' },
-        { answers, diagnostic_type: 'site', source: 'site-score' },
-        score,
-        { level: "Auditoria Técnica", description: "Diagnóstico Finalizado", action: "Revisão Recomendada", color: "revgreen" },
-        'score_captured'
-      );
-
-      setHasSubmittedLead(true);
-      toast({
-        className: "bg-white border-zinc-200 text-zinc-900",
-        title: "RELATÓRIO LIBERADO",
-        description: "Acesso completo concedido ao diagnóstico do seu site."
-      });
-    } catch (error) {
-      console.error(error);
-      toast({ variant: 'destructive', title: "Erro", description: "Tente novamente." });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const handleSubmitted = useCallback(() => {
+    setHasSubmittedLead(true);
+  }, []);
 
   const finalScore = score;
 
@@ -109,8 +83,7 @@ const SiteScore = () => {
           finalScore={finalScore}
           psiResults={psiResults}
           hasSubmittedLead={hasSubmittedLead}
-          onSubmitLead={handleFormSubmit}
-          isSubmitting={isSubmitting}
+          onSubmitted={handleSubmitted}
           viewMode={viewMode}
           setViewMode={setViewMode}
           currentScore={finalScore}

@@ -15,9 +15,7 @@ import SEO from '@/components/shared/SEO';
 
 import { blogPosts as staticBlogPosts, BlogPost as StaticBlogPost } from '@/data/blogData';
 import ContextualCTA from '@/components/blog/post/ContextualCTA';
-import MaterialModal from '@/components/shared/MaterialModal';
 import BookingModal from '@/components/shared/BookingModal';
-import { useToast } from '@/hooks/use-toast';
 
 // Interface matches the Supabase structure
 interface Author {
@@ -48,9 +46,7 @@ const BlogPostPage = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const { toast } = useToast();
 
   // Load posts from Supabase API
   useEffect(() => {
@@ -200,25 +196,6 @@ const BlogPostPage = () => {
   // Handle Primary CTA (Booking/Consultancy)
   const handlePrimaryCTAClick = () => {
     setIsBookingModalOpen(true);
-  };
-
-  // Handle Secondary CTA (Material Download - if handled globally)
-  // Note: StrategicConclusion usually handles secondary CTA locally via LeadMagnetModal, 
-  // but if it bubbles up or if other components trigger it:
-  const handleMaterialDownload = () => {
-    setIsMaterialModalOpen(true);
-  };
-
-  const handleFormSubmit = () => {
-    toast({
-      title: "Solicitação recebida!",
-      description: "Seus dados foram processados. Redirecionando para agendamento...",
-    });
-    setIsMaterialModalOpen(false);
-    // Redirect to booking with slight delay for toast visibility
-    setTimeout(() => {
-      navigate('/booking');
-    }, 1500);
   };
 
   if (error) {
@@ -395,19 +372,6 @@ const BlogPostPage = () => {
           </div>
         </div>
       </section>
-
-      {/* Global CTA Modal for all articles (Material Download) */}
-      <MaterialModal
-        isOpen={isMaterialModalOpen}
-        onClose={() => setIsMaterialModalOpen(false)}
-        material={{
-          title: post.title,
-          material_name: post.title,
-          type: "Contexto", // Changed to generic context as it's secondary
-          id: post.slug
-        }}
-        onSuccess={handleFormSubmit}
-      />
 
       {/* Global Booking Modal (Diagnosis) */}
       <BookingModal

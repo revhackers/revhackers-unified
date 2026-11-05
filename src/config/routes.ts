@@ -16,7 +16,6 @@ export const APP_ROUTES = {
     BLOG: '/blog',
     BLOG_POST: '/blog/:slug',
     DIAGNOSTICO: '/diagnostico',
-    PUBLIC_DIAGNOSTIC_RESULT: '/diagnostico/resultado/:id',
     QUEM_SOMOS: '/quem-somos',
     SERVICOS: '/servicos',
     SERVICOS_DETALHE: '/servicos/:slug',

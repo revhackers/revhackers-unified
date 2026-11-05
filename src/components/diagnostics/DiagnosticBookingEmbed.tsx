@@ -1,33 +1,12 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { GhlBookingEmbed } from '@/components/shared/GhlBookingEmbed';
+import { GHL_CALENDARS } from '@/config/ghl';
 
 interface DiagnosticBookingEmbedProps {
  diagnosticType?: string;
- calendarId?: string;
 }
 
-const CALENDAR_ID = 'MmyRuRPox3ZComQA3jJ1'; // Calendario unico de diagnostico
-
-const DiagnosticBookingEmbed: React.FC<DiagnosticBookingEmbedProps> = ({ diagnosticType, calendarId }) => {
- const activeCalendar = calendarId || CALENDAR_ID;
- useEffect(() => {
- // Load the GHL embed script
- const script = document.createElement('script');
- script.src = 'https://pages.revhackers.com.br/js/form_embed.js';
- script.type = 'text/javascript';
- script.async = true;
- 
- // Append to body instead of document head because the GHL script expects it
- document.body.appendChild(script);
-
- return () => {
- // Cleanup script when component unmounts to prevent duplicates
- const existingScript = document.querySelector(`script[src="${script.src}"]`);
- if (existingScript && existingScript.parentNode) {
- existingScript.parentNode.removeChild(existingScript);
- }
- };
- }, []);
-
+const DiagnosticBookingEmbed: React.FC<DiagnosticBookingEmbedProps> = ({ diagnosticType }) => {
  return (
  <div className="w-full flex-col items-center justify-center p-4 bg-white/30 border border-zinc-200 shadow-sm mt-12 overflow-hidden">
  <div className="text-center mb-6">
@@ -36,12 +15,11 @@ const DiagnosticBookingEmbed: React.FC<DiagnosticBookingEmbedProps> = ({ diagnos
  Nossos especialistas farão o deep dive gratuito no seu funil.
  </p>
  </div>
- <iframe
- src={`https://pages.revhackers.com.br/widget/booking/${activeCalendar}?utm_source=revhackers_hub&utm_medium=diagnostic&utm_campaign=${diagnosticType || 'general'}`}
- style={{ width: '100%', border: 'none', overflow: 'hidden', minHeight: '650px' }}
- scrolling="no"
- id={`${activeCalendar}_embed`}
- title="Agendar Diagnostico"
+ <GhlBookingEmbed
+   calendarId={GHL_CALENDARS.diagnostico}
+   title="Agendar Diagnostico"
+   minHeight={650}
+   params={{ utm_source: 'revhackers_hub', utm_medium: 'diagnostic', utm_campaign: `diagnostico-${diagnosticType || 'general'}` }}
  />
  </div>
  );

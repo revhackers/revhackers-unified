@@ -1,7 +1,8 @@
 
 import { useEffect } from 'react';
 import PageLayout from '@/components/layout/PageLayout';
-import BookingWidget from '@/components/shared/BookingWidget';
+import { GhlBookingEmbed } from '@/components/shared/GhlBookingEmbed';
+import { GHL_CALENDARS } from '@/config/ghl';
 import HeroSection from '@/components/quem-somos/HeroSection';
 import HistorySection from '@/components/quem-somos/HistorySection';
 import TimelineSection from '@/components/quem-somos/TimelineSection';
@@ -45,7 +46,7 @@ const QuemSomos = () => {
         {/* Booking Widget Section — Fundo 100% Branco Puro */}
         <section className="py-20 bg-white border-t border-zinc-200/80">
           <div className="max-w-4xl mx-auto px-6">
-            <BookingWidget />
+            <GhlBookingEmbed calendarId={GHL_CALENDARS.diagnostico} title="Agendar diagnóstico" />
           </div>
         </section>
       </div>
