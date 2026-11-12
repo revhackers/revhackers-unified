@@ -6,7 +6,6 @@ export const APP_CONFIG = {
         LANDING_PAGE: 'https://revhackers.com.br',
         MAIN_SITE: 'https://revhackers.com',
         ACADEMY: 'https://academy.revhackers.com.br/',
-        LP_ACTION_PLAN: 'https://lp.revhackers.com.br/post/plano-acao-90-dias',
         INSTAGRAM: 'https://www.instagram.com/revhackers',
         LINKEDIN: 'https://www.linkedin.com/company/revhackers',
         YOUTUBE: 'https://www.youtube.com/@revhackers',

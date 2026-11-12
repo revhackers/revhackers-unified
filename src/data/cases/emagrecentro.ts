@@ -35,7 +35,7 @@ export const emagrecentroCase: CaseStudy = {
   quote: "O funil de vendas implementado revolucionou nossa captação de clientes. Antes perdíamos leads por falta de follow-up. Hoje, com CRM estruturado, lead scoring e automações rodando 24/7, aumentamos as conversões em 150% e cortamos o ciclo de vendas pela metade. Foi transformador.",
   author: "Hermano",
   role: "Proprietário, Emagrecentro Lins",
-  authorImage: "https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/694f4487ee104719c9d1a4fa.png",
+  authorImage: "/uploads/oftw/694f4487ee104719c9d1a4fa.png",
   preview_description: "Transformação Digital de Franquias: Funil de vendas integrado com CRM, Lead Scoring e automações que aumentaram conversões em 150% e reduziram ciclo de vendas em 45%.",
   logoScale: 1.5,
   techStack: ["Kommo CRM", "Funnels", "Meta Ads", "Google Ads"]

@@ -23,7 +23,7 @@ const SEO = ({
     title,
     description,
     canonical,
-    image = "https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/67f7fc91b95d208445a1317a.jpeg",
+    image = "https://revhackers.com.br/uploads/oftw/67f7fc91b95d208445a1317a.jpeg",
     type = 'website',
     publishedTime,
     modifiedTime,

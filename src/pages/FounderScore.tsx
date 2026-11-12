@@ -283,9 +283,9 @@ const FounderScore = () => {
                 formId={GHL_FORMS.score}
                 title="Liberar Diagnóstico"
                 params={{
-                  diagnostic_type: 'founder',
-                  diagnostic_score: String(score),
-                  diagnostic_category: getResultMap(score).title,
+                  rh_diagnostic_type: 'founder',
+                  rh_diagnostic_score: String(score),
+                  rh_diagnostic_category: getResultMap(score).title,
                 }}
                 minHeight={620}
                 onSubmitted={handleSubmitted}

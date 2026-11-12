@@ -21,9 +21,9 @@ const MIN_INTERVAL_MS = 250;
 
 // Chaves de campo exigidas em S7HE (plano, "Decisões fixadas"; criadas na Fase 1.1)
 const REQUIRED_KEYS = [
-  'origem', 'funil', 'material_slug', 'material_title', 'material_link', 'cargo', 'setor',
-  'consentimento_lgpd', 'diagnostic_type', 'diagnostic_score', 'diagnostic_category',
-  'calculadora', 'calculadora_resultado', 'utm_source', 'utm_medium', 'utm_campaign',
+  'origem', 'funil', 'rh_material_slug', 'rh_material_title', 'cargo', 'setor',
+  'rh_consentimento_lgpd', 'rh_diagnostic_type', 'rh_diagnostic_score', 'rh_diagnostic_category',
+  'rh_calculadora', 'rh_calculadora_resultado', 'utm_source', 'utm_medium', 'utm_campaign',
   'utm_term', 'utm_content', 'linkedin', 'crm_atual', 'tamanho_do_time', 'principal_dor',
 ];
 
@@ -41,9 +41,9 @@ const OFTW_FIELD_TO_KEY = {
   'fwqjWlKHp0P1f6biwu8e': 'principal_dor',
   'XdMA3ZfqWiNVPGr7s2mC': 'crm_atual',
   'sXUgGYTSmoPonpNl4z4h': 'tamanho_do_time',
-  'qCUpCmj7ciDfQnonMFqY': 'diagnostic_score',
-  'h3jGZ0m5IajLV9nynKcI': 'diagnostic_category',
-  'wuQsE7Xw0NndleUuLM67': 'diagnostic_type',
+  'qCUpCmj7ciDfQnonMFqY': 'rh_diagnostic_score',
+  'h3jGZ0m5IajLV9nynKcI': 'rh_diagnostic_category',
+  'wuQsE7Xw0NndleUuLM67': 'rh_diagnostic_type',
   'YjGoZEjX20GpLJzlOCWV': 'linkedin',
 };
 
@@ -139,9 +139,8 @@ function buildFields(rec) {
   const last = (rec.material?.downloads ?? []).at(-1);
   if (last) {
     values.funil = 'materiais';
-    values.material_slug = last.slug;
-    if (last.title) values.material_title = last.title;
-    if (last.link) values.material_link = last.link;
+    values.rh_material_slug = last.slug;
+    if (last.title) values.rh_material_title = last.title;
   }
   return values;
 }

@@ -1,9 +1,9 @@
-Assunto: {{contact.first_name}}, seu acesso ao {{contact.material_title}}
+Assunto: Seu material: {{contact.rh_material_title}}
 
 {{contact.first_name}}, tudo bem?
 
-Aqui está o material que você pediu, {{contact.material_title}}:
-{{contact.material_link}}
+Aqui está o material que você pediu, {{contact.rh_material_title}}:
+{{custom_values.rh_site_base_url}}/materiais/acesso/{{contact.rh_material_slug}}
 
 Se tiver alguma dúvida ou quiser trocar uma ideia sobre como aplicar isso na sua operação, é só responder este e-mail.
 

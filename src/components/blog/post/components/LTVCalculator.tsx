@@ -250,8 +250,8 @@ const LTVCalculator = () => {
                                 formId={GHL_FORMS.calculadora}
                                 title="Liberar resultado"
                                 params={{
-                                    calculadora: 'ltv',
-                                    calculadora_resultado: JSON.stringify({ arpu, margin, churn, ltv, lifetime }),
+                                    rh_calculadora: 'ltv',
+                                    rh_calculadora_resultado: JSON.stringify({ arpu, margin, churn, ltv, lifetime }),
                                 }}
                                 minHeight={320}
                                 onSubmitted={() => setStep('result')}

@@ -13,16 +13,7 @@ export interface BlogArticleGcp {
   createdAt: string;
 }
 
-export interface MaterialGcp {
-  id: string;
-  title: string;
-  slug: string;
-  category: string;
-  description?: string;
-  fileUrl?: string;
-  type: string;
-  createdAt: string;
-}
+// MaterialGcp removed
 
 export interface CaseStudyGcp {
   id: string;
@@ -40,24 +31,7 @@ export interface CaseStudyGcp {
 // Blog: frontend fields already match Zod schema (title, slug, category, authorId, readTime)
 // No transformation needed for blog articles
 
-// Materials: frontend sends snake_case, Zod expects camelCase
-function toGcpMaterialPayload(input: Record<string, unknown>): Record<string, unknown> {
-  const swap: Record<string, string> = {
-    material_name: 'materialName',
-    material_type: 'materialType',
-    material_url: 'materialUrl',
-    link_material: 'materialUrl',
-    is_active: 'isActive',
-  };
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(input)) {
-    if (v === undefined) continue;
-    const target = swap[k] ?? k;
-    out[target] = v;
-  }
-  return out;
-}
-
+// toGcpMaterialPayload removed
 // Cases: frontend sends snake_case, Zod expects camelCase
 // title → headline (frontend field name to Zod field name)
 // Zod requires BOTH title AND headline as separate required fields
@@ -99,23 +73,7 @@ function fromGcpBlog(record: Record<string, unknown> | null | undefined): Record
   return out;
 }
 
-// Materials: map to snake_case for frontend compatibility
-function fromGcpMaterial(record: Record<string, unknown> | null | undefined): Record<string, unknown> | null {
-  if (!record) return null;
-  const swap: Record<string, string> = {
-    materialName: 'material_name',
-    materialType: 'material_type',
-    materialUrl: 'material_url',
-    isActive: 'is_active',
-    createdAt: 'created_at',
-  };
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(record)) {
-    out[swap[k] ?? k] = v;
-  }
-  return out;
-}
-
+// fromGcpMaterial removed
 // Cases: map to snake_case for frontend compatibility
 function fromGcpCase(record: Record<string, unknown> | null | undefined): Record<string, unknown> | null {
   if (!record) return null;
@@ -180,25 +138,7 @@ export const contentGcpAdapter = {
     await callAuth(`/v1/blog/articles/${encodeURIComponent(id)}`, { method: 'DELETE' });
   },
 
-  // Materials
-  async getMaterials(): Promise<Record<string, unknown>[]> {
-    const data = await callPublic<MaterialGcp[]>('/v1/materials');
-    return data.map(r => fromGcpMaterial(r) as Record<string, unknown>);
-  },
-
-  async createMaterial(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
-    return callAuth<MaterialGcp>('/v1/materials', { method: 'POST', body: JSON.stringify(toGcpMaterialPayload(payload)) })
-      .then(r => fromGcpMaterial(r) as Record<string, unknown>);
-  },
-
-  async updateMaterial(id: string, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
-    return callAuth<MaterialGcp>(`/v1/materials/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(toGcpMaterialPayload(payload)) })
-      .then(r => fromGcpMaterial(r) as Record<string, unknown>);
-  },
-
-  async deleteMaterial(id: string): Promise<void> {
-    await callAuth(`/v1/materials/${encodeURIComponent(id)}`, { method: 'DELETE' });
-  },
+  // Materials methods removed
 
   // Cases
   async getCases(): Promise<Record<string, unknown>[]> {

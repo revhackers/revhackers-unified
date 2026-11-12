@@ -9,9 +9,9 @@
  * Props:
  *   - formId: GHL form ID (get from GHL › Sites › Forms › Integrate)
  *   - title: accessibility title
- *   - params: query string params to pass (material_slug, material_link, etc.)
+ *   - params: query string params (GHL custom-field keys)
  *   - minHeight: iframe min-height in px (default 620)
- *   - onSubmitted: callback fired when form emits FORM_SUBMITTED event
+ *   - onSubmitted: callback fired when form emits set-sticky-contacts / _ud event
  */
 
 import { useEffect, useRef, useCallback } from 'react';
@@ -77,24 +77,22 @@ export function GhlFormEmbed({
       return;
     }
 
-    // Set up postMessage listener for FORM_SUBMITTED event
+    // Set up postMessage listener for set-sticky-contacts / _ud event
     const handleMessage = (event: MessageEvent) => {
       // Security: verify origin matches GHL embed base
       if (!event.origin.includes(GHL_EMBED_BASE.replace('https://', ''))) {
         return;
       }
+      if (event.source !== iframeRef.current?.contentWindow) {
+        return;
+      }
 
-      // GHL emits as array [0] === 'FORM_SUBMITTED' or as object { type: 'FORM_SUBMITTED' }
       const isFormSubmitted =
-        (Array.isArray(event.data) && event.data[0] === 'FORM_SUBMITTED') ||
-        event.data?.type === 'FORM_SUBMITTED';
+        Array.isArray(event.data) &&
+        event.data[0] === 'set-sticky-contacts' &&
+        event.data[1] === '_ud';
 
       if (isFormSubmitted) {
-        // Ignore if from different form (if event.data contains form ID, check it matches)
-        if (event.data?.formId && event.data.formId !== formId) {
-          return;
-        }
-
         // Fire callback if provided
         if (onSubmitted) {
           onSubmitted();

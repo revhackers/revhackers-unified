@@ -118,9 +118,8 @@ for (const [email, { slugs }] of queue) {
       await ghl('PUT', `/contacts/${contactId}`, {
         tags: [...new Set([...(contact.tags ?? []), TAG_REENVIO, `baixou:${slug}`])],
         customFields: [
-          { key: 'material_slug', field_value: slug },
-          { key: 'material_title', field_value: material.title },
-          { key: 'material_link', field_value: material.link },
+          { key: 'rh_material_slug', field_value: slug },
+          { key: 'rh_material_title', field_value: material.title },
         ],
       });
       const removed = await waitTagRemoved(contactId);
@@ -137,5 +136,5 @@ function materialFor(slug) {
   const registry = JSON.parse(readFileSync(new URL('./materials-registry.json', import.meta.url), 'utf8'));
   const found = registry.find((m) => m.slug === slug);
   if (!found) throw new Error(`slug sem registro: ${slug}`);
-  return { title: found.title, link: found.link_material };
+  return { title: found.title };
 }

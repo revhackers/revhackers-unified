@@ -49,7 +49,7 @@ export const SiteScoreResultGate = ({
           <GhlFormEmbed
             formId={GHL_FORMS.score}
             title="Receber Relatório"
-            params={{ diagnostic_type: 'site', diagnostic_score: String(finalScore), diagnostic_category: 'Auditoria Técnica' }}
+            params={{ rh_diagnostic_type: 'site', rh_diagnostic_score: String(finalScore), rh_diagnostic_category: 'Auditoria Técnica' }}
             minHeight={620}
             onSubmitted={onSubmitted}
           />

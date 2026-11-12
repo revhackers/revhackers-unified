@@ -198,8 +198,8 @@ const ROASCalculator = () => {
                                 formId={GHL_FORMS.calculadora}
                                 title="Desbloquear Auditoria"
                                 params={{
-                                    calculadora: 'roas',
-                                    calculadora_resultado: JSON.stringify({ spend, revenue, roas, profit }),
+                                    rh_calculadora: 'roas',
+                                    rh_calculadora_resultado: JSON.stringify({ spend, revenue, roas, profit }),
                                 }}
                                 minHeight={320}
                                 onSubmitted={() => setStep('result')}

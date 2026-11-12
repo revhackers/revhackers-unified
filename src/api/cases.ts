@@ -31,7 +31,7 @@ const CASE_OVERRIDES: Record<string, { logo?: string; scale?: number }> = {
         scale: 1.0
     },
     'Idee': {
-        logo: 'https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/694c73dcdda192452a508485.png',
+        logo: '/uploads/oftw/694c73dcdda192452a508485.png',
         scale: 1.0
     },
     'Lindoya': {
@@ -47,7 +47,7 @@ const CASE_OVERRIDES: Record<string, { logo?: string; scale?: number }> = {
         scale: 1.0
     },
     'TOEFL': {
-        logo: 'https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/6959970205b5117729df4a50.png',
+        logo: '/uploads/oftw/6959970205b5117729df4a50.png',
         scale: 1.0
     },
     'Tikpag': {
@@ -79,11 +79,11 @@ const CASE_OVERRIDES: Record<string, { logo?: string; scale?: number }> = {
         scale: 1.0
     },
     'PlacLux': {
-        logo: 'https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/694c76cfe889d38ced51667d.png',
+        logo: '/uploads/oftw/694c76cfe889d38ced51667d.png',
         scale: 1.0
     },
     'BLDN': {
-        logo: 'https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/694c77062fe4f1854fadf797.svg',
+        logo: '/uploads/oftw/694c77062fe4f1854fadf797.svg',
         scale: 1.0
     }
 };
@@ -113,7 +113,7 @@ const FALLBACK_CASES: any[] = [
         slug: 'enics-abm',
         case_category: 'ABM & IA',
         preview_description: 'Estruturação de máquina de prospecção ABM com IA de qualificação. Geração de R$ 14.2M em pipeline de grandes contas em 90 dias com redução de 45% no CAC.',
-        client_logo: 'https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/695996b8748303e24fe82be8.png',
+        client_logo: '/uploads/oftw/695996b8748303e24fe82be8.png',
         published: true,
         featured: true,
         created_at: new Date().toISOString(),
@@ -130,7 +130,7 @@ const FALLBACK_CASES: any[] = [
         slug: 'tikpag-revops',
         case_category: 'RevOps & CRM',
         preview_description: 'Reestruturação completa de CRM e réguas automáticas de acompanhamento no HubSpot. Aumento de 3.2x na velocidade de conversão do funil de vendas.',
-        client_logo: 'https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/695997877483037113e88497.png',
+        client_logo: '/uploads/oftw/695997877483037113e88497.png',
         published: true,
         featured: true,
         created_at: new Date().toISOString(),
@@ -147,7 +147,7 @@ const FALLBACK_CASES: any[] = [
         slug: 'toefl-growth',
         case_category: 'Engenharia de Vendas',
         preview_description: 'Instalação de arquitetura de qualificação por IA e integração multicanal via WhatsApp. Multiplicação do volume de instituições parceiras auditadas.',
-        client_logo: 'https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/6959970205b5117729df4a50.png',
+        client_logo: '/uploads/oftw/6959970205b5117729df4a50.png',
         published: true,
         featured: true,
         created_at: new Date().toISOString(),

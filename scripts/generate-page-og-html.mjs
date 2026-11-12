@@ -10,42 +10,42 @@ const pages = [
     route: 'booking',
     title: 'Agendar Sessão Estratégica de RevOps | RevHackers',
     description: 'Agende uma auditoria de receita gratuita. Mapeamos os vazamentos da sua operação B2B e apresentamos um plano de crescimento acelerado.',
-    defaultImage: 'https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/67f7fc91b95d208445a1317a.jpeg',
+    defaultImage: '/uploads/oftw/67f7fc91b95d208445a1317a.jpeg',
     canonical: 'https://revhackers.com.br/booking'
   },
   {
     route: 'diagnostico',
     title: 'Diagnóstico de Maturidade RevOps & Growth | RevHackers',
     description: 'Avalie a maturidade das suas operações de Marketing, Vendas e Customer Success. Receba um score detalhado da sua máquina de receita.',
-    defaultImage: 'https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/67f7fc91b95d208445a1317a.jpeg',
+    defaultImage: '/uploads/oftw/67f7fc91b95d208445a1317a.jpeg',
     canonical: 'https://revhackers.com.br/diagnostico'
   },
   {
     route: 'servicos',
     title: 'Serviços de Revenue Operations & Inteligência de Dados | RevHackers',
     description: 'Consultoria completa em RevOps: Arquitetura de CRM, Agentes de IA, Founder-Led Growth, Mídia Paga B2B e Automação de Processos.',
-    defaultImage: 'https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/67f7fc91b95d208445a1317a.jpeg',
+    defaultImage: '/uploads/oftw/67f7fc91b95d208445a1317a.jpeg',
     canonical: 'https://revhackers.com.br/servicos'
   },
   {
     route: 'cases',
     title: 'Cases de Sucesso em Revenue Operations B2B | RevHackers',
     description: 'Conheça como empresas B2B escalaram receita e eliminaram gargalos operacionais com a consultoria RevHackers.',
-    defaultImage: 'https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/67f7fc91b95d208445a1317a.jpeg',
+    defaultImage: '/uploads/oftw/67f7fc91b95d208445a1317a.jpeg',
     canonical: 'https://revhackers.com.br/cases'
   },
   {
     route: 'comunidade',
     title: 'Comunidade RevHackers | Revenue Operations & Growth',
     description: 'Junte-se à comunidade de executivos, founders e líderes de RevOps do Brasil. Conteúdos exclusivos, ferramentas e networking.',
-    defaultImage: 'https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/67f7fc91b95d208445a1317a.jpeg',
+    defaultImage: '/uploads/oftw/67f7fc91b95d208445a1317a.jpeg',
     canonical: 'https://revhackers.com.br/comunidade'
   },
   {
     route: 'quem-somos',
     title: 'Quem Somos | RevHackers Consultoria RevOps',
     description: 'A primeira consultoria de Revenue Operations do Brasil. Conheça nossa história, equipe e metodologia de arquitetura de receita.',
-    defaultImage: 'https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/67f7fc91b95d208445a1317a.jpeg',
+    defaultImage: '/uploads/oftw/67f7fc91b95d208445a1317a.jpeg',
     canonical: 'https://revhackers.com.br/quem-somos'
   }
 ];

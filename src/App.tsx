@@ -40,6 +40,8 @@ const Cases = lazy(() => import("./pages/Cases"));
 const CasesDetalhe = lazy(() => import("./pages/CasesDetalhe"));
 const Materiais = lazy(() => import("./pages/Materiais"));
 const MaterialLanding = lazy(() => import("./pages/MaterialLanding"));
+const MaterialThankYou = lazy(() => import("./pages/MaterialThankYou"));
+const MaterialAccess = lazy(() => import("./pages/MaterialAccess"));
 const Metodologia = lazy(() => import("./pages/Metodologia"));
 const SetupPasswordPage = lazy(() => import("./pages/auth/SetupPasswordPage"));
 const Comunidade = lazy(() => import("./pages/Comunidade"));
@@ -92,13 +94,8 @@ const ProfileSettings = lazy(() => import("./pages/admin/ProfileSettings"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const HubMessaging = lazy(() => import("./pages/admin/HubMessaging"));
 
-const AdminMaterials = lazy(() => import("./pages/admin/AdminMaterials"));
 const AdminClients = lazy(() => import("./pages/admin/AdminClients"));
 const ClientForm = lazy(() => import("./pages/admin/ClientForm"));
-const AdminMaterialNew = lazy(() => import("./pages/admin/AdminMaterialNew"));
-const AdminMaterialEdit = lazy(() => import("./pages/admin/AdminMaterialEdit"));
-
-const FixMaterialsPage = lazy(() => import("./pages/admin/FixMaterialsPage"));
 const AdminCases = lazy(() => import("./pages/admin/AdminCases"));
 const AdminCaseNew = lazy(() => import("./pages/admin/AdminCaseNew"));
 const AdminCaseEdit = lazy(() => import("./pages/admin/AdminCaseEdit"));
@@ -177,6 +174,8 @@ const App = () => (
               <Route path="/partners/enics" element={<PartnerEnics />} />
               <Route path="/materiais" element={<Materiais />} />
               <Route path="/materiais/:slug" element={<MaterialLanding />} />
+              <Route path="/materiais/obrigado" element={<MaterialThankYou />} />
+              <Route path="/materiais/acesso/:slug" element={<MaterialAccess />} />
               <Route path="/comunidade" element={<Comunidade />} />
               <Route path="/booking" element={<Booking />} />
               <Route path="/agenda" element={<Navigate to="/booking" replace />} />
@@ -262,12 +261,6 @@ const App = () => (
 
               {/* Pitch Deck (Cinema Mode - fullscreen) */}
               <Route path="/admin/pitch/:id" element={<ProtectedRoute><PitchDeckPresentation /></ProtectedRoute>} />
-
-              {/* Admin - Materials */}
-              <Route path="/admin/materials" element={<ProtectedRoute><AdminMaterials /></ProtectedRoute>} />
-              <Route path="/admin/materials/new" element={<ProtectedRoute><AdminMaterialNew /></ProtectedRoute>} />
-              <Route path="/admin/materials/edit/:id" element={<ProtectedRoute><AdminMaterialEdit /></ProtectedRoute>} />
-              <Route path="/admin/fix-materials" element={<ProtectedRoute><FixMaterialsPage /></ProtectedRoute>} />
 
               {/* Admin - Cases */}
               <Route path="/admin/cases" element={<ProtectedRoute><AdminCases /></ProtectedRoute>} />

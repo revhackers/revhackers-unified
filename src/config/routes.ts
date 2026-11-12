@@ -27,6 +27,8 @@ export const APP_ROUTES = {
     DOWNLOADS: '/downloads',
     MATERIAIS: '/materiais',
     MATERIAL_LANDING: '/materiais/:slug',
+    MATERIAL_THANK_YOU: '/materiais/obrigado',
+    MATERIAL_ACCESS: '/materiais/acesso/:slug',
     COMUNIDADE: '/comunidade',
     BOOKING: '/booking',
     AGENDA: '/agenda', // redirects to /booking
@@ -103,10 +105,6 @@ export const APP_ROUTES = {
     BLOG: '/admin/blog',
     BLOG_NEW: '/admin/blog/novo',
     POSTS_REDIRECT: '/admin/posts', // legacy, maps to /admin/blog
-    MATERIALS: '/admin/materials',
-    MATERIAL_NEW: '/admin/materials/new',
-    MATERIAL_EDIT: '/admin/materials/edit/:id',
-    FIX_MATERIALS: '/admin/fix-materials',
     CASES: '/admin/cases',
     CASE_NEW: '/admin/cases/new',
     CASE_EDIT: '/admin/cases/edit/:id',
