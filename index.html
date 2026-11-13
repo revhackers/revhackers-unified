@@ -29,7 +29,7 @@
   <!-- Google Search Console Verification -->
   <meta name="google-site-verification" content="mnJN0Y0oxcM6PFoQsCcacQWBseZol3jbRI4_GEPtp-w" />
 
-  <!-- Force purge all GHL / LeadConnector external chat widget embeds -->
+  <!-- Purge only the GHL / LeadConnector CHAT widget. Native form/booking embeds (api.leadconnectorhq.com/widget/form|booking) MUST survive. -->
   <style>
     chat-widget,
     #chat-widget,
@@ -38,10 +38,7 @@
     #hl-chat-widget-container,
     [id*="chat-widget"],
     [class*="chat-widget"],
-    [id*="leadconnector"],
-    [class*="leadconnector"],
-    iframe[src*="leadconnector"],
-    iframe[src*="widget.leadconnectorhq"] {
+    iframe[src*="chat-widget"] {
       display: none !important;
       opacity: 0 !important;
       pointer-events: none !important;
@@ -62,8 +59,7 @@
           var selectors = [
             'chat-widget', '#chat-widget', '#leadconnector-chat-widget',
             '.hl-chat-widget', '#hl-chat-widget-container', '[id*="chat-widget"]',
-            '[class*="chat-widget"]', '[id*="leadconnector"]', '[class*="leadconnector"]',
-            'iframe[src*="leadconnector"]', 'iframe[src*="widget.leadconnectorhq"]', 'iframe[src*="msgsndr"]'
+            '[class*="chat-widget"]', 'iframe[src*="chat-widget"]'
           ];
           for (var i = 0; i < selectors.length; i++) {
             var targets = document.querySelectorAll(selectors[i]);
