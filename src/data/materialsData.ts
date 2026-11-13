@@ -18,7 +18,7 @@ export const materialsData: Material[] = [
         type: 'Framework',
         category: 'Automação',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b1bdc72e039818fb5ccc42c813e1fa1',
+        link_material: 'https://revtech.notion.site/1322af87d0f749f98c6b93d095e19f8d',
     },
     {
         slug: 'plano-acao-90-dias',
@@ -34,7 +34,7 @@ export const materialsData: Material[] = [
         type: 'Guia',
         category: 'Automação',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b1bdc72e03981f286f3ee0390b60fd5',
+        link_material: 'https://revtech.notion.site/b29d4498c351464d84ad398e4c7d266d',
     },
     {
         slug: 'crm-estrategico',
@@ -42,7 +42,7 @@ export const materialsData: Material[] = [
         type: 'Guia',
         category: 'Vendas',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b1bdc72e0398116ad99c92f4aceb3c8',
+        link_material: 'https://revtech.notion.site/af40ea73b2ca41df9387a9a20f9e65d2',
     },
     {
         slug: 'transforme-linkedin',
@@ -50,7 +50,7 @@ export const materialsData: Material[] = [
         type: 'Guia',
         category: 'Vendas',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b1bdc72e0398139b03bf54002aa472f',
+        link_material: 'https://revtech.notion.site/3241c424c46145a9a321a4be278b188f',
     },
     {
         slug: 'guia-gtm',
@@ -58,7 +58,7 @@ export const materialsData: Material[] = [
         type: 'Guia',
         category: 'Estratégia',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b1bdc72e0398113a40ed099ea7f2f79',
+        link_material: 'https://revtech.notion.site/bdd9f4fbfe9883a2a13a01b0892e2ea6',
     },
     {
         slug: 'linkedin-outreach',
@@ -66,7 +66,7 @@ export const materialsData: Material[] = [
         type: 'Guia',
         category: 'Vendas',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b2bdc72e03981128dcbd9b1285f0c98',
+        link_material: 'https://revtech.notion.site/685e6be72ec84df584179b72aaca8e75',
     },
     {
         slug: 'timing-sales-playbook',
@@ -74,7 +74,7 @@ export const materialsData: Material[] = [
         type: 'Playbook',
         category: 'Vendas',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b2bdc72e0398157aec3cd72ca2c1915',
+        link_material: 'https://revtech.notion.site/6a985c8ba586402ca0757db7c7b379af',
     },
     {
         slug: 'contato-decisores',
@@ -82,7 +82,7 @@ export const materialsData: Material[] = [
         type: 'Guia',
         category: 'Prospecção',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b2bdc72e03981849f51cc033be06d9a',
+        link_material: 'https://revtech.notion.site/bb3e93c0d4a04db3b02cc17f7a62acc7',
     },
     {
         slug: 'framework-clickup',
@@ -90,7 +90,7 @@ export const materialsData: Material[] = [
         type: 'Framework',
         category: 'Operação',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b2bdc72e039815d81dde70d2273a6dd',
+        link_material: 'https://revtech.notion.site/95eb673f915b4535adaf7b0a15553a59',
     },
     {
         slug: 'servidor-ia-local',
@@ -98,7 +98,7 @@ export const materialsData: Material[] = [
         type: 'Guia',
         category: 'Infraestrutura',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b1bdc72e03981e3ad18d9916c0a67d4',
+        link_material: 'https://revtech.notion.site/af07a0607f1a47f2824a0a1b2964b02d',
     },
     {
         slug: 'growth-score-guia-acao',
@@ -106,7 +106,7 @@ export const materialsData: Material[] = [
         type: 'Guia',
         category: 'Growth',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b2bdc72e039816f872fd9166bcefa92',
+        link_material: 'https://revtech.notion.site/28ae003807a8477a9e74026294964f80',
     },
     {
         slug: 'site-score-guia-acao',
@@ -122,7 +122,7 @@ export const materialsData: Material[] = [
         type: 'Guia',
         category: 'Growth',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b2bdc72e0398183a6cffb86769c7189',
+        link_material: 'https://revtech.notion.site/72e5e9c82b69421d9967c67edaa78785',
     },
     {
         slug: 'revenue-score-guia-acao',
@@ -130,7 +130,7 @@ export const materialsData: Material[] = [
         type: 'Guia',
         category: 'Growth',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b2bdc72e039819aa52de191f0a95b93',
+        link_material: 'https://revtech.notion.site/0f9034e4740840dfb52d06e4e42f8f23',
     },
     {
         slug: 'playbook-handoff-vendas-cs',
@@ -138,7 +138,7 @@ export const materialsData: Material[] = [
         type: 'Playbook',
         category: 'Vendas',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b2bdc72e03981db966ef724a3663b9e',
+        link_material: 'https://revtech.notion.site/2a39d1ae029846d29402940d0a423aee',
     },
     {
         slug: 'matriz-compensacao-vendas-b2b',
