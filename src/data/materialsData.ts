@@ -146,7 +146,7 @@ export const materialsData: Material[] = [
         type: 'Guia',
         category: 'Vendas',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b2bdc72e039814b93e0e90b0841bce4',
+        link_material: 'https://revtech.notion.site/1c01852d6b0744fc956c46c9b3343944',
     },
     {
         slug: 'guia-precificacao-saas-b2b',
@@ -154,7 +154,7 @@ export const materialsData: Material[] = [
         type: 'Guia',
         category: 'Estratégia',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b2bdc72e039814fbfcfd742f6eac760',
+        link_material: 'https://revtech.notion.site/813b96225be8492987a1810150961f83',
     },
     {
         slug: 'framework-territorios-contas-b2b',
