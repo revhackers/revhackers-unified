@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import PageLayout from '@/components/layout/PageLayout';
 import SEO from '@/components/shared/SEO';
 import { Button } from '@/components/ui/button';
@@ -23,12 +22,10 @@ export default function MaterialThankYou() {
 
     return (
         <PageLayout>
-            <Helmet>
-                <meta name="robots" content="noindex,nofollow" />
-            </Helmet>
             <SEO
                 title="Material enviado"
                 description="Seu material RevHackers foi enviado por e-mail."
+                noindex
             />
             {/* Hero Section */}
             <section className="relative min-h-[40vh] flex flex-col justify-center items-center overflow-hidden pt-28 pb-16 bg-black border-b border-zinc-900 text-center">

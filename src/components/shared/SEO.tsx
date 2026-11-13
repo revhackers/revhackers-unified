@@ -13,6 +13,8 @@ interface SEOProps {
     faq?: { question: string; answer: string }[];
     wordCount?: number;
     keywords?: string[];
+    /** Páginas transacionais (obrigado, redirecionamento): emite robots noindex,nofollow. */
+    noindex?: boolean;
 }
 
 export const SEOProvider = ({ children }: { children: React.ReactNode }) => {
@@ -32,6 +34,7 @@ const SEO = ({
     faq,
     wordCount,
     keywords,
+    noindex = false,
 }: SEOProps) => {
 
     const siteTitle = "RevHackers | Consultoria RevOps & Growth B2B";
@@ -304,7 +307,7 @@ const SEO = ({
             <meta name="twitter:image" content={image} />
 
             {/* GEO / Local SEO Signals (Critical for GEO ranking) */}
-            <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+            <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"} />
             <meta name="geo.region" content="BR-SP" />
             <meta name="geo.placename" content="São Paulo" />
             <meta name="geo.position" content="-23.5505;-46.6333" />

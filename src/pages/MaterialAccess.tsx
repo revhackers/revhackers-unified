@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import { ArrowLeft } from 'lucide-react';
 import PageLayout from '@/components/layout/PageLayout';
 import SEO from '@/components/shared/SEO';
@@ -20,10 +19,7 @@ export default function MaterialAccess() {
     if (!material || !material.link_material) {
         return (
             <PageLayout>
-                <Helmet>
-                    <meta name="robots" content="noindex,nofollow" />
-                </Helmet>
-                <SEO title="Material não encontrado" description="O material solicitado não foi encontrado." />
+                <SEO title="Material não encontrado" description="O material solicitado não foi encontrado." noindex />
                 <div className="min-h-[70vh] bg-black flex flex-col items-center justify-center px-6 text-center">
                     <h1 className="text-2xl font-bold text-white tracking-tight mb-3">Material não encontrado</h1>
                     <p className="text-zinc-400 text-sm mb-8 max-w-md">O material solicitado pode ter sido atualizado ou relocado.</p>
@@ -40,10 +36,7 @@ export default function MaterialAccess() {
 
     return (
         <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center">
-            <Helmet>
-                <meta name="robots" content="noindex,nofollow" />
-            </Helmet>
-            <SEO title="Redirecionando..." description="Acessando material oficial RevHackers." />
+            <SEO title="Redirecionando..." description="Acessando material oficial RevHackers." noindex />
             <div className="w-10 h-10 border-2 border-zinc-800 border-t-revgreen rounded-full animate-spin mb-4"></div>
             <p className="text-zinc-400 text-xs uppercase tracking-widest font-bold">Redirecionando para o material...</p>
         </div>
