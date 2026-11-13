@@ -186,6 +186,6 @@ export const materialsData: Material[] = [
         type: 'Framework',
         category: 'Prospecção',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b4bdc72e039819d9bc9cc14774f247f',
+        link_material: 'https://revtech.notion.site/60eb8340dc7449c6a0d8dd3b1cf61152',
     }
 ];
