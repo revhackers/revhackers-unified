@@ -178,7 +178,7 @@ export const materialsData: Material[] = [
         type: 'Framework',
         category: 'Automação',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b4bdc72e03981f3a55cf9be2a62fa6d',
+        link_material: 'https://revtech.notion.site/8f19ed560bcf43eeb3603fe73df1ae14',
     },
     {
         slug: 'prospeccao-ultra-segmentada-7-dados',
