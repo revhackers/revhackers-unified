@@ -26,7 +26,7 @@ export const materialsData: Material[] = [
         type: 'Template',
         category: 'Gestão',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://lp.revhackers.com.br/post/plano-acao-90-dias',
+        link_material: 'https://revtech.notion.site/38549080595c4594970299e623f92f65',
     },
     {
         slug: 'guia-agent-builder',
