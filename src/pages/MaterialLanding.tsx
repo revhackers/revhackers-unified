@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import { GhlFormEmbed } from '@/components/shared/GhlFormEmbed';
 import { GHL_FORMS } from '@/config/ghl';
 import PageLayout from '@/components/layout/PageLayout';
