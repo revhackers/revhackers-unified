@@ -230,6 +230,7 @@ const App = () => (
               <Route path="/score" element={<PageErrorBoundary><GrowthScore /></PageErrorBoundary>} />
               <Route path="/score-site" element={<PageErrorBoundary><SiteScore /></PageErrorBoundary>} />
               <Route path="/score-revenue" element={<PageErrorBoundary><RevenueScore /></PageErrorBoundary>} />
+              <Route path="/score-founder" element={<PageErrorBoundary><FounderScore /></PageErrorBoundary>} />
               <Route path="/diagnostico/v2" element={<PageErrorBoundary><EnrichedDiagnostic /></PageErrorBoundary>} />
 
               <Route path="/diagnostico/resultado/:id" element={<PublicDiagnosticResult />} />
