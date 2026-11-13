@@ -158,7 +158,11 @@ export default function MaterialLanding() {
                                     title="Receber material"
                                     params={{ rh_material_slug: material.slug, rh_material_title: material.title }}
                                     minHeight={380}
-                                    onSubmitted={() => navigate(`/materiais/obrigado?m=${encodeURIComponent(material.slug)}`)}
+                                    onSubmitted={(email) => {
+                                        const q = new URLSearchParams({ m: material.slug });
+                                        if (email) q.set('email', email);
+                                        navigate(`/materiais/obrigado?${q.toString()}`);
+                                    }}
                                 />
                             ) : (
                                 <p className="text-sm text-zinc-500">Material indisponível no momento.</p>

@@ -17,6 +17,7 @@ import { ArrowRight, CheckCircle2 } from 'lucide-react';
 export default function MaterialThankYou() {
     const [searchParams] = useSearchParams();
     const m = searchParams.get('m');
+    const email = searchParams.get('email') || '';
     const material = materialsData.find((x) => x.slug === m);
     const [isBookingOpen, setIsBookingOpen] = useState(false);
 
@@ -105,6 +106,7 @@ export default function MaterialThankYou() {
                             <GhlBookingEmbed
                                 calendarId={GHL_CALENDARS.diagnostico}
                                 title="Agendar diagnóstico"
+                                params={email ? { email } : undefined}
                                 minHeight={780}
                             />
                         </div>

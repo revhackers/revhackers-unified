@@ -42,9 +42,11 @@ const MaterialModal = ({ isOpen, onClose, material, onSuccess }: MaterialModalPr
                             rh_material_slug: material.slug,
                             rh_material_title: material.title,
                         }}
-                        onSubmitted={() => {
+                        onSubmitted={(email) => {
                             onSuccess();
-                            navigate(`/materiais/obrigado?m=${encodeURIComponent(material.slug)}`);
+                            const q = new URLSearchParams({ m: material.slug });
+                            if (email) q.set('email', email);
+                            navigate(`/materiais/obrigado?${q.toString()}`);
                         }}
                     />
                 </div>

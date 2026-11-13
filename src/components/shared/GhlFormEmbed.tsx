@@ -23,7 +23,7 @@ export interface GhlFormEmbedProps {
   title: string;
   params?: Record<string, string>;
   minHeight?: number;
-  onSubmitted?: () => void;
+  onSubmitted?: (email?: string) => void;
 }
 
 /**
@@ -131,9 +131,14 @@ export function GhlFormEmbed({
         event.data[1] === '_ud';
 
       if (isFormSubmitted) {
-        // Fire callback if provided
         if (onSubmitted) {
-          onSubmitted();
+          let userEmail: string | undefined;
+          try {
+            const raw = event.data[2];
+            const obj = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            userEmail = obj?.email || obj?.contact?.email;
+          } catch (e) {}
+          onSubmitted(userEmail);
         }
       }
     };
