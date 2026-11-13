@@ -114,7 +114,7 @@ export const materialsData: Material[] = [
         type: 'Guia',
         category: 'Growth',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b2bdc72e03981539fcaec897782dbbb',
+        link_material: 'https://revtech.notion.site/996358b210ee41f1a71ea5c5976f25ec',
     },
     {
         slug: 'founder-score-guia-acao',
@@ -162,7 +162,7 @@ export const materialsData: Material[] = [
         type: 'Framework',
         category: 'Vendas',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b2bdc72e039815095e7fe40a648b77e',
+        link_material: 'https://revtech.notion.site/9551cc1a4bc845bfa66610469ad15de0',
     },
     {
         slug: 'framework-prime-o-playbook-definitivo-de-comentarios-de-autoridade-no-linkedin-b2b',
