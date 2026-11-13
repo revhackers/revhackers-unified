@@ -69,18 +69,20 @@ export default function MaterialThankYou() {
                             Quer aplicar isso na sua operação?
                         </h2>
                         <p className="text-zinc-600 text-base leading-relaxed">
-                            Converse 45 minutos com nosso time e saia com os principais vazamentos de receita mapeados.
+                            Descubra sua pontuação e os gargalos com o diagnóstico <strong>Decisor Visible</strong>.
                         </p>
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Button
                             size="lg"
-                            onClick={() => setIsBookingOpen(true)}
+                            asChild
                             className="bg-zinc-950 text-white hover:bg-zinc-800 font-bold text-sm h-12 px-8 rounded-xl shadow-xs transition-all"
                         >
-                            Agendar diagnóstico
-                            <ArrowRight className="ml-2 w-4 h-4" />
+                            <Link to={`/score-founder?source=materiais:${material?.slug || 'geral'}&material=${material?.slug || ''}`}>
+                                Fazer diagnóstico Decisor Visible
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Link>
                         </Button>
                         <Button
                             variant="outline"
