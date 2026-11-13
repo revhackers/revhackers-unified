@@ -103,7 +103,7 @@ export default function MaterialThankYou() {
                             <GhlBookingEmbed
                                 calendarId={GHL_CALENDARS.diagnostico}
                                 title="Agendar diagnóstico"
-                                minHeight={650}
+                                minHeight={780}
                             />
                         </div>
                     </DialogContent>
