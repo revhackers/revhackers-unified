@@ -34,18 +34,30 @@ export default function MaterialThankYou() {
                         <CheckCircle2 className="w-8 h-8 text-[#00CC6A]" />
                     </div>
                     <span className="text-[#00CC6A] text-xs font-semibold uppercase tracking-wider mb-4">
-                        Material a caminho
+                        Material liberado
                     </span>
                     <h1 className="font-sans text-[2.25rem] sm:text-[2.75rem] md:text-[3.25rem] font-extrabold text-white mb-5 leading-[1.15] tracking-tight">
-                        Pronto. Enviamos o material para o seu e-mail.
+                        Pronto. Seu material está liberado.
                     </h1>
                     <p className="text-zinc-400 text-base md:text-lg font-normal leading-relaxed max-w-2xl mx-auto">
                         {material ? (
-                            <>O <strong>{material.title}</strong> chega em instantes. Confira também a caixa de spam.</>
+                            <>Acesse agora o <strong>{material.title}</strong>. Enviamos uma cópia para o seu e-mail; se não chegar, confira a caixa de spam.</>
                         ) : (
-                            <>O material chega em instantes. Confira também a caixa de spam.</>
+                            <>Enviamos o material para o seu e-mail. Se não chegar, confira a caixa de spam.</>
                         )}
                     </p>
+                    {material && (
+                        <Button
+                            size="lg"
+                            asChild
+                            className="mt-8 bg-[#00CC6A] text-black hover:bg-[#00b85f] font-bold text-sm h-12 px-8 rounded-xl"
+                        >
+                            <a href={`/materiais/acesso/${material.slug}`} target="_blank" rel="noopener noreferrer">
+                                Abrir material agora
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </a>
+                        </Button>
+                    )}
                 </div>
             </section>
 

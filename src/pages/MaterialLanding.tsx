@@ -157,7 +157,7 @@ export default function MaterialLanding() {
                                     formId={GHL_FORMS.materiais}
                                     title="Receber material"
                                     params={{ rh_material_slug: material.slug, rh_material_title: material.title }}
-                                    minHeight={520}
+                                    minHeight={380}
                                     onSubmitted={() => navigate(`/materiais/obrigado?m=${encodeURIComponent(material.slug)}`)}
                                 />
                             ) : (
