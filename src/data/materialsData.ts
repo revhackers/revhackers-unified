@@ -170,7 +170,7 @@ export const materialsData: Material[] = [
         type: 'Playbook',
         category: 'LinkedIn',
         description: '<p>Material oficial. Conteúdo prático e validado para sua operação.</p>',
-        link_material: 'https://bustling-lemon-68c.notion.site/3b4bdc72e03981d99754c9f5e8772a62',
+        link_material: 'https://revtech.notion.site/6c492e93b2404721a6e1919dd43a3737',
     },
     {
         slug: 'matriz-roteamento-ia-qual-modelo-usar-em-cada-tarefa',
