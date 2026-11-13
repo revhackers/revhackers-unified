@@ -14,7 +14,7 @@
  *   - onSubmitted: callback fired when form emits set-sticky-contacts / _ud event
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { GHL_EMBED_BASE, GHL_FORM_EMBED_SCRIPT } from '@/config/ghl';
 import { getPersistedUtmParams } from '@/utils/utm';
 
@@ -68,6 +68,44 @@ export function GhlFormEmbed({
     return `${GHL_EMBED_BASE}/widget/form/${formId}?${allParams.toString()}`;
   }, [formId, params]);
 
+  // O widget do GHL preenche campos ocultos (rh_material_slug, rh_diagnostic_*, utm_* ...) a partir da
+  // query string da PAGINA-MAE; os parametros da URL do iframe sao ignorados. Por isso espelhamos
+  // `params` (e os UTMs persistidos, sem sobrescrever os da URL) na URL atual antes do iframe carregar.
+  const paramsKey = JSON.stringify(params);
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined' || !formId) return;
+    const explicit = JSON.parse(paramsKey) as Record<string, string>;
+    const url = new URL(window.location.href);
+    const applied: Array<[string, string]> = [];
+    for (const [key, value] of Object.entries(getPersistedUtmParams())) {
+      if (value && !url.searchParams.has(key)) {
+        url.searchParams.set(key, value);
+        applied.push([key, value]);
+      }
+    }
+    for (const [key, value] of Object.entries(explicit)) {
+      if (value) {
+        url.searchParams.set(key, value);
+        applied.push([key, value]);
+      }
+    }
+    if (applied.length) {
+      window.history.replaceState(window.history.state, '', url.toString());
+    }
+    return () => {
+      const current = new URL(window.location.href);
+      let changed = false;
+      for (const [key, value] of applied) {
+        if (current.searchParams.get(key) === value) {
+          current.searchParams.delete(key);
+          changed = true;
+        }
+      }
+      if (changed) {
+        window.history.replaceState(window.history.state, '', current.toString());
+      }
+    };
+  }, [formId, paramsKey]);
   useEffect(() => {
     // Inject global GHL script once
     injectGhlFormScript();
