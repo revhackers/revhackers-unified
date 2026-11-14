@@ -20,10 +20,11 @@ export default function MaterialThankYou() {
     const location = useLocation();
     const m = searchParams.get('m');
     const stateVal = location.state as unknown;
-    const email =
-        stateVal && typeof stateVal === 'object' && 'email' in stateVal && typeof (stateVal as { email?: unknown }).email === 'string'
-            ? ((stateVal as { email?: string }).email ?? '')
-            : '';
+    const stateObj = stateVal && typeof stateVal === 'object' ? (stateVal as Record<string, unknown>) : {};
+    const email = typeof stateObj.email === 'string' ? stateObj.email : '';
+    // ghl_contact_id só entra se o widget/workflow o fornecer (nunca inventar).
+    const contactId =
+        typeof stateObj.ghl_contact_id === 'string' && stateObj.ghl_contact_id ? stateObj.ghl_contact_id : '';
     const material = materialsData.find((x) => x.slug === m);
     const [isBookingOpen, setIsBookingOpen] = useState(false);
 
@@ -31,6 +32,7 @@ export default function MaterialThankYou() {
     const scoreParams = new URLSearchParams({
         source: `materiais:${material?.slug || 'geral'}`,
         material: material?.slug || '',
+        ...(contactId ? { ghl_contact_id: contactId } : null),
         ...utm,
     });
 
