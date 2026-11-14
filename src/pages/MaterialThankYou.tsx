@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, useLocation, Link } from 'react-router-dom';
+import { captureUtmParams } from '@/utils/utm';
 import PageLayout from '@/components/layout/PageLayout';
 import SEO from '@/components/shared/SEO';
 import { Button } from '@/components/ui/button';
@@ -16,16 +17,28 @@ import { ArrowRight, CheckCircle2 } from 'lucide-react';
 
 export default function MaterialThankYou() {
     const [searchParams] = useSearchParams();
+    const location = useLocation();
     const m = searchParams.get('m');
-    const email = searchParams.get('email') || '';
+    const stateVal = location.state as unknown;
+    const email =
+        stateVal && typeof stateVal === 'object' && 'email' in stateVal && typeof (stateVal as { email?: unknown }).email === 'string'
+            ? ((stateVal as { email?: string }).email ?? '')
+            : '';
     const material = materialsData.find((x) => x.slug === m);
     const [isBookingOpen, setIsBookingOpen] = useState(false);
+
+    const utm = captureUtmParams();
+    const scoreParams = new URLSearchParams({
+        source: `materiais:${material?.slug || 'geral'}`,
+        material: material?.slug || '',
+        ...utm,
+    });
 
     return (
         <PageLayout>
             <SEO
-                title="Material enviado"
-                description="Seu material RevHackers foi enviado por e-mail."
+                title="Material liberado"
+                description="Acesse seu material RevHackers instantaneamente."
                 noindex
             />
             {/* Hero Section */}
@@ -42,9 +55,9 @@ export default function MaterialThankYou() {
                     </h1>
                     <p className="text-zinc-400 text-base md:text-lg font-normal leading-relaxed max-w-2xl mx-auto">
                         {material ? (
-                            <>Acesse agora o <strong>{material.title}</strong>. Enviamos uma cópia para o seu e-mail; se não chegar, confira a caixa de spam.</>
+                            <>Acesse agora o <strong>{material.title}</strong> através do link abaixo. O acesso está liberado para consulta imediata.</>
                         ) : (
-                            <>Enviamos o material para o seu e-mail. Se não chegar, confira a caixa de spam.</>
+                            <>Seu material está liberado. Acesse através do link abaixo.</>
                         )}
                     </p>
                     {material && (
@@ -74,21 +87,28 @@ export default function MaterialThankYou() {
                         </p>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
                         <Button
                             size="lg"
                             asChild
                             className="bg-zinc-950 text-white hover:bg-zinc-800 font-bold text-sm h-12 px-8 rounded-xl shadow-xs transition-all"
                         >
-                            <Link to={`/score-founder?source=materiais:${material?.slug || 'geral'}&material=${material?.slug || ''}`}>
+                            <Link to={`/score-founder?${scoreParams.toString()}`}>
                                 Fazer diagnóstico Decisor Visible
                                 <ArrowRight className="ml-2 w-4 h-4" />
                             </Link>
                         </Button>
                         <Button
                             variant="outline"
+                            onClick={() => setIsBookingOpen(true)}
+                            className="border-zinc-300 text-zinc-700 hover:bg-zinc-50 font-semibold text-sm h-12 px-6 rounded-xl cursor-pointer"
+                        >
+                            Agendar diagnóstico
+                        </Button>
+                        <Button
+                            variant="ghost"
                             asChild
-                            className="border-zinc-300 text-zinc-700 hover:bg-zinc-50 font-semibold text-sm h-12 px-6 rounded-xl"
+                            className="text-zinc-500 hover:text-zinc-900 font-medium text-sm h-12 px-4"
                         >
                             <Link to="/materiais">Ver outros materiais</Link>
                         </Button>

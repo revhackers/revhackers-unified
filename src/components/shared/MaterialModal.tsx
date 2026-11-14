@@ -10,6 +10,7 @@ import {
 import { GhlFormEmbed } from './GhlFormEmbed';
 import { GHL_FORMS } from '@/config/ghl';
 import type { Material } from '@/data/materialsData';
+import { captureUtmParams } from '@/utils/utm';
 
 interface MaterialModalProps {
     isOpen: boolean;
@@ -44,9 +45,9 @@ const MaterialModal = ({ isOpen, onClose, material, onSuccess }: MaterialModalPr
                         }}
                         onSubmitted={(email) => {
                             onSuccess();
-                            const q = new URLSearchParams({ m: material.slug });
-                            if (email) q.set('email', email);
-                            navigate(`/materiais/obrigado?${q.toString()}`);
+                            const utm = captureUtmParams();
+                            const q = new URLSearchParams({ m: material.slug, ...utm });
+                            navigate(`/materiais/obrigado?${q.toString()}`, { state: { email } });
                         }}
                     />
                 </div>

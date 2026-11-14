@@ -46,16 +46,7 @@ jobs:
       - name: Instalar Dependências
         run: npm ci
 
-      - name: Compilar Build de Produção (GCP Native Stack)
-        env:
-          VITE_FIREBASE_API_KEY: "AIzaSyDrdt32oOHC86aXqGxm7QC1HpbmH4H2VJk"
-          VITE_FIREBASE_AUTH_DOMAIN: "revhackers-staging.firebaseapp.com"
-          VITE_FIREBASE_PROJECT_ID: "revhackers-staging"
-          VITE_GOOGLE_AUTH_ENABLED: "true"
-          VITE_GCP_API_URL: "https://revhackers-api-staging-3na73syj5a-rj.a.run.app"
-          VITE_GCP_ENABLED: "true"
-          VITE_CLIENTS_GCP_ENABLED: "true"
-          VITE_GROWTHMAP_GCP_ENABLED: "true"
+      - name: Compilar Build de Produção (Cloudflare-only)
         run: npx vite build
 
       - name: Gerar OG HTML

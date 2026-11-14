@@ -94,6 +94,7 @@ export function GhlFormEmbed({
     }
     return () => {
       const current = new URL(window.location.href);
+      if (current.pathname !== url.pathname) return;
       let changed = false;
       for (const [key, value] of applied) {
         if (current.searchParams.get(key) === value) {
@@ -115,16 +116,15 @@ export function GhlFormEmbed({
       return;
     }
 
-    // Set up postMessage listener for set-sticky-contacts / _ud event
+    const allowedOrigin = new URL(GHL_EMBED_BASE).origin;
+
     const handleMessage = (event: MessageEvent) => {
-      // Security: verify origin matches GHL embed base
-      if (!event.origin.includes(GHL_EMBED_BASE.replace('https://', ''))) {
+      if (event.origin !== allowedOrigin) {
         return;
       }
       if (event.source !== iframeRef.current?.contentWindow) {
         return;
       }
-
       const isFormSubmitted =
         Array.isArray(event.data) &&
         event.data[0] === 'set-sticky-contacts' &&

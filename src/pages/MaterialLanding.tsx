@@ -8,6 +8,7 @@ import PageLayout from '@/components/layout/PageLayout';
 import SEO from '@/components/shared/SEO';
 import { Button } from '@/components/ui/button';
 import { materialsData } from '@/data/materialsData';
+import { captureUtmParams } from '@/utils/utm';
 
 const formatHeadlineWithGreen = (text: string) => {
     if (!text) return null;
@@ -159,9 +160,9 @@ export default function MaterialLanding() {
                                     params={{ rh_material_slug: material.slug, rh_material_title: material.title }}
                                     minHeight={380}
                                     onSubmitted={(email) => {
-                                        const q = new URLSearchParams({ m: material.slug });
-                                        if (email) q.set('email', email);
-                                        navigate(`/materiais/obrigado?${q.toString()}`);
+                                        const utm = captureUtmParams();
+                                        const q = new URLSearchParams({ m: material.slug, ...utm });
+                                        navigate(`/materiais/obrigado?${q.toString()}`, { state: { email } });
                                     }}
                                 />
                             ) : (
