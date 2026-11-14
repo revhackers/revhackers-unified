@@ -30,7 +30,6 @@ const NAVIGATION: Record<string, NavItem[]> = {
   ],
   CONTEÚDO: [
     { icon: Book, label: 'Blog', to: '/admin/blog' },
-    { icon: Book, label: 'Materiais', to: '/admin/materials' },
     { icon: Briefcase, label: 'Cases', to: '/admin/cases' },
   ],
   SISTEMA: [

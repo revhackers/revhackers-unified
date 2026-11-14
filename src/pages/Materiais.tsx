@@ -29,11 +29,11 @@ const Materiais = () => {
   // Mais recentes primeiro: materiais novos entram no fim do array/fonte de dados
   const materials = materialsData.slice().reverse();
 
-  const categories = ['Todos', ...Array.from(new Set(materials.map(m => m.material_type || m.type).filter(Boolean)))];
+  const categories = ['Todos', ...Array.from(new Set(materials.map(m => m.type).filter(Boolean)))];
 
   const filteredMaterials = materials.filter(material => {
-    const title = material.material_name || material.title || '';
-    const type = material.material_type || material.type || '';
+    const title = material.title || '';
+    const type = material.type || '';
     const description = material.description || '';
 
     const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -95,22 +95,16 @@ const Materiais = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredMaterials.map((material, index) => {
-                const type = material.material_type || material.type || "Geral";
+                const type = material.type || "Geral";
                 const IconComponent = IconMap[type] || FileText;
-                const title = material.material_name || material.title || "Sem título";
+                const title = material.title || "Sem título";
 
                 return (
                   <div
                     key={index}
                     className="group"
                     onClick={() => {
-                      // Generate slug from title and navigate to landing page
-                      const slug = (material.slug || title)
-                        .toLowerCase()
-                        .replace(/[^\w\s-]/g, '')
-                        .replace(/\s+/g, '-')
-                        .replace(/-+/g, '-');
-                      navigate(`/materiais/${slug}`);
+                      navigate(`/materiais/${material.slug}`);
                     }}
                   >
                     <div className="h-full flex flex-col p-8 rounded-xl border border-zinc-200 bg-white shadow-sm hover:-translate-y-1 transition-all duration-500 relative cursor-pointer group">
@@ -163,8 +157,7 @@ const Materiais = () => {
             <div className="flex-shrink-0">
               <Button
                 size="lg"
-                onClick={() => setIsBookingOpen(true)}
-                className="bg-zinc-950 text-white hover:bg-zinc-800 font-bold text-sm h-12 px-8 rounded-xl shadow-xs transition-all"
+                onClick={() => navigate('/booking')}
               >
                 Auditar Minha Operação →
               </Button>

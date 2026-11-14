@@ -1,0 +1,140 @@
+import React, { useState } from 'react';
+import { useSearchParams, useLocation, Link } from 'react-router-dom';
+import { captureUtmParams } from '@/utils/utm';
+import PageLayout from '@/components/layout/PageLayout';
+import SEO from '@/components/shared/SEO';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { GhlBookingEmbed } from '@/components/shared/GhlBookingEmbed';
+import { GHL_CALENDARS } from '@/config/ghl';
+import { materialsData } from '@/data/materialsData';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
+
+export default function MaterialThankYou() {
+    const [searchParams] = useSearchParams();
+    const location = useLocation();
+    const m = searchParams.get('m');
+    const stateVal = location.state as unknown;
+    const stateObj = stateVal && typeof stateVal === 'object' ? (stateVal as Record<string, unknown>) : {};
+    const email = typeof stateObj.email === 'string' ? stateObj.email : '';
+    // ghl_contact_id só entra se o widget/workflow o fornecer (nunca inventar).
+    const contactId =
+        typeof stateObj.ghl_contact_id === 'string' && stateObj.ghl_contact_id ? stateObj.ghl_contact_id : '';
+    const material = materialsData.find((x) => x.slug === m);
+    const [isBookingOpen, setIsBookingOpen] = useState(false);
+
+    const utm = captureUtmParams();
+    const scoreParams = new URLSearchParams({
+        source: `materiais:${material?.slug || 'geral'}`,
+        material: material?.slug || '',
+        ...(contactId ? { ghl_contact_id: contactId } : null),
+        ...utm,
+    });
+
+    return (
+        <PageLayout>
+            <SEO
+                title="Material liberado"
+                description="Acesse seu material RevHackers instantaneamente."
+                noindex
+            />
+            {/* Hero Section */}
+            <section className="relative min-h-[40vh] flex flex-col justify-center items-center overflow-hidden pt-28 pb-16 bg-black border-b border-zinc-900 text-center">
+                <div className="relative z-10 w-full max-w-4xl mx-auto px-6 flex flex-col items-center">
+                    <div className="w-16 h-16 rounded-full bg-[#00CC6A]/10 border border-[#00CC6A]/20 flex items-center justify-center mb-6">
+                        <CheckCircle2 className="w-8 h-8 text-[#00CC6A]" />
+                    </div>
+                    <span className="text-[#00CC6A] text-xs font-semibold uppercase tracking-wider mb-4">
+                        Material liberado
+                    </span>
+                    <h1 className="font-sans text-[2.25rem] sm:text-[2.75rem] md:text-[3.25rem] font-extrabold text-white mb-5 leading-[1.15] tracking-tight">
+                        Pronto. Seu material está liberado.
+                    </h1>
+                    <p className="text-zinc-400 text-base md:text-lg font-normal leading-relaxed max-w-2xl mx-auto">
+                        {material ? (
+                            <>Acesse agora o <strong>{material.title}</strong> através do link abaixo. O acesso está liberado para consulta imediata.</>
+                        ) : (
+                            <>Seu material está liberado. Acesse através do link abaixo.</>
+                        )}
+                    </p>
+                    {material && (
+                        <Button
+                            size="lg"
+                            asChild
+                            className="mt-8 bg-[#00CC6A] text-black hover:bg-[#00b85f] font-bold text-sm h-12 px-8 rounded-xl"
+                        >
+                            <a href={`/materiais/acesso/${material.slug}`} target="_blank" rel="noopener noreferrer">
+                                Abrir material agora
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </a>
+                        </Button>
+                    )}
+                </div>
+            </section>
+
+            {/* CTA Section */}
+            <section className="py-20 bg-white text-zinc-900 border-b border-zinc-200/80">
+                <div className="max-w-4xl mx-auto px-6 text-center space-y-8">
+                    <div className="space-y-4 max-w-2xl mx-auto">
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-950 tracking-tight">
+                            Quer aplicar isso na sua operação?
+                        </h2>
+                        <p className="text-zinc-600 text-base leading-relaxed">
+                            Descubra sua pontuação e os gargalos com o diagnóstico <strong>Decisor Visible</strong>.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
+                        <Button
+                            size="lg"
+                            asChild
+                            className="bg-zinc-950 text-white hover:bg-zinc-800 font-bold text-sm h-12 px-8 rounded-xl shadow-xs transition-all"
+                        >
+                            <Link to={`/score-founder?${scoreParams.toString()}`}>
+                                Fazer diagnóstico Decisor Visible
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Link>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsBookingOpen(true)}
+                            className="border-zinc-300 text-zinc-700 hover:bg-zinc-50 font-semibold text-sm h-12 px-6 rounded-xl cursor-pointer"
+                        >
+                            Agendar diagnóstico
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            asChild
+                            className="text-zinc-500 hover:text-zinc-900 font-medium text-sm h-12 px-4"
+                        >
+                            <Link to="/materiais">Ver outros materiais</Link>
+                        </Button>
+                    </div>
+                </div>
+            </section>
+
+            <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
+                {isBookingOpen && (
+                    <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto bg-white p-0">
+                        <DialogHeader className="p-6 pb-0">
+                            <DialogTitle>Agendar diagnóstico</DialogTitle>
+                        </DialogHeader>
+                        <div className="p-6 pt-2">
+                            <GhlBookingEmbed
+                                calendarId={GHL_CALENDARS.diagnostico}
+                                title="Agendar diagnóstico"
+                                params={email ? { email } : undefined}
+                                minHeight={780}
+                            />
+                        </div>
+                    </DialogContent>
+                )}
+            </Dialog>
+        </PageLayout>
+    );
+}

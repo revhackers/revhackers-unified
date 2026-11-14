@@ -2,6 +2,10 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { SEOProvider } from './components/shared/SEO.tsx'
+import { persistUtmParams } from './utils/utm'
+
+// Guarda os UTM da URL de entrada na sessao; os formularios Funnels leem de la.
+persistUtmParams();
 
 // Crash Protection: Catch unhandled auth/chunk errors that might cause White Screen
 window.addEventListener('unhandledrejection', (event) => {

@@ -25,10 +25,10 @@ export const GHL_FORMS = {
   contato: 'iNOZntXTFX9wJPeu53YM',
   
   /** RH · Newsletter — form for newsletter subscription */
-  newsletter: 't6SRbbh2FcjBtam3B5Gj',
-  
+  newsletter: 'mgZCl7IRYbpcLeoAoTPG',
+
   /** RH · Score — hidden form for capturing diagnostic results */
-  score: '6BrluXzMJOPOIGOvgYzV',
+  score: 'CDRZEJMYk68u6g4qIfJW',
   
   /** RH · Calculadora — hidden form for capturing calculator results */
   calculadora: 'JJEKvTdL9Sm6JFdirbb0',
@@ -46,7 +46,7 @@ export const GHL_SURVEYS = {
  */
 export const GHL_CALENDARS = {
   /** Diagnóstico RevHackers · 45 min */
-  diagnostico: '0qBL8YhEucu58qzNgdpe',
+  diagnostico: 'Iomc4XDA6aJug4HSaUIF',
 } as const;
 
 /**
@@ -73,7 +73,6 @@ export const GHL_CUSTOM_FIELD_KEYS = {
   funil: 'funil',
   rh_material_slug: 'rh_material_slug',
   rh_material_title: 'rh_material_title',
-  rh_material_link: 'rh_material_link',
   cargo: 'cargo',
   setor: 'setor',
   rh_consentimento_lgpd: 'rh_consentimento_lgpd',

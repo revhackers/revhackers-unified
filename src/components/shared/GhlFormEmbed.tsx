@@ -9,12 +9,12 @@
  * Props:
  *   - formId: GHL form ID (get from GHL › Sites › Forms › Integrate)
  *   - title: accessibility title
- *   - params: query string params to pass (material_slug, material_link, etc.)
+ *   - params: query string params (GHL custom-field keys)
  *   - minHeight: iframe min-height in px (default 620)
- *   - onSubmitted: callback fired when form emits FORM_SUBMITTED event
+ *   - onSubmitted: callback fired when form emits set-sticky-contacts / _ud event
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { GHL_EMBED_BASE, GHL_FORM_EMBED_SCRIPT } from '@/config/ghl';
 import { getPersistedUtmParams } from '@/utils/utm';
 
@@ -23,7 +23,7 @@ export interface GhlFormEmbedProps {
   title: string;
   params?: Record<string, string>;
   minHeight?: number;
-  onSubmitted?: () => void;
+  onSubmitted?: (email?: string) => void;
 }
 
 /**
@@ -68,6 +68,45 @@ export function GhlFormEmbed({
     return `${GHL_EMBED_BASE}/widget/form/${formId}?${allParams.toString()}`;
   }, [formId, params]);
 
+  // O widget do GHL preenche campos ocultos (rh_material_slug, rh_diagnostic_*, utm_* ...) a partir da
+  // query string da PAGINA-MAE; os parametros da URL do iframe sao ignorados. Por isso espelhamos
+  // `params` (e os UTMs persistidos, sem sobrescrever os da URL) na URL atual antes do iframe carregar.
+  const paramsKey = JSON.stringify(params);
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined' || !formId) return;
+    const explicit = JSON.parse(paramsKey) as Record<string, string>;
+    const url = new URL(window.location.href);
+    const applied: Array<[string, string]> = [];
+    for (const [key, value] of Object.entries(getPersistedUtmParams())) {
+      if (value && !url.searchParams.has(key)) {
+        url.searchParams.set(key, value);
+        applied.push([key, value]);
+      }
+    }
+    for (const [key, value] of Object.entries(explicit)) {
+      if (value) {
+        url.searchParams.set(key, value);
+        applied.push([key, value]);
+      }
+    }
+    if (applied.length) {
+      window.history.replaceState(window.history.state, '', url.toString());
+    }
+    return () => {
+      const current = new URL(window.location.href);
+      if (current.pathname !== url.pathname) return;
+      let changed = false;
+      for (const [key, value] of applied) {
+        if (current.searchParams.get(key) === value) {
+          current.searchParams.delete(key);
+          changed = true;
+        }
+      }
+      if (changed) {
+        window.history.replaceState(window.history.state, '', current.toString());
+      }
+    };
+  }, [formId, paramsKey]);
   useEffect(() => {
     // Inject global GHL script once
     injectGhlFormScript();
@@ -77,27 +116,29 @@ export function GhlFormEmbed({
       return;
     }
 
-    // Set up postMessage listener for FORM_SUBMITTED event
+    const allowedOrigin = new URL(GHL_EMBED_BASE).origin;
+
     const handleMessage = (event: MessageEvent) => {
-      // Security: verify origin matches GHL embed base
-      if (!event.origin.includes(GHL_EMBED_BASE.replace('https://', ''))) {
+      if (event.origin !== allowedOrigin) {
         return;
       }
-
-      // GHL emits as array [0] === 'FORM_SUBMITTED' or as object { type: 'FORM_SUBMITTED' }
+      if (event.source !== iframeRef.current?.contentWindow) {
+        return;
+      }
       const isFormSubmitted =
-        (Array.isArray(event.data) && event.data[0] === 'FORM_SUBMITTED') ||
-        event.data?.type === 'FORM_SUBMITTED';
+        Array.isArray(event.data) &&
+        event.data[0] === 'set-sticky-contacts' &&
+        event.data[1] === '_ud';
 
       if (isFormSubmitted) {
-        // Ignore if from different form (if event.data contains form ID, check it matches)
-        if (event.data?.formId && event.data.formId !== formId) {
-          return;
-        }
-
-        // Fire callback if provided
         if (onSubmitted) {
-          onSubmitted();
+          let userEmail: string | undefined;
+          try {
+            const raw = event.data[2];
+            const obj = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            userEmail = obj?.email || obj?.contact?.email;
+          } catch (e) {}
+          onSubmitted(userEmail);
         }
       }
     };

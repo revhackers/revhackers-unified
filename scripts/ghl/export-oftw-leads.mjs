@@ -227,12 +227,18 @@ function coversMaterial(msg, mat) {
   return (link !== '' && text.includes(link)) || (title !== '' && text.includes(title));
 }
 
+const LEGACY_ID_TO_SLUG = {
+  'framework-prime-linkedin-autoridade': 'framework-prime-o-playbook-definitivo-de-comentarios-de-autoridade-no-linkedin-b2b',
+  'matriz-roteamento-ia-custo': 'matriz-roteamento-ia-qual-modelo-usar-em-cada-tarefa',
+};
+
 function materialDecision(contact, emails, registry) {
   const slugs = [...new Set(
     (contact.tags ?? [])
       .map((t) => String(t).trim().toLowerCase())
       .filter((t) => t.startsWith('download:'))
       .map((t) => t.slice('download:'.length).trim())
+      .map((t) => LEGACY_ID_TO_SLUG[t] ?? t)
       .filter(Boolean),
   )];
   const downloads = slugs.map((slug) => {

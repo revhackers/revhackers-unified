@@ -3,7 +3,7 @@ import { CaseStudy } from './index';
 
 export const placluxCase: CaseStudy = {
   title: "PlacLux",
-  logo: "https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/694c76cfe889d38ced51667d.png",
+  logo: "/uploads/oftw/694c76cfe889d38ced51667d.png",
   coverImage: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&h=600&fit=crop",
   category: "Funis de Vendas & CRM Integrado",
   challenge: "A PlacLux, referência em sistemas de revestimentos e construções secas de alto padrão, enfrentava a necessidade de alinhar o time comercial aos processos operacionais e acelerar a captação de clientes B2B.\n\nO desafio envolvia: (1) Ausência de um funil de vendas B2B padronizado com visibilidade total do pipeline; (2) Falta de integração entre o time de vendas e a operação da fábrica; (3) Baixa taxa de agendamento de visitas presenciais à fábrica, canal decisivo para o fechamento de grandes contratos industriais.",
@@ -23,7 +23,7 @@ export const placluxCase: CaseStudy = {
   quote: "A RevHackers estruturou nossos funis de vendas e integrou o CRM diretamente com nossa equipe comercial. O aumento na produtividade e no número de visitas de clientes à nossa fábrica foi imediato e transformador.",
   author: "Diretoria Comercial",
   role: "PlacLux Sistemas Construtivos",
-  authorImage: "https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/694f30a6e889d323d980a67a.png",
+  authorImage: "/uploads/oftw/694f30a6e889d323d980a67a.png",
   preview_description: "Funis de Vendas & CRM Integrado: Estruturação de funis B2B, implementação de CRM e integração comercial que aumentaram a produtividade e o número de visitas à fábrica.",
   logoScale: 1.4,
   techStack: ["Funis de Vendas B2B", "CRM Integrado", "Visitas à Fábrica", "Automação Comercial"]

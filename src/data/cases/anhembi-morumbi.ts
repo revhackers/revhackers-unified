@@ -24,7 +24,7 @@ export const anhembiMorumbiCase: CaseStudy = {
     quote: "A estratégia de funil personalizado por perfil de aluno revolucionou nossa captação e nos permitiu escalar o número de matrículas mantendo a qualidade do processo.",
     author: "André Cavalcante",
     role: "Diretor de Marketing, Anhembi Morumbi",
-    authorImage: "https://storage.googleapis.com/msgsndr/oFTw9DcsKRUj6xCiq4mb/media/694f38ce42bb1c32c23c64f6.jpg",
+    authorImage: "/uploads/oftw/694f38ce42bb1c32c23c64f6.jpg",
     preview_description: "Transformação Digital em EAD: Mídia paga otimizada, CRM estruturado, IA para SDR 24/7 e automações que aumentaram matrículas em 35% e reduziram CPL em 40%.",
     logoScale: 1.6,
     techStack: ["Funnels", "OpenAI API", "Google Ads", "Meta Ads"]

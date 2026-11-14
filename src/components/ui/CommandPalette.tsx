@@ -4,7 +4,7 @@ import { Command } from 'cmdk';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Search, Home, LayoutDashboard, FolderKanban,
-  Users, FileText, Plus, Book, Briefcase, Lightbulb,
+  Users, FileText, Plus, Briefcase, Lightbulb,
   type LucideIcon
 } from 'lucide-react';
 
@@ -22,7 +22,6 @@ const NAV_ACTIONS: Omit<CommandAction, 'onSelect'>[] = [
   { icon: FolderKanban, label: 'Projetos', group: 'Navegacao' },
   { icon: Users, label: 'Clientes', group: 'Navegacao' },
   { icon: FileText, label: 'Propostas', group: 'Navegacao' },
-  { icon: Book, label: 'Materiais', group: 'Navegacao' },
   { icon: Briefcase, label: 'Cases', group: 'Navegacao' },
 ];
 
@@ -32,7 +31,6 @@ const NAV_ROUTES: Record<string, string> = {
   'Projetos': '/admin/projects',
   'Clientes': '/admin/clients',
   'Propostas': '/admin/proposals',
-  'Materiais': '/admin/materials',
   'Cases': '/admin/cases',
 };
 

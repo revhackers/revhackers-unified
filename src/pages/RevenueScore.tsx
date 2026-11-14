@@ -258,7 +258,7 @@ const RevenueScore = () => {
         <GhlFormEmbed
           formId={GHL_FORMS.score}
           title="Receber Relatório"
-          params={{ diagnostic_type: 'revenue', diagnostic_score: String(score), diagnostic_category: getResultMap(score).title }}
+          params={{ rh_diagnostic_type: 'revenue', rh_diagnostic_score: String(score), rh_diagnostic_category: getResultMap(score).title }}
           minHeight={620}
           onSubmitted={handleSubmitted}
         />

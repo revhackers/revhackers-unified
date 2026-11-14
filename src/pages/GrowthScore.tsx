@@ -343,7 +343,7 @@ const GrowthScore = () => {
               <GhlFormEmbed
                 formId={GHL_FORMS.score}
                 title="Desbloquear Relatório Completo"
-                params={{ diagnostic_type: 'growth', diagnostic_score: String(score), diagnostic_category: getResultMap(score).title }}
+                params={{ rh_diagnostic_type: 'growth', rh_diagnostic_score: String(score), rh_diagnostic_category: getResultMap(score).title }}
                 minHeight={620}
                 onSubmitted={handleSubmitted}
               />

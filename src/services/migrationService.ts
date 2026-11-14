@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { blogPosts } from "@/data/blogData";
-import { materialsData } from "@/data/materialsData";
+// materialsData import removed
 import { casesData } from "@/data/cases/index.ts"; // Import cases data
 
 export const migratePosts = async () => {
@@ -92,36 +92,4 @@ export const migrateCases = async () => {
     return { success: successCount, failed: failCount };
 };
 
-export const migrateMaterials = async () => {
-    let successCount = 0;
-    let failCount = 0;
-
-    for (const material of materialsData) {
-        const dbMaterial = {
-            material_name: material.title, // REQUIRED by DB
-            title: material.title,
-            slug: material.slug,
-            material_type: material.material_type || 'Material', // Use correct source property
-            category: material.category,
-            description: material.description,
-            cover_image: material.cover_image,
-            material_url: material.material_url,
-            link_material: material.link_material,
-            published: material.published,
-            is_active: material.is_active
-        };
-
-        const { error } = await supabase
-            .from('materials')
-            .upsert(dbMaterial, { onConflict: 'slug' });
-
-        if (error) {
-            console.error(`❌ Falha ao migrar material: ${material.slug}`, error);
-            failCount++;
-        } else {
-            successCount++;
-        }
-    }
-
-    return { success: successCount, failed: failCount };
-};
+// migrateMaterials removed
