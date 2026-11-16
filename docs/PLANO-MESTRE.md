@@ -1,8 +1,9 @@
-# Plano mestre — RevHackers + benchmark GrowthHub
+# Plano mestre — RevHackers (Decisor Visible + GTM Blueprint)
 
-Documento vivo de consolidação. Não duplica o conteúdo dos documentos detalhados,
-referencia-os. Atualizar o status aqui sempre que uma frente avançar.
+> **Nota de Atualização (Novembro 2026):** O modelo canônico de entrada é o Decisor Visible (`diagnostic_type='authority'`, rota `/score-founder`), acoplado ao motor de plano GTM Blueprint (`growthmap/*`). Os diagnósticos 360 e Growth Score estão obsoletos. O domínio `thegrowthhub.com.br` é utilizado estritamente como benchmark externo.
 
+ Documento vivo de consolidação. Não duplica o conteúdo dos documentos detalhados,
+ referencia-os. Atualizar o status aqui sempre que uma frente avançar.
 ## Como ler
 
 - **Feito:** verificado no repositório (commit, arquivo ou teste apontado).

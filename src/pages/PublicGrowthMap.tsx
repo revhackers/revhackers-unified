@@ -82,7 +82,7 @@ export default function PublicGrowthMap() {
           </div>
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
             <div className="text-sm text-slate-400 font-medium">Com Website</div>
-            <div className="text-3xl font-bold text-blue-400 mt-2">{data.competitors.filter((c) => c.website).length}</div>
+            <div className="text-3xl font-bold text-emerald-400 mt-2">{data.competitors.filter((c) => c.website).length}</div>
           </div>
         </div>
 

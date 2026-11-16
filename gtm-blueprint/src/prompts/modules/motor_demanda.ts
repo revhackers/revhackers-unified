@@ -1,0 +1,74 @@
+import { z } from 'zod';
+import type { PromptSpec } from '../types';
+import { SHARED_SYSTEM_PREAMBLE } from '../shared';
+import { ClaimSchema } from '../evidence';
+
+export const MotorDemandaInputSchema = z.object({
+  dossierSummary: z.record(z.any()),
+  posicionamentoOutput: z.record(z.any()),
+});
+
+export type MotorDemandaInput = z.infer<typeof MotorDemandaInputSchema>;
+
+export const MotorDemandaOutputSchema = z.object({
+  mixCanaisPrioritarios: z.array(z.object({
+    canal: z.enum(['ABM (Account-Based Marketing)', 'Outbound Rigoroso', 'Founder-Led LinkedIn / Social Selling', 'Inbound / SEO Técnico', 'Parcerias e Canais / Ecossistema']),
+    alocacaoEsforcoPercentual: z.number().describe('Percentual de alocação de esforço da equipe (soma deve ser 100%)'),
+    justificativaEstagioIcp: ClaimSchema,
+    playConcretoExecucao: ClaimSchema,
+  })).min(3).max(4),
+  ritualOperacionalGtm: ClaimSchema.describe('Rotina semanal de prospecção e alinhamento Marketing/Vendas'),
+  decisao: z.string(),
+  proximosPassos: z.array(z.object({
+    acao: z.string(),
+    responsavelRole: z.string(),
+    prazoDias: z.number(),
+  })).min(1),
+});
+
+export type MotorDemandaOutput = z.infer<typeof MotorDemandaOutputSchema>;
+
+const SYSTEM_ADDEND_RULE = `
+# Módulo 5: Motor de Demanda e Canais GTM
+
+## 1. Objetivo Executivo e Estratégico
+Definir a matriz de canais de aquisição B2B mais eficiente para o estágio atual da empresa e ticket médio, estabelecendo a alocação de esforço operacional da equipe (cujos percentuais representam exclusivamente esforço/recursos, nunca promessas de resultados financeiros).
+
+## 2. Metodologia Passo a Passo de Análise
+1. Cruzar o estágio do negócio e o ICP do Dossiê com os canais viáveis (ABM, Outbound, LinkedIn/Social Selling, Inbound, Parcerias).
+2. Proibir canais inadequados ao ticket e estágio (ex: sugerir tráfego pago B2C de massa para SaaS Enterprise).
+3. Atribuir percentuais de alocação de esforço operacional cuja soma seja 100%.
+4. Escrever plays táticos concretos de execução comercial (passo a passo de prospecção) em vez de dicas genéricas.
+5. Desenhar o ritual operacional semanal de alinhamento entre Marketing e Vendas (SrevOps).
+
+## 3. Guia Detalhado Campo a Campo
+- \`mixCanaisPrioritarios\`: Array de canais com alocação de esforço (recursos/equipe), justificativa alinhada ao estágio e play tático de execução.
+- \`ritualOperacionalGtm\`: Rotina de cadência semanal de alinhamento comercial.
+- \`decisao\`: Decisão imediata sobre canais.
+- \`proximosPassos\`: Ações operacionais com prazos.
+
+## 4. Padrão de Qualidade & Exemplo (B2B SaaS Brasil)
+- BOM: \`{"canal": "Founder-Led LinkedIn / Social Selling", "alocacaoEsforcoPercentual": 40, "justificativaEstagioIcp": {"text": "Adequado à fase de tração inicial onde o fundador possui autoridade técnica perante C-Levels, conforme Dossiê.", "status": "VERIFICADO", "evidenceIds": ["E1"]}, "playConcretoExecucao": {"text": "Publicação diária de teardown de processos e abordagem direta via LinkedIn Sales Nav aos diretores mapeados.", "status": "HIPOTESE", "howToValidate": "Enviar 30 conexões semanais personalizadas e medir taxa de aceite."}}\`
+- MAL: \`{"canal": "Marketing Digital", "alocacaoEsforcoPercentual": 50, "justificativaEstagioIcp": {"text": "Fazer anúncios.", "status": "VERIFICADO", "evidenceIds": []}}\`
+
+## 5. Antipadrões a Evitar
+- Nunca usar percentuais para prever resultados de conversão (percentuais permitidos apenas para alocação de esforço/recursos).
+- Nunca sugerir estratégias genéricas de postagens sem cadência ou ICP.
+`;
+
+export const motorDemandaPromptSpec: PromptSpec<MotorDemandaInput, MotorDemandaOutput> = {
+  id: 'module.motor_demanda',
+  version: '1.0.0',
+  task: 'module',
+  system: SHARED_SYSTEM_PREAMBLE + SYSTEM_ADDEND_RULE,
+  buildUser(input: MotorDemandaInput): string {
+    return `Com base no Dossiê e no Posicionamento, gere o Módulo 5 (Motor de Demanda) em JSON estrito.
+
+DOSSIÊ ESTRATÉGICO:
+${JSON.stringify(input.dossierSummary, null, 2)}
+
+POSICIONAMENTO:
+${JSON.stringify(input.posicionamentoOutput, null, 2)}`;
+  },
+  schema: MotorDemandaOutputSchema,
+};

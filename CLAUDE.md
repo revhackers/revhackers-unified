@@ -260,7 +260,7 @@ O `App.tsx` define todas as rotas. As areas principais sao:
 | Area | Prefixo | Acesso | Descricao |
 |---|---|---|---|
 | Publica | `/`, `/blog`, `/servicos`, `/cases`... | Publico | Site institucional |
-| Score/Lead | `/score`, `/score-site`, `/score-founder`, `/score-revenue` | Publico | Quiz de maturidade (lead gen) |
+| Decisor Visible / Lead | `/score-founder` (diagnostic_type='authority') | Publico | Diagnóstico canônico Decisor Visible (substitui rotas legadas `/score`, `/score-site`, `/score-revenue`) + motor GTM Blueprint (`growthmap/*`) |
 | REI | `/rei/wizard`, `/rei/resultado/:id` | ProtectedRoute | Formulario interno de kickoff |
 | Admin (GrowthHub) | `/admin/*` | ProtectedRoute | Dashboard operacional completo |
 | Pipeline | `/admin/pipeline` | ProtectedRoute | Cockpit comercial / Revenue Cockpit |

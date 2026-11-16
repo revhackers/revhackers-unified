@@ -92,7 +92,7 @@ export default function FrameworkCard({ framework, onRegenerate, onClick }: Fram
           : isError
           ? 'border border-red-500/40 shadow-[0_0_0_1px_rgba(248,113,113,0.2)] hover:border-red-400/60'
           : isGenerating
-          ? 'border border-blue-400/20 hover:border-blue-400/30'
+          ? 'border border-emerald-400/20 hover:border-emerald-400/30'
           : 'border border-white/7 hover:border-lime-400/20 hover:shadow-lime-400/5',
       ].join(' ')}
     >

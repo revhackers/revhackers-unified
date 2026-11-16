@@ -808,7 +808,7 @@ export const LeadWarRoomSheet: React.FC<LeadWarRoomSheetProps> = ({
                                         <div className="grid grid-cols-2 gap-2">
                                             <div className="bg-white/80 border border-zinc-200 rounded-lg p-2.5 shadow-sm">
                                                 <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 mb-0.5 flex items-center gap-1"><Target className="w-2.5 h-2.5" /> Arquétipo B2B</p>
-                                                <p className="text-[11px] font-black text-blue-900">{osint.archetype}</p>
+                                                <p className="text-[11px] font-black text-zinc-900">{osint.archetype}</p>
                                             </div>
                                             <div className="bg-white/80 border border-zinc-200 rounded-lg p-2.5 shadow-sm">
                                                 <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 mb-0.5 flex items-center gap-1"><Briefcase className="w-2.5 h-2.5" /> Estilo de Gestão</p>

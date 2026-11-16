@@ -1,5 +1,7 @@
 # Plano de Transição: Migração de Diagnósticos e Oportunidades para a API GCP
 
+> **Nota de Atualização (Novembro 2026):** O escopo migrou para a porta de entrada única Decisor Visible (`diagnostic_type='authority'`, rota `/score-founder`) com persistência em GCP Cloud SQL. Os múltiplos scorecards legados estão descontinuados.
+
 Este documento estabelece o plano técnico para portar as últimas frentes que ainda dependem do Supabase: a tabela de `diagnosticos`, a tabela de `opportunities` (pré-vendas) e o retransmissor do GoHighLevel (GHL Relay) para a nova API NodeJS/TypeScript rodando no Google Cloud Run.
 
 ---
@@ -14,7 +16,7 @@ O core da nova API GCP foi implementado com sucesso em `/repository/api/src/main
 *   `/v1/growthmap` (Mapeamento de jornada de escala)
 
 ### O Gargalo:
-As submissões dos quatro diagnósticos públicos de conversão (Growth, Revenue, Founder e Site) na página `/score` ainda estão gravando diretamente no Supabase por meio do arquivo `src/api/publicDiagnostic.ts`. 
+A submissão do diagnóstico canônico de entrada Decisor Visible (`diagnostic_type='authority'`, rota `/score-founder`) ainda está gravando no Supabase por meio do arquivo `src/api/publicDiagnostic.ts`. 
 
 Para descontinuar o Supabase de vez, precisamos criar o domínio `opportunities` e `diagnosticos` na nossa API do Cloud Run e apontar o React do frontend para lá.
 

@@ -1,4 +1,6 @@
-# Estudo de Ponta a Ponta: Arquitetura RevHackers e Integração FonteData
+> **ARQUIVADO (Novembro 2026):** Estudo legado focado no Growth Score 360 e arquitetura antiga. O modelo canônico atual é o Decisor Visible (`diagnostic_type='authority'`) + GTM Blueprint (`growthmap/*`).
+
+ # Estudo de Ponta a Ponta: Arquitetura RevHackers e Integração FonteData
 
 Este documento apresenta uma análise técnica profunda da arquitetura do projeto RevHackers de ponta a ponta e estabelece o plano estratégico de engenharia para plugar as APIs da FonteData diretamente na ferramenta de Diagnóstico e na Calculadora de ROI (REI).
 
