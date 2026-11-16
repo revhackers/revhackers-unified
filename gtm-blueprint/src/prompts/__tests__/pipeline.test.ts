@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { runGtmPipeline, SITE_INACESSIVEL, type PipelineInput } from '../../pipeline.js';
+import { runGtmPipeline, type PipelineInput } from '../../pipeline.js';
+import { SITE_INACESSIVEL } from '../../stages.js';
 import { criticWith, fakeLlm } from './fixtures/fakeLlm.js';
 
 // Texto acima de 1500 caracteres: a home não cai no caminho de render (que não existe nos testes).
@@ -58,7 +59,7 @@ describe('runGtmPipeline', () => {
       providers: { bedrock: provider },
     });
 
-    expect(out.collectionResult.competitors).toEqual([{ url: 'https://rival.test', collected: false }]);
+    expect(out.collect.competitors).toEqual([{ url: 'https://rival.test', collected: false }]);
     const dossierPrompt = prompts.find((p) => p.kind === 'dossier')?.user ?? '';
     expect(dossierPrompt).toContain('- Concorrentes informados sem coleta (não analisar): https://rival.test');
     expect(dossierPrompt).toContain('- Concorrentes informados e coletados: nenhum');
@@ -99,8 +100,8 @@ describe('runGtmPipeline', () => {
 
     const out = await runGtmPipeline({ ...BASE, providers: { bedrock: provider } });
 
-    const cnpj = out.cnpjData as { evidence: { content: string } | null };
-    expect(JSON.parse(cnpj.evidence?.content ?? '{}')).toMatchObject({ cnpj: '12345678000190', origem: 'detectado no site' });
+    const cnpjEvidence = out.collect.evidences.find((ev) => ev.id === 'CNPJ1');
+    expect(JSON.parse(cnpjEvidence?.content ?? '{}')).toMatchObject({ cnpj: '12345678000190', origem: 'detectado no site' });
     const dossierPrompt = prompts.find((p) => p.kind === 'dossier')?.user ?? '';
     expect(dossierPrompt).toContain('[CNPJ1] (cnpj)');
     expect(dossierPrompt).toContain('[S1] (site_signals)');

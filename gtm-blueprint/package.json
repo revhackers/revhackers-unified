@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "eval": "tsx scripts/eval.ts",
+    "gate": "tsx scripts/gate.ts",
     "test": "vitest run"
   },
   "dependencies": {
