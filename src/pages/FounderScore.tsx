@@ -147,16 +147,13 @@ const FounderScore = () => {
 
   const finalScore = getFinalScore();
   const resultDetails = getResultMap(finalScore);
-  // Handoff Materiais-Ricos → Decisor Visible (contrato forms-authority):
-  // source/material/ghl_contact_id vêm da query do CTA; UTMs já entram
-  // automáticos via getPersistedUtmParams no GhlFormEmbed. Sem PII na URL.
+  // Handoff Materiais-Ricos → Decisor Visible: só chaves de campo GHL vão ao embed.
+  // source/ghl_contact_id ficam na URL da página (join por e-mail no GHL).
   const attributionParams = (() => {
-    const pick = (key: string) => searchParams.get(key) || undefined;
+    const material = searchParams.get('material') || undefined;
     return {
       rh_diagnostic_type: 'authority',
-      source: pick('source') || 'founder-score',
-      ...(pick('material') ? { material: pick('material') as string } : {}),
-      ...(pick('ghl_contact_id') ? { ghl_contact_id: pick('ghl_contact_id') as string } : {}),
+      ...(material ? { rh_material_slug: material } : {}),
     };
   })();
   const insights = getDiagnosticInsights('founder', finalScore);

@@ -29,10 +29,10 @@ O endpoint/rota `/score-founder` aceita exatamente a query string combinada (sem
   2. A página de obrigado (`MaterialThankYou`) libera o link de acesso imediato ao material (`/materiais/acesso/<slug>`).
   3. Apresenta o CTA **"Fazer diagnóstico Decisor Visible"** apontando para `/score-founder?...`.
   4. Mantém o widget de agendamento embutido (`GhlBookingEmbed` com o calendário S7HE) para quem preferir agendar diretamente com o time comercial.
-### 5. Atualização Site-e-Blog (pós-rebase 2026-11-16) — ponta B no GHL nativo
-- O caminho antigo `submitPublicDiagnostic`/`publicDiagnostic.ts` foi removido pelo cutover GHL native forms (`aa350fa5`); a ponta B agora é `GhlFormEmbed` (hidden fields via URL da página-mãe, UTMs automáticos por `getPersistedUtmParams`).
-- `FounderScore.tsx` lê `source`/`material`/`ghl_contact_id` via `useSearchParams` e repassa em `params` do embed junto com `rh_diagnostic_type='authority'` (antes `'founder'`), `rh_diagnostic_score` e `rh_diagnostic_category`. Sem PII na URL.
-- `ghl_content_id` era typo e não existe em nenhuma ponta — chave única de join: `ghl_contact_id`.
+ ### 5. Atualização Site-e-Blog (pós-rebase 2026-11-16) — ponta B no GHL nativo
+ - O caminho antigo `submitPublicDiagnostic`/`publicDiagnostic.ts` foi removido pelo cutover GHL native forms (`aa350fa5`); a ponta B agora é `GhlFormEmbed` (hidden fields via URL da página-mãe, UTMs automáticos por `getPersistedUtmParams`).
+ - `FounderScore.tsx` lê apenas `material` via `useSearchParams` e repassa em `params` do embed `rh_diagnostic_type='authority'` e, quando presente, `rh_material_slug`. `source` e `ghl_contact_id` continuam na URL da página (o CTA do Materiais os envia) e não são repassados ao embed; o join entre pontas é por e-mail no GHL.
+ - `ghl_content_id` era typo e não existe em nenhuma ponta — chave única de join: `ghl_contact_id` (na URL, não no formulário).
 
 ---
 *Fim do documento de alinhamento.*
