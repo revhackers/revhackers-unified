@@ -60,7 +60,7 @@ Regras rígidas para esta tarefa:
 
 export const extractPromptSpec: PromptSpec<ExtractInput, ExtractOutput> = {
   id: 'extract.page',
-  version: '1.0.0',
+  version: '2.0.0',
   task: 'extract',
   system: EXTRACT_SYSTEM_PROMPT,
   buildUser(input: ExtractInput): string {
@@ -73,3 +73,48 @@ ${input.rawContent}
   },
   schema: ExtractOutputSchema,
 };
+
+/** Normaliza para comparar citações: espaços colapsados, minúsculas e aspas tipográficas viram retas. */
+function normalizeQuote(text: string): string {
+  return text
+    .replace(/[“”„‟]/g, '"')
+    .replace(/[‘’‚‛]/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+/**
+ * Mantém só os itens cuja citação (`quote`) aparece literalmente no conteúdo da página.
+ * Campo único com citação inválida vira null. Devolve quantas citações foram descartadas.
+ */
+export function verifyExtract(extract: ExtractOutput, content: string): { extract: ExtractOutput; dropped: number } {
+  const source = normalizeQuote(content);
+  const supported = (quote: string): boolean => {
+    const needle = normalizeQuote(quote);
+    return needle.length > 0 && source.includes(needle);
+  };
+  let dropped = 0;
+  const keepItems = <T extends { quote: string }>(items: T[]): T[] => {
+    const kept = items.filter((item) => supported(item.quote));
+    dropped += items.length - kept.length;
+    return kept;
+  };
+  const keepSingle = <T extends { quote: string }>(item: T | null): T | null => {
+    if (item === null) return null;
+    if (supported(item.quote)) return item;
+    dropped += 1;
+    return null;
+  };
+  return {
+    extract: {
+      ...extract,
+      propostaValorDeclarada: keepSingle(extract.propostaValorDeclarada),
+      icpDeclarado: keepSingle(extract.icpDeclarado),
+      produtosPlanosPrecos: keepItems(extract.produtosPlanosPrecos),
+      provasSociais: keepItems(extract.provasSociais),
+      ctasConversao: keepItems(extract.ctasConversao),
+    },
+    dropped,
+  };
+}

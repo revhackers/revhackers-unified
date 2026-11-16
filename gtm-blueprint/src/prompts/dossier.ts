@@ -3,6 +3,7 @@ import type { PromptSpec } from './types';
 import { SHARED_SYSTEM_PREAMBLE } from './shared';
 import { ClaimSchema, Evidence, renderEvidenceCompact } from './evidence';
 import { competitorLines } from './numberGuard';
+import { ExtractOutputSchema, type ExtractOutput } from './extract';
 
 export const DossierInputSchema = z.object({
   companyName: z.string(),
@@ -16,6 +17,7 @@ export const DossierInputSchema = z.object({
     estimatedAddressState: z.string().nullable().optional(),
   }),
   evidences: z.array(z.any()).describe('Lista de evidências coletadas (Extracts, CNPJ, etc.)'),
+  fatosExtraidos: z.array(z.object({ evidenceId: z.string(), extract: ExtractOutputSchema })).describe('Extrações de página com citação conferida no texto da página'),
 });
 
 export type DossierInput = z.infer<typeof DossierInputSchema>;
@@ -70,7 +72,7 @@ const DOSSIER_SYSTEM_PROMPT = `${SHARED_SYSTEM_PREAMBLE}
 Atuar como o estrategista sênior de GTM construindo o Dossiê Estratégico, o artefato mestre que serve como a Verdade Absoluta (Single Source of Truth) para todos os 8 módulos subsequentes do GTM Blueprint RevHackers. Toda tese, ICP, persona e contradição mapeada aqui deve ser estritamente referenciada e mantida por todos os módulos seguintes, garantindo rigor analítico e coesão absoluta.
 
 ## 2. Metodologia Passo a Passo de Análise
-1. Triagem exaustiva de todas as evidências coletadas (E1..En) provenientes da homepage, páginas de preços, sobre, cases e concorrentes.
+1. Triagem exaustiva de todas as evidências coletadas (E1..En) provenientes da homepage, páginas de preços, sobre, cases e concorrentes. O bloco FATOS EXTRAÍDOS COM CITAÇÃO CONFERIDA é a leitura já conferida de cada página: use-o junto das evidências.
 2. Sintetizar a tese central do negócio em uma frase incisiva e memorável focada em valor B2B SaaS.
 3. Contrastar rigorosamente a fase declarada pela empresa com a realidade auditada nas evidências e dados de CNPJ (idade, porte, UF), destacando contradições estruturais (ex: CNPJ antigo com site raso).
 4. Identificar o modelo de negócio predominante (PLG, Enterprise Sales, Self-Service + Inside Sales, Marketplace, Agency/Service-led) amparado por evidências.
@@ -104,6 +106,35 @@ Atuar como o estrategista sênior de GTM construindo o Dossiê Estratégico, o a
 - Nunca listar como cliente uma empresa que não aparece nomeada nas evidências.
 `;
 
+/** Uma linha por fato extraído, com a citação literal que o sustenta. Sem fato conferido, uma linha de ausência. */
+function renderFatosExtraidos(facts: DossierInput['fatosExtraidos']): string {
+  if (facts.length === 0) return 'Nenhum fato extraído com citação conferida.';
+  return facts.map(({ evidenceId, extract }) => renderExtract(evidenceId, extract)).join('\n');
+}
+
+function renderExtract(evidenceId: string, extract: ExtractOutput): string {
+  const lines: string[] = [];
+  if (extract.propostaValorDeclarada) {
+    lines.push(`Proposta de valor: ${extract.propostaValorDeclarada.resumo} — citação: "${extract.propostaValorDeclarada.quote}"`);
+  }
+  if (extract.icpDeclarado) {
+    lines.push(`ICP declarado: ${extract.icpDeclarado.publicoAlvo} — citação: "${extract.icpDeclarado.quote}"`);
+  }
+  for (const plano of extract.produtosPlanosPrecos) {
+    lines.push(`Plano ${plano.nomePlano} (${plano.precoStr}): ${plano.features.join(', ')} — citação: "${plano.quote}"`);
+  }
+  for (const prova of extract.provasSociais) {
+    lines.push(`Prova social (${prova.tipo}): ${prova.descricao} — citação: "${prova.quote}"`);
+  }
+  for (const cta of extract.ctasConversao) {
+    lines.push(`CTA "${cta.textoBotao}" → ${cta.destino ?? 'sem destino'} — citação: "${cta.quote}"`);
+  }
+  if (extract.sinaisMaturidade.length > 0) lines.push(`Sinais de maturidade: ${extract.sinaisMaturidade.join('; ')}`);
+  if (extract.lacunasOuInconsistencias.length > 0) lines.push(`Lacunas e inconsistências: ${extract.lacunasOuInconsistencias.join('; ')}`);
+  if (lines.length === 0) return `[${evidenceId}] Nenhum fato com citação conferida.`;
+  return lines.map((line) => `[${evidenceId}] ${line}`).join('\n');
+}
+
 export const dossierPromptSpec: PromptSpec<DossierInput, DossierOutput> = {
   id: 'dossier.build',
   version: '2.0.0',
@@ -119,6 +150,9 @@ export const dossierPromptSpec: PromptSpec<DossierInput, DossierOutput> = {
 - ICP Declarado: ${input.declaredIcp || 'Não informado'}
 ${competitorLines(input.competitors).map((line) => `- ${line}`).join('\n')}
 - Fatos Computados (CNPJ/Porte): Idade CNPJ: ${input.computedFacts.cnpjAgeYears ?? 'Desconhecida'} anos | Porte estimado: ${input.computedFacts.companySizeEstimated ?? 'Não informado'} | UF: ${input.computedFacts.estimatedAddressState ?? 'Não informada'}
+
+FATOS EXTRAÍDOS COM CITAÇÃO CONFERIDA:
+${renderFatosExtraidos(input.fatosExtraidos)}
 
 EVIDÊNCIAS COLETADAS:
 ${compactEv}

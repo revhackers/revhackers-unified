@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { collectSiteData, detectErrorPage, type RenderResult } from '../site.js';
+import { collectSiteData, detectErrorPage, type CollectionResult, type RenderResult } from '../site.js';
+import type { Evidence } from '../../prompts/evidence.js';
 
 type Page = { status?: number; body: string };
 
@@ -32,6 +33,11 @@ const longTechnicalText = 'Guia técnico: como tratar erros 404 em APIs REST e d
 const shell = '<html><head><title>App</title></head><body><div id="root"></div></body></html>';
 
 const noRender = async (): Promise<RenderResult | null> => null;
+
+/** Evidências de página, sem o registro de sinais S1 (kind site_signals). */
+function pagesOf(result: CollectionResult): Evidence[] {
+  return result.evidences.filter((e) => e.kind !== 'site_signals');
+}
 
 const html = (body: string): Page => ({ body: `<html><body>${body}</body></html>` });
 const link = (href: string): string => `<a href="${href}">link</a>`;
@@ -75,10 +81,10 @@ describe('collectSiteData', () => {
     });
     const result = await collectSiteData({ companyName: 'Acme', websiteUrl: 'acme.test', competitors: [] }, { fetch, render: noRender });
 
-    expect(result.evidences).toHaveLength(1);
-    expect(result.evidences[0].id).toBe('E1');
-    expect(result.evidences[0].source).toBe('https://acme.test/pricing');
-    expect(result.evidences.some((e) => e.content.includes('Página não encontrada'))).toBe(false);
+    expect(pagesOf(result)).toHaveLength(1);
+    expect(pagesOf(result)[0].id).toBe('E1');
+    expect(pagesOf(result)[0].source).toBe('https://acme.test/pricing');
+    expect(pagesOf(result).some((e) => e.content.includes('Página não encontrada'))).toBe(false);
     expect(result.gaps.some((g) => g.includes('https://acme.test') && g.includes('rejeitada'))).toBe(true);
   });
 
@@ -89,8 +95,8 @@ describe('collectSiteData', () => {
     });
     const result = await collectSiteData({ companyName: 'Acme', websiteUrl: 'https://acme.test', competitors: [] }, { fetch, render: noRender });
 
-    expect(result.evidences.map((e) => e.source)).toEqual(['https://acme.test/precos']);
-    expect(result.evidences[0].id).toBe('E1');
+    expect(pagesOf(result).map((e) => e.source)).toEqual(['https://acme.test/precos']);
+    expect(pagesOf(result)[0].id).toBe('E1');
     expect(result.gaps.some((g) => g.includes('dns-tool-page'))).toBe(true);
   });
 
@@ -103,7 +109,7 @@ describe('collectSiteData', () => {
     });
     const result = await collectSiteData({ companyName: 'Acme', websiteUrl: 'https://acme.test', competitors: [] }, { fetch, render });
 
-    expect(result.evidences).toHaveLength(0);
+    expect(pagesOf(result)).toHaveLength(0);
     expect(result.gaps.some((g) => g.includes('rejeitada'))).toBe(true);
   });
 
@@ -116,7 +122,7 @@ describe('collectSiteData', () => {
     });
     const result = await collectSiteData({ companyName: 'Acme', websiteUrl: 'https://acme.test', competitors: [] }, { fetch, render });
 
-    expect(result.evidences).toHaveLength(0);
+    expect(pagesOf(result)).toHaveLength(0);
     expect(result.gaps.some((g) => g.includes('HTTP 404'))).toBe(true);
   });
 
@@ -126,15 +132,15 @@ describe('collectSiteData', () => {
     const render = async (): Promise<RenderResult> => ({ text: rendered, status: 200, finalUrl: 'https://acme.test/' });
     const result = await collectSiteData({ companyName: 'Acme', websiteUrl: 'https://acme.test', competitors: [] }, { fetch, render });
 
-    expect(result.evidences).toHaveLength(1);
-    expect(result.evidences[0].content).toContain('prospecção B2B');
+    expect(pagesOf(result)).toHaveLength(1);
+    expect(pagesOf(result)[0].content).toContain('prospecção B2B');
   });
 
   it('records gap and no evidence for empty page without render', async () => {
     const fetch = stubFetch({ 'https://acme.test': { body: '<html><body>   </body></html>' } });
     const result = await collectSiteData({ companyName: 'Acme', websiteUrl: 'https://acme.test', competitors: [] }, { fetch, render: noRender });
 
-    expect(result.evidences).toHaveLength(0);
+    expect(pagesOf(result)).toHaveLength(0);
     expect(result.gaps.some((g) => g.includes('sem conteúdo textual'))).toBe(true);
   });
 
@@ -142,15 +148,15 @@ describe('collectSiteData', () => {
     const fetch = stubFetch({ 'https://tiny.test': html('Ateliê Lua: cerâmica artesanal sob encomenda.') });
     const result = await collectSiteData({ companyName: 'Ateliê Lua', websiteUrl: 'https://tiny.test', competitors: [] }, { fetch, render: noRender });
 
-    expect(result.evidences).toHaveLength(1);
-    expect(result.evidences[0].content).toContain('cerâmica artesanal');
+    expect(pagesOf(result)).toHaveLength(1);
+    expect(pagesOf(result)[0].content).toContain('cerâmica artesanal');
   });
 
   it('preserves long technical pages mentioning 404 and DNS', async () => {
     const fetch = stubFetch({ 'https://dev.test': html(longTechnicalText) });
     const result = await collectSiteData({ companyName: 'Dev', websiteUrl: 'https://dev.test', competitors: [] }, { fetch, render: noRender });
 
-    expect(result.evidences).toHaveLength(1);
+    expect(pagesOf(result)).toHaveLength(1);
     expect(result.gaps.filter((g) => g.includes('rejeitada'))).toHaveLength(0);
   });
 
@@ -165,8 +171,8 @@ describe('collectSiteData', () => {
       { fetch, render: noRender },
     );
 
-    expect(result.evidences.map((e) => e.id)).toEqual(['E1', 'E2']);
-    expect(result.evidences.map((e) => e.source)).toEqual(['https://rival.test', 'https://other.test']);
+    expect(pagesOf(result).map((e) => e.id)).toEqual(['E1', 'E2']);
+    expect(pagesOf(result).map((e) => e.source)).toEqual(['https://rival.test', 'https://other.test']);
   });
 
   it('skips a linked soft-404 page and accepts the next real linked page', async () => {
@@ -181,8 +187,8 @@ describe('collectSiteData', () => {
     );
     const result = await collectSiteData({ companyName: 'Acme', websiteUrl: 'https://acme.test', competitors: [] }, { fetch, render: noRender });
 
-    expect(result.evidences.map((e) => e.id)).toEqual(['E1', 'E2']);
-    expect(result.evidences.map((e) => e.source)).toEqual(['https://acme.test', 'https://acme.test/cases']);
+    expect(pagesOf(result).map((e) => e.id)).toEqual(['E1', 'E2']);
+    expect(pagesOf(result).map((e) => e.source)).toEqual(['https://acme.test', 'https://acme.test/cases']);
     expect(result.gaps.some((g) => g.includes('/precos') && g.includes('rejeitada'))).toBe(true);
     expect(calls).toEqual(['https://acme.test', 'https://acme.test/precos', 'https://acme.test/cases']);
   });
@@ -212,7 +218,7 @@ describe('collectSiteData', () => {
     const result = await collectSiteData({ companyName: 'Acme', websiteUrl: 'https://acme.test', competitors: [] }, { fetch, render: noRender });
 
     expect(calls).toEqual(['https://acme.test', 'https://acme.test/sobre', 'https://acme.test/cases']);
-    expect(result.evidences.map((e) => e.source)).toEqual(['https://acme.test', 'https://acme.test/sobre', 'https://acme.test/cases']);
+    expect(pagesOf(result).map((e) => e.source)).toEqual(['https://acme.test', 'https://acme.test/sobre', 'https://acme.test/cases']);
   });
 
   it('uses links from the rendered DOM when the fetched shell has none', async () => {
@@ -225,7 +231,7 @@ describe('collectSiteData', () => {
         : null;
     const result = await collectSiteData({ companyName: 'Acme', websiteUrl: 'https://acme.test', competitors: [] }, { fetch, render });
 
-    expect(result.evidences.map((e) => e.source)).toEqual(['https://acme.test', 'https://acme.test/planos']);
+    expect(pagesOf(result).map((e) => e.source)).toEqual(['https://acme.test', 'https://acme.test/planos']);
     expect(calls).toEqual(['https://acme.test', 'https://acme.test/planos']);
   });
 
@@ -241,35 +247,90 @@ describe('collectSiteData', () => {
     const result = await collectSiteData({ companyName: 'Acme', websiteUrl: 'https://acme.test', competitors: [] }, { fetch, render: noRender });
 
     expect(calls).toEqual(['https://acme.test']);
-    expect(result.evidences).toHaveLength(1);
+    expect(pagesOf(result)).toHaveLength(1);
   });
 
-  it('caps internal fetch attempts at five even when every linked page is an error', async () => {
+  it('busca no máximo oito candidatas internas, mesmo quando todas são erro', async () => {
     const calls: string[] = [];
-    const links = Array.from({ length: 8 }, (_, i) => link(`/pagina-${i + 1}`));
+    const links = Array.from({ length: 10 }, (_, i) => link(`/pagina-${i + 1}`));
     const pages: Record<string, Page> = {
       'https://acme.test': html(`Acme automatiza prospecção B2B para times de vendas. ${links.join(' ')}`),
     };
-    for (let i = 1; i <= 8; i++) pages[`https://acme.test/pagina-${i}`] = { body: `<html><body>${SOFT_404_BASELINE}</body></html>` };
+    for (let i = 1; i <= 10; i++) pages[`https://acme.test/pagina-${i}`] = { body: `<html><body>${SOFT_404_BASELINE}</body></html>` };
     const fetch = stubFetch(pages, calls);
     const result = await collectSiteData({ companyName: 'Acme', websiteUrl: 'https://acme.test', competitors: [] }, { fetch, render: noRender });
 
-    expect(calls).toHaveLength(1 + 5);
-    expect(result.evidences).toHaveLength(1);
+    expect(calls).toHaveLength(1 + 8);
+    expect(pagesOf(result)).toHaveLength(1);
   });
 
-  it('caps accepted internal pages at three', async () => {
+  it('aceita as cinco primeiras páginas internas bem-sucedidas, na ordem de prioridade', async () => {
     const calls: string[] = [];
-    const links = Array.from({ length: 5 }, (_, i) => link(`/pagina-${i + 1}`));
+    const links = Array.from({ length: 7 }, (_, i) => link(`/pagina-${i + 1}`));
     const pages: Record<string, Page> = {
       'https://acme.test': html(`Acme automatiza prospecção B2B para times de vendas. ${links.join(' ')}`),
     };
-    for (let i = 1; i <= 5; i++) pages[`https://acme.test/pagina-${i}`] = html(`Página ${i} da Acme com conteúdo comercial distinto e suficiente.`);
+    for (let i = 1; i <= 7; i++) pages[`https://acme.test/pagina-${i}`] = html(`Página ${i} da Acme com conteúdo comercial distinto e suficiente.`);
     const fetch = stubFetch(pages, calls);
     const result = await collectSiteData({ companyName: 'Acme', websiteUrl: 'https://acme.test', competitors: [] }, { fetch, render: noRender });
 
-    expect(result.evidences).toHaveLength(4);
-    expect(calls).toHaveLength(1 + 3);
+    expect(result.evidences.filter((e) => e.kind === 'site').map((e) => e.source)).toEqual([
+      'https://acme.test',
+      'https://acme.test/pagina-1',
+      'https://acme.test/pagina-2',
+      'https://acme.test/pagina-3',
+      'https://acme.test/pagina-4',
+      'https://acme.test/pagina-5',
+    ]);
+    expect(calls).toHaveLength(1 + 7);
+  });
+});
+
+describe('collectSiteData: ids e sinais', () => {
+  it('atribui E1…En na ordem home, internas (prioridade) e concorrentes (entrada), com S1 por último', async () => {
+    const fetch = stubFetch({
+      'https://acme.test': html(`Acme automatiza prospecção B2B. ${link('/sobre')} ${link('/cases')}`),
+      'https://acme.test/sobre': html('Sobre a Acme: fundada por operadores de vendas com experiência em SaaS B2B.'),
+      'https://acme.test/cases': html('Case: a Beta reduziu o ciclo de vendas em quarenta por cento em um trimestre.'),
+      'https://rival.test': html('Rival oferece automação de prospecção para times de vendas enterprise.'),
+    });
+    const result = await collectSiteData(
+      { companyName: 'Acme', websiteUrl: 'https://acme.test', competitors: ['https://rival.test'] },
+      { fetch, render: noRender },
+    );
+
+    expect(result.evidences.map((e) => [e.id, e.source])).toEqual([
+      ['E1', 'https://acme.test'],
+      ['E2', 'https://acme.test/sobre'],
+      ['E3', 'https://acme.test/cases'],
+      ['E4', 'https://rival.test'],
+      ['S1', 'https://acme.test'],
+    ]);
+  });
+
+  it('registra sinais técnicos da home como evidência S1 e no resultado, com ausências explícitas', async () => {
+    const home = '<html><head><script src="https://www.googletagmanager.com/gtm.js?id=GTM-1"></script></head><body>'
+      + 'Acme automatiza prospecção B2B para times de vendas. '.repeat(40)
+      + '<form action="/lead"></form><a href="/precos">Preços</a></body></html>';
+    const fetch = stubFetch({
+      'https://acme.test': { body: home },
+      'https://acme.test/precos': html('Plano Starter por R$ 199 mensais para equipes pequenas de vendas.'),
+    });
+    const result = await collectSiteData({ companyName: 'Acme', websiteUrl: 'https://acme.test', competitors: [] }, { fetch, render: noRender });
+
+    const signalEvidence = result.evidences.find((e) => e.kind === 'site_signals');
+    expect(signalEvidence?.content).toContain('Detectado na home: Google Tag Manager');
+    expect(signalEvidence?.content).toContain('Não detectado no HTML da home: Pixel Meta');
+    expect(result.signals).toContainEqual({ sinal: 'Formulário', detectado: true });
+    expect(result.signals).toContainEqual({ sinal: 'Página de preços', detectado: true });
+    expect(result.signals).toContainEqual({ sinal: 'Pixel Meta', detectado: false });
+  });
+
+  it('sem render configurado, registra a lacuna de render indisponível em página com pouco texto', async () => {
+    const fetch = stubFetch({ 'https://acme.test': { body: shell } });
+    const result = await collectSiteData({ companyName: 'Acme', websiteUrl: 'https://acme.test', competitors: [] }, { fetch });
+
+    expect(result.gaps.some((g) => g.includes('render indisponível') && g.includes('https://acme.test'))).toBe(true);
   });
 });
 

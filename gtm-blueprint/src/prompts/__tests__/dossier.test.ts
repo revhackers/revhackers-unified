@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { dossierPromptSpec, type DossierInput } from '../dossier.js';
 import type { Evidence } from '../evidence.js';
+import type { ExtractOutput } from '../extract.js';
 
-function input(evidences: Evidence[]): DossierInput {
+function input(evidences: Evidence[], fatosExtraidos: DossierInput['fatosExtraidos'] = []): DossierInput {
   return {
     companyName: 'Acme',
     websiteUrl: 'https://acme.test',
@@ -13,8 +14,20 @@ function input(evidences: Evidence[]): DossierInput {
     ],
     computedFacts: { cnpjAgeYears: null, companySizeEstimated: null, estimatedAddressState: null },
     evidences,
+    fatosExtraidos,
   };
 }
+
+const EXTRACT: ExtractOutput = {
+  url: 'https://acme.test',
+  propostaValorDeclarada: { resumo: 'Automação de prospecção', quote: 'Acme automatiza prospecção B2B' },
+  icpDeclarado: null,
+  produtosPlanosPrecos: [],
+  provasSociais: [],
+  ctasConversao: [],
+  sinaisMaturidade: [],
+  lacunasOuInconsistencias: [],
+};
 
 describe('dossierPromptSpec.buildUser', () => {
   it('mantém no prompt o fim de uma página longa (orçamento de 60 mil caracteres)', () => {
@@ -36,5 +49,13 @@ describe('dossierPromptSpec.buildUser', () => {
     expect(user).toContain('- Concorrentes informados e coletados: https://rival.test');
     expect(user).toContain('- Concorrentes informados sem coleta (não analisar): https://ausente.test');
     expect(user).not.toContain('Concorrentes Informados:');
+  });
+
+  it('imprime os fatos com citação conferida antes da lista de evidências', () => {
+    const user = dossierPromptSpec.buildUser(input([], [{ evidenceId: 'E1', extract: EXTRACT }]));
+
+    expect(user.indexOf('FATOS EXTRAÍDOS COM CITAÇÃO CONFERIDA:')).toBeGreaterThan(-1);
+    expect(user.indexOf('FATOS EXTRAÍDOS COM CITAÇÃO CONFERIDA:')).toBeLessThan(user.indexOf('EVIDÊNCIAS COLETADAS:'));
+    expect(user).toContain('[E1] Proposta de valor: Automação de prospecção — citação: "Acme automatiza prospecção B2B"');
   });
 });

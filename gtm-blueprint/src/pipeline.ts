@@ -4,10 +4,11 @@ import type { PromptSpec } from './prompts/types.js';
 import { enforceEvidence, enforcePersonaHypothesis, renderEvidenceCompact } from './prompts/evidence.js';
 import { enforceNumberProvenance, userInputEvidence, type NumericFinding } from './prompts/numberGuard.js';
 import { fetchCnpjData } from './compute/cnpj.js';
-import { collectSiteData, type CollectionResult } from './collect/site.js';
+import { collectSiteData, type CollectionOptions, type CollectionResult } from './collect/site.js';
+import { findCnpj } from './collect/signals.js';
 import { computeAndSortIce, type Plano90DiasData } from './compute/ice.js';
 import { computeUnitEconomics, computeSomAnual, computedEvidence } from './compute/unitEconomics.js';
-import { extractPromptSpec, type ExtractInput, type ExtractOutput } from './prompts/extract.js';
+import { extractPromptSpec, verifyExtract, type ExtractInput, type ExtractOutput } from './prompts/extract.js';
 import { dossierPromptSpec, type DossierInput, type DossierOutput } from './prompts/dossier.js';
 import { raioXPromptSpec, type RaioXInput, type RaioXOutput } from './prompts/modules/raio_x.js';
 import { icpMercadoPromptSpec, type IcpMercadoInput, type IcpMercadoOutput } from './prompts/modules/icp_mercado.js';
@@ -41,6 +42,11 @@ export interface PipelineInput {
     arpuMedioMensal: number;
   };
   providers: Record<string, LlmProvider>;
+}
+
+export interface PipelineOptions {
+  /** I/O de coleta injetável (fetch e render). Sem `render`, páginas sem texto no HTML bruto viram lacuna. */
+  collect?: CollectionOptions;
 }
 
 export interface CallMetric {
@@ -84,7 +90,7 @@ export interface PipelineOutput {
 /** Código de erro do pipeline quando o site informado não entrega nenhuma página para análise. */
 export const SITE_INACESSIVEL = 'site_inacessivel';
 
-export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutput> {
+export async function runGtmPipeline(input: PipelineInput, options: PipelineOptions = {}): Promise<PipelineOutput> {
   const breakdown: CallMetric[] = [];
   let totalCostUsd = 0;
   let totalLatencyMs = 0;
@@ -102,22 +108,27 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
     });
   };
 
-  // 1. CNPJ Lookup
-  const cnpjResult = await fetchCnpjData(input.cnpj, { origem: 'informado pelo lead' });
-  const allEvidences: Evidence[] = [];
-  if (cnpjResult.evidence) {
-    allEvidences.push(cnpjResult.evidence);
-  }
-
-  // 2. Collection
+  // 1. Collection
   const collection = await collectSiteData({
     companyName: input.companyName,
     websiteUrl: input.websiteUrl,
     competitors: input.competitors,
-  });
+  }, options.collect);
   // Sem nenhuma página do site não há o que analisar: aborta antes de qualquer chamada de modelo.
   if (!collection.evidences.some((ev) => ev.kind === 'site')) {
     throw new Error(SITE_INACESSIVEL);
+  }
+
+  // 2. CNPJ: o informado pelo lead; sem ele, o único CNPJ citado nas páginas do site (rodapé, contato).
+  const siteTexts = collection.evidences.filter((ev) => ev.kind === 'site').map((ev) => ev.content);
+  const declaredCnpj = input.cnpj;
+  const detectedCnpj = declaredCnpj ? null : findCnpj(siteTexts);
+  const cnpjResult = await fetchCnpjData(declaredCnpj ?? detectedCnpj ?? undefined, {
+    origem: declaredCnpj ? 'informado pelo lead' : 'detectado no site',
+  });
+  const allEvidences: Evidence[] = [];
+  if (cnpjResult.evidence) {
+    allEvidences.push(cnpjResult.evidence);
   }
   allEvidences.push(...collection.evidences);
 
@@ -149,9 +160,11 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
     return { ...res, data: guarded.value };
   };
 
-  // 3. Extract each page in parallel (limit 3 concurrency). Only site pages are extracted, never the CNPJ record.
+  // 3. Extract each page in parallel (limit 3 concurrency). Only site pages are extracted, never the CNPJ or signal records.
+  // Cada extração passa pela checagem de citação: quote que não está no texto da página é descartado.
   const pageEvidences = allEvidences.filter((ev) => ev.kind === 'site' || ev.kind === 'competitor_site');
-  const extractions: ExtractOutput[] = [];
+  const fatosExtraidos: Array<{ evidenceId: string; extract: ExtractOutput }> = [];
+  let droppedQuotes = 0;
   const limit = 3;
   for (let i = 0; i < pageEvidences.length; i += limit) {
     const chunk = pageEvidences.slice(i, i + limit);
@@ -163,11 +176,14 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
       };
       const res = await runPrompt(extractPromptSpec, extInput, { providers: input.providers });
       recordCall(extractPromptSpec.id, res.costUsd, res.raw);
-      return res.data;
+      const verified = verifyExtract(res.data, ev.content);
+      droppedQuotes += verified.dropped;
+      return { evidenceId: ev.id, extract: verified.extract };
     });
     const chunkResults = await Promise.all(chunkPromises);
-    extractions.push(...chunkResults);
+    fatosExtraidos.push(...chunkResults);
   }
+  const extractions = fatosExtraidos.map((fato) => fato.extract);
 
   // 4. Build Dossier
   const dossierInput: DossierInput = {
@@ -182,6 +198,7 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
       estimatedAddressState: cnpjResult.estimatedAddressState,
     },
     evidences: citableEvidences,
+    fatosExtraidos,
   };
   const dossierRes = await run(dossierPromptSpec, dossierInput);
   recordCall(dossierPromptSpec.id, dossierRes.costUsd, dossierRes.raw);

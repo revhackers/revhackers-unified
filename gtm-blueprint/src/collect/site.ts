@@ -1,4 +1,5 @@
 import type { Evidence } from '../prompts/evidence.js';
+import { detectSiteSignals, PRIORITY_LINK_PATTERNS, type SiteSignal } from './signals.js';
 
 export interface CollectionInput {
   companyName: string;
@@ -17,17 +18,21 @@ export interface CollectionResult {
   gaps: string[];
   /** Concorrentes na ordem de entrada. */
   competitors: CompetitorStatus[];
+  /** Sinais técnicos da home (vazio quando a home não entrou nas evidências). */
+  signals: SiteSignal[];
 }
 
 /**
  * Outcome of a browser load. `status` and `finalUrl` come from the navigation when the browser exposes them.
  * `links` are the anchor hrefs of the rendered DOM (absolute when the browser resolves them).
+ * `html` is the rendered DOM, used to detect scripts and forms the fetched shell does not show.
  */
 export interface RenderResult {
   text: string;
   status: number | null;
   finalUrl: string;
   links?: string[];
+  html?: string;
 }
 
 /** Injectable I/O so tests can stub network and browser without real services. */
@@ -37,18 +42,32 @@ export interface CollectionOptions {
 }
 
 type FetchOutcome = 'accepted' | 'rejected' | 'unreachable';
+type PageKind = 'site' | 'competitor_site';
+
+interface PageDraft {
+  kind: PageKind;
+  source: string;
+  content: string;
+  /** HTML bruto e, quando houve render, o HTML renderizado. Usado para detectar sinais. */
+  html: string;
+}
 
 interface FetchResult {
   outcome: FetchOutcome;
   /** Raw anchor hrefs seen on the page (HTML and, when rendered, the browser DOM). Resolved later against the page URL. */
   links: string[];
+  /** Presente quando a página entra nas evidências. Os ids são atribuídos depois, em ordem fixa. */
+  draft?: PageDraft;
+  /** Lacuna desta tentativa: página rejeitada, erro de rede, ou coletada sem render. */
+  gap?: string;
 }
 
 const MAX_TEXT_CHARS = 12000;
 const THIN_TEXT_CHARS = 1500;
-const MAX_INTERNAL_PAGES = 3;
-/** Upper bound on internal fetches per site, so a link-heavy or error-heavy site cannot stall collection. */
-const MAX_INTERNAL_ATTEMPTS = 5;
+/** Páginas internas aceitas por site, na ordem de prioridade. */
+const MAX_INTERNAL_PAGES = 5;
+/** Candidatas internas buscadas em paralelo por site. As primeiras bem-sucedidas, por prioridade, entram. */
+const MAX_INTERNAL_ATTEMPTS = 8;
 /** Error pages (soft 404, native browser network errors) are short; longer pages are never classified as errors. */
 const ERROR_PAGE_MAX_CHARS = 2000;
 
@@ -56,14 +75,6 @@ const ERROR_PAGE_MAX_CHARS = 2000;
 const EXCLUDED_PATH =
   /\/(?:login|signin|sign-in|logout|cadastro|register|signup|sign-up|auth|entrar|minha-conta|account|carrinho|cart|checkout|download|downloads|wp-admin|wp-login)(?=\/|$)/i;
 const EXCLUDED_EXTENSION = /\.(?:pdf|zip|rar|png|jpe?g|gif|webp|svg|ico|mp4|mov|mp3|docx?|xlsx?|pptx?|xml|json|txt|csv)$/i;
-
-/** Ranking of discovered links by business value: pricing, about, cases, product. Earlier entries win. */
-const PRIORITY_PATTERNS: RegExp[] = [
-  /pre[cç]o|pricing|planos?|plans|assinatura|investimento/i,
-  /sobre|about|quem-somos|empresa|equipe|team/i,
-  /cases?|clientes|casos|resultados|depoimentos|customers|testimonials/i,
-  /produto|product|features|solu[cç][oõ]es|solutions|servi[cç]os|services/i,
-];
 
 /** Soft 404 headline anchored at the start of the text. */
 const SOFT_404_HEADLINE: RegExp[] = [
@@ -131,8 +142,8 @@ function extractHrefs(html: string): string[] {
 }
 
 function rankInternalLink(path: string): number {
-  const index = PRIORITY_PATTERNS.findIndex((re) => re.test(path));
-  return index === -1 ? PRIORITY_PATTERNS.length : index;
+  const index = PRIORITY_LINK_PATTERNS.findIndex((re) => re.test(path));
+  return index === -1 ? PRIORITY_LINK_PATTERNS.length : index;
 }
 
 /**
@@ -172,13 +183,11 @@ function discoverInternalLinks(hrefs: string[], pageUrl: string): string[] {
 }
 
 export async function collectSiteData(input: CollectionInput, options: CollectionOptions = {}): Promise<CollectionResult> {
-  const evidences: Evidence[] = [];
-  const gaps: string[] = [];
-  let evidenceCounter = 1;
   const fetchImpl = options.fetch ?? fetch;
-  const render = options.render ?? renderWithBrowser;
+  const render = options.render;
 
   const renderSafe = async (url: string): Promise<RenderResult | null> => {
+    if (!render) return null;
     try {
       return await render(url);
     } catch {
@@ -194,7 +203,8 @@ export async function collectSiteData(input: CollectionInput, options: Collectio
     return u;
   };
 
-  const fetchAndStrip = async (url: string, kind: 'site' | 'competitor_site'): Promise<FetchResult> => {
+  // Uma tentativa de página. Não grava evidência: a coleta paralela devolve rascunhos e os ids são atribuídos depois.
+  const fetchAndStrip = async (url: string, kind: PageKind): Promise<FetchResult> => {
     let res: Response;
     let html: string;
     try {
@@ -206,23 +216,23 @@ export async function collectSiteData(input: CollectionInput, options: Collectio
         signal: AbortSignal.timeout(10000),
       });
       if (!res.ok) {
-        gaps.push(`Falha ao buscar ${url}: HTTP status ${res.status}`);
-        return { outcome: 'rejected', links: [] };
+        return { outcome: 'rejected', links: [], gap: `Falha ao buscar ${url}: HTTP status ${res.status}` };
       }
       html = await res.text();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      gaps.push(`Erro de rede ao buscar ${url}: ${msg}`);
-      return { outcome: 'unreachable', links: [] };
+      return { outcome: 'unreachable', links: [], gap: `Erro de rede ao buscar ${url}: ${msg}` };
     }
 
     const links = extractHrefs(html);
+    let detectionHtml = html;
     let stripped = stripHtmlToText(html).slice(0, MAX_TEXT_CHARS);
     let rejection: string | null = null;
     const fetchedErrorKind = detectErrorPage(stripped);
     if (fetchedErrorKind) rejection = `${fetchedErrorKind} na resposta HTTP`;
 
-    // SPAs (React/Vue) deliver an empty or thin shell without JS: render it in a real browser.
+    // SPAs (React/Vue) deliver an empty or thin shell without JS: render it in a real browser when one is configured.
+    let renderUnavailable = false;
     if (rejection || stripped.length < THIN_TEXT_CHARS) {
       const rendered = await renderSafe(url);
       if (rendered) {
@@ -233,66 +243,94 @@ export async function collectSiteData(input: CollectionInput, options: Collectio
           rejection = renderedRejection;
           stripped = '';
         } else {
+          if (rendered.html) detectionHtml = `${detectionHtml}\n${rendered.html}`;
           const renderedText = rendered.text.replace(/\s+/g, ' ').trim().slice(0, MAX_TEXT_CHARS);
           if (rejection || renderedText.length > stripped.length) {
             stripped = renderedText;
             rejection = null;
           }
         }
-      } else if (!rejection && stripped.length > 0) {
-        gaps.push(`Página com pouco texto sem JavaScript e render indisponível: ${url}`);
+      } else if (!rejection) {
+        renderUnavailable = true;
       }
     }
 
     if (rejection) {
-      gaps.push(`Página rejeitada (${rejection}): ${url}`);
-      return { outcome: 'rejected', links };
+      return { outcome: 'rejected', links, gap: `Página rejeitada (${rejection}): ${url}` };
     }
     if (stripped.length === 0) {
-      gaps.push(`Página sem conteúdo textual: ${url}`);
-      return { outcome: 'rejected', links };
+      return {
+        outcome: 'rejected',
+        links,
+        gap: `Página sem conteúdo textual${renderUnavailable ? ' e render indisponível' : ''}: ${url}`,
+      };
     }
-
-    evidences.push({
-      id: `E${evidenceCounter++}`,
-      kind,
-      source: url,
-      fetchedAt: new Date().toISOString(),
-      content: stripped,
-    });
-    return { outcome: 'accepted', links };
+    return {
+      outcome: 'accepted',
+      links,
+      draft: { kind, source: url, content: stripped, html: detectionHtml },
+      gap: renderUnavailable ? `Página com pouco texto sem JavaScript e render indisponível: ${url}` : undefined,
+    };
   };
 
-  // 1. Company Homepage
+  // 1. Home first: its links decide which internal pages exist.
   const companyUrl = normalizeUrl(input.websiteUrl);
   const home = await fetchAndStrip(companyUrl, 'site');
 
-  // Internal pages come only from links the origin actually serves (HTML anchors or rendered DOM), never guessed routes.
-  if (home.outcome !== 'unreachable') {
-    const candidates = discoverInternalLinks(home.links, companyUrl);
-    let internalCount = 0;
-    let attempts = 0;
-    for (const link of candidates) {
-      if (internalCount >= MAX_INTERNAL_PAGES || attempts >= MAX_INTERNAL_ATTEMPTS) break;
-      attempts += 1;
-      if ((await fetchAndStrip(link, 'site')).outcome === 'accepted') internalCount += 1;
-    }
+  // 2. Internal candidates (only links the origin actually serves, in priority order) and competitors, in parallel.
+  const candidates = home.outcome === 'unreachable'
+    ? []
+    : discoverInternalLinks(home.links, companyUrl).slice(0, MAX_INTERNAL_ATTEMPTS);
+  const competitorUrls = input.competitors.filter((raw) => raw).map(normalizeUrl);
+  const [internalResults, competitorResults] = await Promise.all([
+    Promise.all(candidates.map((url) => fetchAndStrip(url, 'site'))),
+    Promise.all(competitorUrls.map((url) => fetchAndStrip(url, 'competitor_site'))),
+  ]);
+
+  // 3. Internal pages: the first MAX_INTERNAL_PAGES that loaded, in priority order.
+  const internal: FetchResult[] = [];
+  for (const result of internalResults) {
+    if (internal.length >= MAX_INTERNAL_PAGES) break;
+    if (result.outcome === 'accepted') internal.push(result);
   }
 
-  // 2. Competitors Homepages
-  const competitors: CompetitorStatus[] = [];
-  for (const compUrlRaw of input.competitors) {
-    if (!compUrlRaw) continue;
-    const url = normalizeUrl(compUrlRaw);
-    const result = await fetchAndStrip(url, 'competitor_site');
-    competitors.push({ url, collected: result.outcome === 'accepted' });
-  }
-
-  return {
-    evidences,
-    gaps,
-    competitors,
+  // 4. Evidence ids in fixed order: home, internal pages (priority), competitors (entry order).
+  const evidences: Evidence[] = [];
+  const addPage = (result: FetchResult): void => {
+    if (!result.draft) return;
+    evidences.push({
+      id: `E${evidences.length + 1}`,
+      kind: result.draft.kind,
+      source: result.draft.source,
+      fetchedAt: new Date().toISOString(),
+      content: result.draft.content,
+    });
   };
+  addPage(home);
+  internal.forEach(addPage);
+  const competitors: CompetitorStatus[] = [];
+  competitorUrls.forEach((url, i) => {
+    const result = competitorResults[i];
+    addPage(result);
+    competitors.push({ url, collected: result.outcome === 'accepted' });
+  });
+
+  // 5. Sinais técnicos da home, só quando a home entrou nas evidências.
+  const signals = home.draft ? detectSiteSignals(home.draft.html, home.links) : [];
+  if (home.draft) {
+    evidences.push({
+      id: 'S1',
+      kind: 'site_signals',
+      source: home.draft.source,
+      fetchedAt: new Date().toISOString(),
+      content: signals
+        .map((s) => (s.detectado ? `Detectado na home: ${s.sinal}` : `Não detectado no HTML da home: ${s.sinal}`))
+        .join('\n'),
+    });
+  }
+
+  const gaps = [home, ...internalResults, ...competitorResults].flatMap((result) => (result.gap ? [result.gap] : []));
+  return { evidences, gaps, competitors, signals };
 }
 
 function stripHtmlToText(html: string): string {
@@ -308,52 +346,4 @@ function stripHtmlToText(html: string): string {
     .replace(/&#39;/g, "'");
   cleaned = cleaned.replace(/\s+/g, ' ').trim();
   return cleaned;
-}
-
-/**
- * Local/Node renderer for JS-only sites (system Chrome via playwright).
- * In the Cloudflare Worker this is replaced by Browser Run. Returns null when unavailable.
- */
-async function renderWithBrowser(url: string): Promise<RenderResult | null> {
-  if (typeof process === 'undefined' || !process.versions?.node) return null;
-  try {
-    // Dynamic: playwright exists only in the local Node toolchain, never in the Worker bundle.
-    type PwResponse = { status(): number };
-    type PwPage = {
-      goto(u: string, o: object): Promise<PwResponse | null>;
-      waitForTimeout(ms: number): Promise<void>;
-      innerText(sel: string): Promise<string>;
-      evaluate(expression: string): Promise<string[]>;
-      url(): string;
-    };
-    type PwBrowser = { newPage(): Promise<PwPage>; close(): Promise<void> };
-    const pw = (await import('playwright' as string)) as unknown as { chromium: { launch(o: object): Promise<PwBrowser> } };
-    const browser = await pw.chromium.launch({
-      executablePath: process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-      args: ['--no-sandbox'],
-    });
-    try {
-      const page = await browser.newPage();
-      const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await page.waitForTimeout(4000);
-      const text: string = await page.innerText('body');
-      // Link discovery is best-effort: a failed DOM query must not discard the rendered text.
-      let links: string[] = [];
-      try {
-        links = await page.evaluate("Array.from(document.querySelectorAll('a[href]'), (a) => a.href)");
-      } catch {
-        links = [];
-      }
-      return {
-        text: text.replace(/\s+/g, ' ').trim(),
-        status: response ? response.status() : null,
-        finalUrl: page.url(),
-        links,
-      };
-    } finally {
-      await browser.close();
-    }
-  } catch {
-    return null;
-  }
 }

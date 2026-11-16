@@ -82,4 +82,50 @@ describe('runGtmPipeline', () => {
     const criticPrompt = prompts.find((p) => p.kind === 'critic')?.user ?? '';
     expect(criticPrompt).toContain('"calculado":');
   });
+
+  it('usa o CNPJ citado no site quando o lead não informa, e registra a origem', async () => {
+    const brasilApi = JSON.stringify({
+      data_inicio_atividade: '2013-10-03',
+      porte: 'DEMAIS',
+      uf: 'SP',
+      razao_social: 'ACME SOLUCOES LTDA',
+      descricao_situacao_cadastral: 'ATIVA',
+    });
+    stubFetch({
+      'https://acme.test': `<html><body>${HOME_TEXT} CNPJ 12.345.678/0001-90</body></html>`,
+      'https://brasilapi.com.br/api/cnpj/v1/12345678000190': brasilApi,
+    });
+    const { provider, prompts } = fakeLlm();
+
+    const out = await runGtmPipeline({ ...BASE, providers: { bedrock: provider } });
+
+    const cnpj = out.cnpjData as { evidence: { content: string } | null };
+    expect(JSON.parse(cnpj.evidence?.content ?? '{}')).toMatchObject({ cnpj: '12345678000190', origem: 'detectado no site' });
+    const dossierPrompt = prompts.find((p) => p.kind === 'dossier')?.user ?? '';
+    expect(dossierPrompt).toContain('[CNPJ1] (cnpj)');
+    expect(dossierPrompt).toContain('[S1] (site_signals)');
+  });
+
+  it('entrega ao dossiê só as citações conferidas no texto da página', async () => {
+    stubFetch({ 'https://acme.test': HOME_HTML });
+    const { provider, prompts } = fakeLlm({
+      extract: () => ({
+        url: 'https://acme.test',
+        propostaValorDeclarada: { resumo: 'Automação B2B', quote: 'Acme automatiza prospecção B2B' },
+        icpDeclarado: { publicoAlvo: 'Público inventado', quote: 'Frase que não existe na página.' },
+        produtosPlanosPrecos: [],
+        provasSociais: [],
+        ctasConversao: [],
+        sinaisMaturidade: [],
+        lacunasOuInconsistencias: [],
+      }),
+    });
+
+    const out = await runGtmPipeline({ ...BASE, providers: { bedrock: provider } });
+
+    const dossierPrompt = prompts.find((p) => p.kind === 'dossier')?.user ?? '';
+    expect(dossierPrompt).toContain('[E1] Proposta de valor: Automação B2B — citação: "Acme automatiza prospecção B2B"');
+    expect(dossierPrompt).not.toContain('Público inventado');
+    expect(out.extractions[0]?.icpDeclarado).toBeNull();
+  });
 });

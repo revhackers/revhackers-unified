@@ -10,6 +10,7 @@ export const EvidenceKindSchema = z.enum([
   'user_input',
   'file',
   'computed',
+  'site_signals',
 ]);
 
 export const EvidenceSchema = z.object({
