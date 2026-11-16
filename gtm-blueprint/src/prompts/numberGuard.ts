@@ -1,4 +1,5 @@
 import type { Evidence } from './evidence.js';
+import type { CompetitorStatus } from '../collect/site.js';
 import type { PipelineInput } from '../pipeline.js';
 
 /**
@@ -289,14 +290,25 @@ function formatPtBr(value: number): string {
 }
 
 /**
+ * Duas linhas sempre: concorrentes coletados e concorrentes informados sem coleta. O dossiê e a evidência U1
+ * usam o mesmo texto, para que nenhum módulo analise um concorrente que não foi lido.
+ */
+export function competitorLines(competitors: CompetitorStatus[]): string[] {
+  const collected = competitors.filter((c) => c.collected).map((c) => c.url);
+  const skipped = competitors.filter((c) => !c.collected).map((c) => c.url);
+  return [
+    `Concorrentes informados e coletados: ${collected.join('; ') || 'nenhum'}`,
+    `Concorrentes informados sem coleta (não analisar): ${skipped.join('; ') || 'nenhum'}`,
+  ];
+}
+
+/**
  * Entrada informada pelo cliente como evidência `U1` (kind `user_input`). Citável por claims e pela guarda.
  * Não entra em `allEvidences`: o loop de extração não processa esta evidência. Campos nulos saem do conteúdo.
  */
 export function userInputEvidence(
-  input: Pick<
-    PipelineInput,
-    'companyName' | 'websiteUrl' | 'declaredPhase' | 'declaredIcp' | 'competitors' | 'crmOrFinancialInputs' | 'tamBottomUpData'
-  >,
+  input: Pick<PipelineInput, 'companyName' | 'websiteUrl' | 'declaredPhase' | 'declaredIcp' | 'crmOrFinancialInputs' | 'tamBottomUpData'>,
+  competitors: CompetitorStatus[],
 ): Evidence {
   const lines = [
     `Empresa: ${input.companyName}`,
@@ -304,7 +316,7 @@ export function userInputEvidence(
     `Fase declarada: ${input.declaredPhase}`,
   ];
   if (input.declaredIcp) lines.push(`ICP declarado: ${input.declaredIcp}`);
-  if (input.competitors.length > 0) lines.push(`Concorrentes informados: ${input.competitors.join('; ')}`);
+  lines.push(...competitorLines(competitors));
   const crm = input.crmOrFinancialInputs;
   if (crm?.arpuMonthly != null) lines.push(`ARPU mensal: R$ ${formatPtBr(crm.arpuMonthly)}`);
   if (crm?.cacEstimated != null) lines.push(`CAC estimado: R$ ${formatPtBr(crm.cacEstimated)}`);

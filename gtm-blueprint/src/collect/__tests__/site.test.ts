@@ -272,3 +272,21 @@ describe('collectSiteData', () => {
     expect(calls).toHaveLength(1 + 3);
   });
 });
+
+describe('collectSiteData: status dos concorrentes', () => {
+  it('marca como coletado só o concorrente cuja página entrou nas evidências', async () => {
+    const fetch = stubFetch({
+      'https://acme.test': html('Acme automatiza prospecção B2B para times de vendas.'),
+      'https://rival.test': html('Rival oferece automação de prospecção para times de vendas enterprise.'),
+    });
+    const result = await collectSiteData(
+      { companyName: 'Acme', websiteUrl: 'https://acme.test', competitors: ['rival.test', 'https://ausente.test'] },
+      { fetch, render: noRender },
+    );
+
+    expect(result.competitors).toEqual([
+      { url: 'https://rival.test', collected: true },
+      { url: 'https://ausente.test', collected: false },
+    ]);
+  });
+});

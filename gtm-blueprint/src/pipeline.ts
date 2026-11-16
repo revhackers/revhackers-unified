@@ -4,7 +4,7 @@ import type { PromptSpec } from './prompts/types.js';
 import { enforceEvidence, renderEvidenceCompact } from './prompts/evidence.js';
 import { enforceNumberProvenance, userInputEvidence, type NumericFinding } from './prompts/numberGuard.js';
 import { fetchCnpjData } from './compute/cnpj.js';
-import { collectSiteData } from './collect/site.js';
+import { collectSiteData, type CollectionResult } from './collect/site.js';
 import { computeAndSortIce } from './compute/ice.js';
 import { extractPromptSpec, type ExtractInput, type ExtractOutput } from './prompts/extract.js';
 import { dossierPromptSpec, type DossierInput, type DossierOutput } from './prompts/dossier.js';
@@ -57,7 +57,7 @@ export interface PipelineOutput {
   declaredPhase: string;
   competitors: string[];
   cnpjData: unknown;
-  collectionResult: { evidences: Evidence[]; gaps: string[] };
+  collectionResult: CollectionResult;
   extractions: ExtractOutput[];
   dossier: DossierOutput;
   modules: {
@@ -71,10 +71,7 @@ export interface PipelineOutput {
     plano_90_dias: Plano90DiasOutput;
   };
   critic: CriticOutput;
-  qualityChecks: {
-    downgradedClaims: number;
-    numericFindings: NumericFinding[];
-  };
+  qualityChecks: { downgradedClaims: number; numericFindings: NumericFinding[] };
   metrics: {
     totalCostUsd: number;
     totalLatencyMs: number;
@@ -82,6 +79,9 @@ export interface PipelineOutput {
     breakdown: CallMetric[];
   };
 }
+
+/** Código de erro do pipeline quando o site informado não entrega nenhuma página para análise. */
+export const SITE_INACESSIVEL = 'site_inacessivel';
 
 export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutput> {
   const breakdown: CallMetric[] = [];
@@ -102,7 +102,7 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
   };
 
   // 1. CNPJ Lookup
-  const cnpjResult = await fetchCnpjData(input.cnpj);
+  const cnpjResult = await fetchCnpjData(input.cnpj, { origem: 'informado pelo lead' });
   const allEvidences: Evidence[] = [];
   if (cnpjResult.evidence) {
     allEvidences.push(cnpjResult.evidence);
@@ -114,12 +114,16 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
     websiteUrl: input.websiteUrl,
     competitors: input.competitors,
   });
+  // Sem nenhuma página do site não há o que analisar: aborta antes de qualquer chamada de modelo.
+  if (!collection.evidences.some((ev) => ev.kind === 'site')) {
+    throw new Error(SITE_INACESSIVEL);
+  }
   allEvidences.push(...collection.evidences);
 
   // Every Claim is checked in code against the evidence actually collected: invented ids are dropped
   // and VERIFICADO without valid evidence is downgraded to HIPOTESE (the model is not trusted for this).
   // Client-declared numbers are citable as U1; they stay out of allEvidences so the extraction loop skips them.
-  const citableEvidences: Evidence[] = [...allEvidences, userInputEvidence(input)];
+  const citableEvidences: Evidence[] = [...allEvidences, userInputEvidence(input, collection.competitors)];
   const validEvidenceIds = new Set(citableEvidences.map((e) => e.id));
   let downgradedClaims = 0;
   const numericFindings: NumericFinding[] = [];
@@ -133,11 +137,12 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
     return { ...res, data: guarded.value };
   };
 
-  // 3. Extract each page in parallel (limit 3 concurrency)
+  // 3. Extract each page in parallel (limit 3 concurrency). Only site pages are extracted, never the CNPJ record.
+  const pageEvidences = allEvidences.filter((ev) => ev.kind === 'site' || ev.kind === 'competitor_site');
   const extractions: ExtractOutput[] = [];
   const limit = 3;
-  for (let i = 0; i < allEvidences.length; i += limit) {
-    const chunk = allEvidences.slice(i, i + limit);
+  for (let i = 0; i < pageEvidences.length; i += limit) {
+    const chunk = pageEvidences.slice(i, i + limit);
     const chunkPromises = chunk.map(async (ev) => {
       const extInput: ExtractInput = {
         url: ev.source,
@@ -158,7 +163,7 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
     websiteUrl: input.websiteUrl,
     declaredPhase: input.declaredPhase,
     declaredIcp: input.declaredIcp,
-    competitors: input.competitors,
+    competitors: collection.competitors,
     computedFacts: {
       cnpjAgeYears: cnpjResult.cnpjAgeYears,
       companySizeEstimated: cnpjResult.companySizeEstimated,
@@ -170,12 +175,10 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
   recordCall(dossierPromptSpec.id, dossierRes.costUsd, dossierRes.raw);
   const dossier = dossierRes.data;
 
+  // Módulos recebem o dossiê inteiro e o texto das evidências dentro de um orçamento maior.
   const dossierSummary = {
-    teseCentral: dossier.teseCentral,
-    modeloNegocio: dossier.modeloNegocio,
-    icpAtualFirmografico: dossier.icpAtualFirmografico,
-    comiteCompraB2B: dossier.comiteCompraB2B,
-    evidenciasDisponiveis: renderEvidenceCompact(citableEvidences, 6000),
+    ...dossier,
+    evidenciasDisponiveis: renderEvidenceCompact(citableEvidences, 40000),
   };
 
   // 5. Module 1: Raio-X
@@ -270,9 +273,9 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
   };
   const planoRes = await run(plano90DiasPromptSpec, planoInput);
   recordCall(plano90DiasPromptSpec.id, planoRes.costUsd, planoRes.raw);
-  
+
   // Compute ICE and sort initiatives deterministically
-  const plano_90_dias = computeAndSortIce(planoRes.data as any) as Plano90DiasOutput;
+  const plano_90_dias = computeAndSortIce(planoRes.data) as Plano90DiasOutput;
 
   const modules = {
     raio_x: raioX,
@@ -285,13 +288,13 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
     plano_90_dias,
   };
 
-  // 6. Critic Audit
+  // 6. Critic Audit. Sem `run`: o crítico lê a saída já guardada e não pode ter a própria saída alterada pelas travas.
   const criticInput: CriticInput = {
     dossier: dossier as unknown as Record<string, unknown>,
     modules: modules as unknown as Record<string, unknown>,
     evidences: citableEvidences,
   };
-  const criticRes = await run(criticPromptSpec, criticInput);
+  const criticRes = await runPrompt(criticPromptSpec, criticInput, { providers: input.providers });
   recordCall(criticPromptSpec.id, criticRes.costUsd, criticRes.raw);
   const critic = criticRes.data;
 
@@ -301,7 +304,7 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
     declaredPhase: input.declaredPhase,
     competitors: input.competitors,
     cnpjData: cnpjResult,
-    collectionResult: collection,
+    collectionResult: { ...collection, gaps: [...collection.gaps, ...(cnpjResult.gap ? [cnpjResult.gap] : [])] },
     extractions,
     dossier,
     modules,

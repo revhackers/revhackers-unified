@@ -6,9 +6,17 @@ export interface CollectionInput {
   competitors: string[];
 }
 
+/** Concorrente informado. `collected` é true quando a página entrou nas evidências. */
+export interface CompetitorStatus {
+  url: string;
+  collected: boolean;
+}
+
 export interface CollectionResult {
   evidences: Evidence[];
   gaps: string[];
+  /** Concorrentes na ordem de entrada. */
+  competitors: CompetitorStatus[];
 }
 
 /**
@@ -272,14 +280,18 @@ export async function collectSiteData(input: CollectionInput, options: Collectio
   }
 
   // 2. Competitors Homepages
+  const competitors: CompetitorStatus[] = [];
   for (const compUrlRaw of input.competitors) {
     if (!compUrlRaw) continue;
-    await fetchAndStrip(normalizeUrl(compUrlRaw), 'competitor_site');
+    const url = normalizeUrl(compUrlRaw);
+    const result = await fetchAndStrip(url, 'competitor_site');
+    competitors.push({ url, collected: result.outcome === 'accepted' });
   }
 
   return {
     evidences,
     gaps,
+    competitors,
   };
 }
 

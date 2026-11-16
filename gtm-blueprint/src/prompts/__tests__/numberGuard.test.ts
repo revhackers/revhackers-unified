@@ -153,12 +153,21 @@ describe('enforceNumberProvenance (checagem mecânica)', () => {
 });
 
 describe('userInputEvidence (U1)', () => {
-  const u1 = userInputEvidence({
+  const u1Input = {
     companyName: 'TestCo',
     websiteUrl: 'https://testco.com.br',
     declaredPhase: 'Escala',
-    competitors: [],
     crmOrFinancialInputs: { arpuMonthly: 2500, cacEstimated: 4000, churnMonthlyRate: 0.035, salesCycleDays: 90 },
+  };
+  const u1 = userInputEvidence(u1Input, []);
+
+  it('separa concorrentes coletados dos informados sem coleta', () => {
+    const ev = userInputEvidence(u1Input, [
+      { url: 'https://a.test', collected: true },
+      { url: 'https://b.test', collected: false },
+    ]);
+    expect(ev.content).toContain('Concorrentes informados e coletados: https://a.test');
+    expect(ev.content).toContain('Concorrentes informados sem coleta (não analisar): https://b.test');
   });
 
   it('usa id U1 e kind user_input', () => {

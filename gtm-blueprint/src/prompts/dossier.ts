@@ -2,13 +2,14 @@ import { z } from 'zod';
 import type { PromptSpec } from './types';
 import { SHARED_SYSTEM_PREAMBLE } from './shared';
 import { ClaimSchema, Evidence, renderEvidenceCompact } from './evidence';
+import { competitorLines } from './numberGuard';
 
 export const DossierInputSchema = z.object({
   companyName: z.string(),
   websiteUrl: z.string(),
   declaredPhase: z.string().describe('Ex: Estruturação Inicial, Primeira Tração Validada, Escala Estruturada, Otimização e Eficiência'),
   declaredIcp: z.string().optional(),
-  competitors: z.array(z.string()).describe('Lista de concorrentes informados ou descobertos'),
+  competitors: z.array(z.object({ url: z.string(), collected: z.boolean() })).describe('Concorrentes informados, com indicação de coleta. Só os coletados são analisados.'),
   computedFacts: z.object({
     cnpjAgeYears: z.number().nullable().optional(),
     companySizeEstimated: z.string().nullable().optional(),
@@ -96,18 +97,18 @@ Atuar como o estrategista sênior de GTM construindo o Dossiê Estratégico, o a
 
 export const dossierPromptSpec: PromptSpec<DossierInput, DossierOutput> = {
   id: 'dossier.build',
-  version: '1.0.0',
+  version: '2.0.0',
   task: 'dossier',
   system: DOSSIER_SYSTEM_PROMPT,
   buildUser(input: DossierInput): string {
-    const compactEv = renderEvidenceCompact(input.evidences as Evidence[]);
+    const compactEv = renderEvidenceCompact(input.evidences as Evidence[], 60000);
     return `Construa o Dossiê Estratégico para a seguinte empresa:
 
 - Empresa: ${input.companyName}
 - Website: ${input.websiteUrl}
 - Fase Declarada: ${input.declaredPhase}
 - ICP Declarado: ${input.declaredIcp || 'Não informado'}
-- Concorrentes Informados: ${input.competitors.join(', ')}
+${competitorLines(input.competitors).map((line) => `- ${line}`).join('\n')}
 - Fatos Computados (CNPJ/Porte): Idade CNPJ: ${input.computedFacts.cnpjAgeYears ?? 'Desconhecida'} anos | Porte estimado: ${input.computedFacts.companySizeEstimated ?? 'Não informado'} | UF: ${input.computedFacts.estimatedAddressState ?? 'Não informada'}
 
 EVIDÊNCIAS COLETADAS:
