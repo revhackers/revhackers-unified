@@ -46,7 +46,7 @@ Auditar o Dossiê Estratégico e os módulos gerados contra o conteúdo integral
 
 ## 2. Limite das checagens mecânicas
 O código que produziu este payload já executou checagens mecânicas: removeu IDs de evidência inexistentes, rebaixou para HIPOTESE as afirmações VERIFICADO sem ID válido, removeu de cada campo as frases com número sem procedência e rebaixou personas. Essas checagens são mecânicas e NÃO provam suporte semântico: não provam que a evidência trata da mesma empresa, do mesmo mercado, da mesma métrica, da mesma unidade ou do mesmo período. Ausência de marcador não é aprovação.
-\`scoreIceCalculado\`, \`modules.unit_economics.calculado\` e a evidência \`C1\` (kind computed) são calculados por código; notas de 1 a 10 e \`prazoDias\` são propostas. Objetos \`{ text, baseadoEm }\` são recomendações: avalie especificidade e coerência, não suporte de evidência; só são issue quando afirmam resultado como fato. O texto 'A coletar: as fontes consultadas não trazem este dado.' marca dado ausente; só é issue quando esvazia um campo central.
+\`scoreIceCalculado\`, \`modules.unit_economics.calculado\` e a evidência \`C1\` (kind computed) são calculados por código; notas de 1 a 10 e \`prazoDias\` são propostas. Objetos \`{ text, baseadoEm }\` são recomendações: avalie especificidade e coerência, não suporte de evidência; só são issue quando afirmam resultado como fato. O texto 'A coletar: as fontes consultadas não trazem este dado.' marca dado ausente; só é issue quando esvazia um campo central. A trava de número cobre recomendações: em \`{ text, baseadoEm }\` saem as frases com valor em moeda, percentual, multiplicador ou prazo de payback e de ciclo de vendas sem fonte. Quantidade (contas, pessoas), prazo de execução e SLA são parâmetros de desenho e permanecem. Em \`howToValidate\`, \`lacunasDeDadosCriticas\` e \`dadosParaColetarSeAusentes\`, tamanho de amostra e período de análise são parâmetros do procedimento, não fatos. O texto 'A coletar: a meta depende de dado que as fontes consultadas não trazem.' marca recomendação cuja meta foi removida. A evidência \`D1\` (kind computed) é a contagem, por código, dos clientes nomeados que o dossiê listou em \`icpDeclaradoVsClientes.clientesObservados\`.
 
 ## 3. Como ler o payload
 - O payload é um único objeto JSON com as chaves textosRepetidos, dossier, modules e evidences. O renderer não corta texto: todo conteúdo de evidência e de módulo aparece íntegro.
@@ -57,7 +57,7 @@ O código que produziu este payload já executou checagens mecânicas: removeu I
 
 ## 4. Metodologia
 1. Para cada afirmação VERIFICADO: localize cada evidenceId em evidences (campo id), leia o content integral e confirme que ele sustenta a afirmação. Página de erro, página vazia, conteúdo de outra empresa ou de outro assunto NÃO sustentam VERIFICADO. Nesses casos use o tipo 'VERIFICADO sem evidenceId válido', mesmo quando o ID existe; o nome do tipo é mantido por compatibilidade.
-2. Para cada número (faturamento, CAC, LTV, conversões, TAM, SAM, SOM, percentuais, prazos, contagens): confirme que alguma evidência ou input declara esse mesmo número para a mesma entidade, métrica, unidade e período. Sem essa correspondência, use 'Número inventado / sem fonte'.
+2. Para cada número em afirmação de fato (Claim ou texto corrido): confirme que alguma evidência ou input declara esse mesmo número para a mesma entidade, métrica, unidade e período. Número ausente de todas as evidências usa 'Número inventado / sem fonte'. Número que consta na evidência citada, mas é atribuído a outro sujeito, métrica ou período, não é número inventado: em Claim use 'VERIFICADO sem evidenceId válido'; em recomendação use 'Recomendação apresentada como fato'. Em recomendação, em \`howToValidate\` e nas listas de dados a coletar, quantidade, prazo de execução, SLA, tamanho de amostra e período de análise são parâmetros de desenho e não são issue.
 3. Avalie especificidade B2B. Conselho aplicável a qualquer negócio (por exemplo, "melhorar o atendimento") usa 'Afirmação genérica (falta especificidade B2B)'.
 4. Verifique coerência transversal. Módulos que contradizem o dossiê ou outro módulo usam 'Contradição entre módulos ou com o dossiê'. Desalinhamento com personas, ICP, tese central ou estágio declarado usa 'Inconsistência de persona ou tese'. Contradição que a própria empresa aponta não é issue; é issue quando o relatório a ignora.
 5. Liste cada causa raiz encontrada, sem limite de quantidade. Agrupe as ocorrências de uma mesma causa raiz em uma issue e, em locationPath, liste todos os caminhos separados por " | ". Não invente issues sem base no payload.
@@ -160,7 +160,7 @@ function buildUser(input: CriticInput): string {
 
 export const criticPromptSpec: PromptSpec<CriticInput, CriticOutput> = {
   id: 'critic.audit',
-  version: '3.1.0',
+  version: '3.1.1',
   task: 'critic',
   system: CRITIC_SYSTEM_PROMPT,
   buildUser,

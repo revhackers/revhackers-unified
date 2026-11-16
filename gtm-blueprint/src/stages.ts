@@ -193,15 +193,37 @@ function toCallMetric(promptId: string, res: { costUsd: number; raw: LlmResponse
 }
 
 /**
+ * Contagem por código dos clientes nomeados que o dossiê listou em
+ * `icpDeclaradoVsClientes.clientesObservados`. Vira a evidência `D1` (kind `computed`): sustenta a contagem
+ * sem que o modelo precise citar cada cliente.
+ */
+export function dossierDerivedEvidence(dossier: DossierOutput): Evidence | null {
+  const count = dossier.icpDeclaradoVsClientes.clientesObservados.length;
+  if (count === 0) return null;
+  return {
+    id: 'D1',
+    kind: 'computed',
+    source: 'cálculo do GTM Blueprint',
+    fetchedAt: new Date().toISOString(),
+    content: `Clientes nomeados nas evidências (contagem por código): ${count} clientes`,
+  };
+}
+
+/**
  * Chamada com as três travas, nesta ordem: evidência (IDs válidos), persona (dor e objeção nunca são fato) e número
  * (frase com métrica sem fonte sai). Toda saída de dossiê e de módulo passa por aqui.
  */
-async function guardedRun<I, O>(spec: PromptSpec<I, O>, promptInput: I, collect: CollectStage, deps: StageDeps): Promise<StageResult<O>> {
+async function guardedRun<I, O>(spec: PromptSpec<I, O>, promptInput: I, collect: CollectStage, deps: StageDeps, derive: (value: O) => Evidence | null): Promise<StageResult<O>> {
   const res = await runPrompt(spec, promptInput, { providers: deps.providers });
   const validIds = new Set(collect.citable.map((ev) => ev.id));
   const checked = enforceEvidence(res.data, validIds);
   const personas = enforcePersonaHypothesis(checked.value, validIds);
-  const guarded = enforceNumberProvenance(personas.value, { evidences: collect.citable }, { pathPrefix: spec.id });
+  const derived = derive(personas.value);
+  const guarded = enforceNumberProvenance(
+    personas.value,
+    { evidences: derived ? [...collect.citable, derived] : collect.citable, alwaysCited: derived ? [derived.id] : [] },
+    { pathPrefix: spec.id },
+  );
   return {
     data: guarded.value,
     calls: [toCallMetric(spec.id, res)],
@@ -298,7 +320,7 @@ export async function stageDossier(
     evidences: collect.citable,
     fatosExtraidos: extracts,
   };
-  return guardedRun(dossierPromptSpec, dossierInput, collect, deps);
+  return guardedRun(dossierPromptSpec, dossierInput, collect, deps, dossierDerivedEvidence);
 }
 
 /** Um módulo. O dossiê entra inteiro, junto com o texto das evidências dentro de um orçamento de caracteres. */
@@ -314,7 +336,7 @@ export async function stageModule<K extends ModuleKey>(
     dossierSummary: { ...ctx.dossier, evidenciasDisponiveis: renderEvidenceCompact(ctx.collect.citable, MAX_DOSSIER_SUMMARY_CHARS) },
     modules: ctx.modules,
   };
-  const res = await guardedRun(entry.spec, entry.input(moduleCtx), ctx.collect, deps);
+  const res = await guardedRun(entry.spec, entry.input(moduleCtx), ctx.collect, deps, () => dossierDerivedEvidence(ctx.dossier));
   return { ...res, data: entry.finish ? entry.finish(res.data) : res.data };
 }
 
@@ -325,10 +347,11 @@ export async function stageCritic(
   modules: ModuleOutputs,
   deps: StageDeps,
 ): Promise<StageResult<CriticOutput>> {
+  const derived = dossierDerivedEvidence(dossier);
   const criticInput: CriticInput = {
     dossier,
     modules: { ...modules, unit_economics: { ...modules.unit_economics, calculado: collect.unitEconomics } },
-    evidences: collect.citable,
+    evidences: derived ? [...collect.citable, derived] : collect.citable,
   };
   const res = await runPrompt(criticPromptSpec, criticInput, { providers: deps.providers });
   return { data: res.data, calls: [toCallMetric(criticPromptSpec.id, res)], quality: { downgradedClaims: 0, numericFindings: [], droppedQuotes: 0 } };

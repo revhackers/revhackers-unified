@@ -2,12 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { PipelineOutput } from '../src/pipeline.js';
-import { BLOCKED_NARRATIVE_TEXT } from '../src/prompts/numberGuard.js';
+import { BLOCKED_NARRATIVE_TEXT, BLOCKED_RECOMMENDATION_TEXT } from '../src/prompts/numberGuard.js';
 
 // Limiares de homologação: proposta inicial, ajustável aqui.
 const MIN_CHARS_TEXTO_CENTRAL = 40;
 const MAX_RAZAO_TEXTO_NEUTRO = 0.03;
-const MAX_ACHADOS_NUMERICOS = 15;
+const MAX_RAZAO_CAMPOS_ALTERADOS = 0.10;
 const MIN_NOTA = 7;
 
 interface Regra {
@@ -36,12 +36,14 @@ function regras(out: PipelineOutput): Regra[] {
     ['dossier.teseCentral', dossier.teseCentral],
   ];
   const invalidos = textosCentrais
-    .filter(([, texto]) => texto === BLOCKED_NARRATIVE_TEXT || texto.length < MIN_CHARS_TEXTO_CENTRAL)
+    .filter(([, texto]) => texto === BLOCKED_NARRATIVE_TEXT || texto === BLOCKED_RECOMMENDATION_TEXT || texto.length < MIN_CHARS_TEXTO_CENTRAL)
     .map(([campo]) => campo);
 
   const todas = [...folhas(dossier), ...folhas(modules)];
-  const neutros = todas.filter((s) => s === BLOCKED_NARRATIVE_TEXT).length;
+  const neutros = todas.filter((s) => s === BLOCKED_NARRATIVE_TEXT || s === BLOCKED_RECOMMENDATION_TEXT).length;
   const proporcao = todas.length === 0 ? 0 : neutros / todas.length;
+  const alterados = qualityChecks.numericFindings.length;
+  const razaoAlterados = todas.length === 0 ? 0 : alterados / todas.length;
 
   const inventados = critic.issuesFound.filter(
     (i) => i.tipoProblema === 'Número inventado / sem fonte' && (i.severidade === 'ALTA' || i.severidade === 'CRITICA'),
@@ -62,9 +64,9 @@ function regras(out: PipelineOutput): Regra[] {
     },
     {
       id: 3,
-      descricao: `Achados numéricos bloqueados ≤ ${MAX_ACHADOS_NUMERICOS}`,
-      ok: qualityChecks.numericFindings.length <= MAX_ACHADOS_NUMERICOS,
-      detalhe: `${qualityChecks.numericFindings.length}`,
+      descricao: `Campos alterados pela trava ≤ ${MAX_RAZAO_CAMPOS_ALTERADOS * 100}% das strings de dossiê e módulos`,
+      ok: razaoAlterados <= MAX_RAZAO_CAMPOS_ALTERADOS,
+      detalhe: `${alterados} de ${todas.length} (${(razaoAlterados * 100).toFixed(1)}%)`,
     },
     {
       id: 4,

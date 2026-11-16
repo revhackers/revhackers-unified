@@ -2,7 +2,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { stageDossier, stageModule, runModulesDag, type CollectStage, type DiagnosticInput } from '../../stages.js';
 import { computeUnitEconomics } from '../../compute/unitEconomics.js';
-import { fakeLlm, recomendacao } from './fixtures/fakeLlm.js';
+import { fakeLlm, hipotese, recomendacao } from './fixtures/fakeLlm.js';
+import type { Evidence } from '../evidence.js';
 
 const BASE_INPUT: DiagnosticInput = {
   companyName: 'Acme',
@@ -94,5 +95,61 @@ describe('stageModule', () => {
     const out = await stageModule('plano_90_dias', { input: BASE_INPUT, collect: COLLECT, dossier, modules: {} }, deps);
 
     expect(out.data.ondasExecucao[0]?.iniciativasPraticas.map((i) => i.scoreIceCalculado)).toEqual([729, 125]);
+  });
+});
+
+describe('stageDossier (contagem de clientes por código)', () => {
+  it('mantém a leitura com a contagem de clientesObservados via D1', async () => {
+    const evidences: Evidence[] = ['E1', 'E2', 'E3'].map((id) => ({
+      id,
+      kind: 'site',
+      source: 'https://acme.test',
+      fetchedAt: '2026-11-13T00:00:00.000Z',
+      content: `Case do cliente ${id} publicado no site.`,
+    }));
+    const collect: CollectStage = { ...COLLECT, evidences, citable: evidences };
+    const clientesObservados = ['E1', 'E2', 'E3'].map((evidenceId, i) => ({
+      nome: `Cliente ${i + 1}`,
+      setorAparente: 'SaaS B2B',
+      evidenceId,
+    }));
+    const { provider } = fakeLlm({
+      dossier: () => ({
+        teseCentral: 'Tese de teste para o dossiê.',
+        estagioRealVsDeclarado: {
+          declarado: 'Estruturação Inicial',
+          realidadeAuditada: 'Site institucional com proposta de valor genérica.',
+          contradicoesEncontradas: [hipotese()],
+        },
+        modeloNegocio: { tipo: 'Self-Service + Inside Sales', monetizacao: hipotese(), ticketMedioEstimado: hipotese() },
+        icpAtualFirmografico: {
+          segmentoSetor: hipotese(),
+          tamanhoEmpresa: hipotese(),
+          faturamentoAnualOuFaixa: hipotese(),
+          tecnologiasOuSinaisChave: hipotese(),
+        },
+        icpDeclaradoVsClientes: {
+          clientesObservados,
+          alinhamento: 'DIVERGENTE',
+          leitura: {
+            text: 'Os 3 clientes nomeados estão fora do ICP declarado.',
+            status: 'HIPOTESE',
+            evidenceIds: [],
+            howToValidate: 'Validar em entrevistas de discovery.',
+          },
+        },
+        comiteCompraB2B: [
+          { papel: 'Decisor (C-Level/Diretor)', cargoArquetipo: 'CRO de SaaS B2B', dorPrincipal: hipotese(), gatilhoDeCompra: hipotese(), objecaoPrincipal: hipotese() },
+          { papel: 'Influenciador Técnico', cargoArquetipo: 'Head de RevOps', dorPrincipal: hipotese(), gatilhoDeCompra: hipotese(), objecaoPrincipal: hipotese() },
+          { papel: 'Usuário Final', cargoArquetipo: 'Gerente de Growth', dorPrincipal: hipotese(), gatilhoDeCompra: hipotese(), objecaoPrincipal: hipotese() },
+        ],
+        concorrentesReais: [],
+        sinaisMaturidadeGtm: [hipotese()],
+        topRiscos: [hipotese(), hipotese(), hipotese()],
+        lacunasDeDadosCriticas: [],
+      }),
+    });
+    const out = await stageDossier(BASE_INPUT, collect, [], { providers: { bedrock: provider } });
+    expect(out.data.icpDeclaradoVsClientes.leitura.text).toBe('Os 3 clientes nomeados estão fora do ICP declarado.');
   });
 });
