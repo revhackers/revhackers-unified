@@ -48,7 +48,7 @@ Desenhar o fluxo operacional de conversão do lead até o sucesso do cliente (CS
 ## 3. Guia Detalhado Campo a Campo
 - \`etapasFunilB2B\`: Estágio do funil, critério de avanço (recomendação) e como medir a conversão no CRM (recomendação, sem taxa).
 - \`slasSdrAeCs\`: Transições de equipe com tempo máximo e regras de passagem (recomendações).
-- \`gapsProcessoCRM\`: Falhas operacionais típicas de CRM (Claims).
+- \`gapsProcessoCRM\`: Falhas operacionais típicas de CRM (Claims). Quantidade de leads afetados só entra quando o CRM mostrar o número; sem ele, o gap vira hipótese com o procedimento de auditoria.
 - \`decisao\` & \`proximosPassos\`: Governança de RevOps.
 
 ## 4. Padrão de Qualidade & Exemplo (B2B SaaS Brasil)
@@ -57,12 +57,13 @@ Desenhar o fluxo operacional de conversão do lead até o sucesso do cliente (CS
 
 ## 5. Antipadrões a Evitar
 - Nunca inventar taxas de conversão precisas sem base nos dados da empresa ou fontes auditadas.
+- Anti-exemplo real (eval): MAL \`{"text": "[N] leads por mês sem dono no CRM, com perda de R$ [X] milhões em pipeline.", "status": "VERIFICADO", "evidenceIds": ["E6"]}\` → BOM \`{"text": "Não há evidência de como os leads recebem responsável; a falta de campo obrigatório precisa ser auditada no CRM.", "status": "HIPOTESE", "evidenceIds": ["E6"], "howToValidate": "Exportar do CRM os leads sem responsável atribuído no período e calcular a proporção sobre o total."}\`
 - Nunca deixar de definir os SLAs de atendimento de leads por SDR.
 `;
 
 export const funilRevOpsPromptSpec: PromptSpec<FunilRevOpsInput, FunilRevOpsOutput> = {
   id: 'module.funil_revops',
-  version: '2.0.0',
+  version: '2.0.1',
   task: 'module',
   system: SHARED_SYSTEM_PREAMBLE + SYSTEM_ADDENDUM,
   buildUser(input: FunilRevOpsInput): string {

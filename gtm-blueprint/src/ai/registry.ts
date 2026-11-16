@@ -21,7 +21,7 @@ const DEFAULT_ROUTES: Record<Task, ModelRoute> = {
     priceInPerM: 1.0,
     priceOutPerM: 5.0,
     maxTokens: 12000,
-    temperature: 0.4,
+    temperature: 0.2,
   },
   dossier: {
     provider: 'bedrock',
@@ -29,7 +29,7 @@ const DEFAULT_ROUTES: Record<Task, ModelRoute> = {
     priceInPerM: 3.0,
     priceOutPerM: 15.0,
     maxTokens: 16000,
-    temperature: 0.3,
+    temperature: 0.2,
   },
   critic: {
     provider: 'bedrock',

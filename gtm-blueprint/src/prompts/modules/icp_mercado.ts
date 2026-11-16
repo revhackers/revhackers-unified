@@ -57,7 +57,7 @@ Definir com extrema precisão o ICP prioritário B2B e o Anti-ICP, interpretando
 - \`icpPrioritario\`: Descrição firmográfica, critérios de qualificação e triggers de momento (recomendações: \`{ text, baseadoEm }\`).
 - \`antiIcp\`: Perfil a ser evitado e motivo do descarte (recomendações).
 - \`tamSamSomInterpretacao\`: Análise estratégica do mercado endereçável, usando \`somAnualCalculado\` quando existir.
-- \`criteriosPriorizacaoContas\`: Critérios objetivos para ranking de contas.
+- \`criteriosPriorizacaoContas\`: Critérios objetivos para ranking de contas. Faixa de faturamento aparece só como dado a confirmar em discovery, nunca como faixa inferida do porte.
 
 ## 4. Padrão de Qualidade & Exemplo (B2B SaaS Brasil)
 - BOM: \`{"descricaoFirmografica": {"text": "Empresas de software B2B com equipes comerciais de médio porte, sediadas no Sudeste, conforme sinais do Dossiê [E1].", "baseadoEm": ["E1"]}}\`
@@ -66,11 +66,12 @@ Definir com extrema precisão o ICP prioritário B2B e o Anti-ICP, interpretando
 ## 5. Antipadrões a Evitar
 - Nunca modificar os números matemáticos de TAM/SAM/SOM fornecidos pelo código.
 - Nunca criar ICPs vagos que sirvam para qualquer mercado.
+- Anti-exemplo real (eval): MAL \`"criteriosPriorizacaoContas": "Faturamento anual estimado acima de R$ [X] milhões (inferido de porte de [N]-[M] colaboradores)."\` → BOM \`"criteriosPriorizacaoContas": "Porte observável pela página de equipe [E1]; faixa de faturamento a confirmar em discovery."\`
 `;
 
 export const icpMercadoPromptSpec: PromptSpec<IcpMercadoInput, IcpMercadoOutput> = {
   id: 'module.icp_mercado',
-  version: '2.0.0',
+  version: '2.0.1',
   task: 'module',
   system: SHARED_SYSTEM_PREAMBLE + SYSTEM_ADDENDUM,
   buildUser(input: IcpMercadoInput): string {

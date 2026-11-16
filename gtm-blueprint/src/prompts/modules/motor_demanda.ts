@@ -42,7 +42,7 @@ Definir a matriz de canais de aquisição B2B mais eficiente para o estágio atu
 5. Desenhar o ritual operacional semanal de alinhamento entre Marketing e Vendas (SrevOps).
 
 ## 3. Guia Detalhado Campo a Campo
-- \`mixCanaisPrioritarios\`: Array de canais com alocação de esforço (recursos/equipe), justificativa alinhada ao estágio (Claim) e play tático de execução (recomendação).
+- \`mixCanaisPrioritarios\`: Array de canais com alocação de esforço (recursos/equipe), justificativa alinhada ao estágio (Claim) e play tático de execução (recomendação). A justificativa cita a origem observada dos clientes; quando ela não está no CRM, a frase vira hipótese com validação.
 - \`ritualOperacionalGtm\`: Rotina de cadência semanal de alinhamento comercial (recomendação).
 - \`decisao\`: Decisão imediata sobre canais.
 - \`proximosPassos\`: Ações operacionais com prazos.
@@ -54,11 +54,12 @@ Definir a matriz de canais de aquisição B2B mais eficiente para o estágio atu
 ## 5. Antipadrões a Evitar
 - Nunca usar percentuais para prever resultados de conversão (percentuais permitidos apenas para alocação de esforço/recursos).
 - Nunca sugerir estratégias genéricas de postagens sem cadência ou ICP.
+- Anti-exemplo real (eval): MAL \`{"canal": "Founder-Led LinkedIn / Social Selling", "justificativaEstagioIcp": {"text": "ICP de até [N] colaboradores e ticket de R$ [X] fecha [N] contratos pelo canal.", "status": "VERIFICADO", "evidenceIds": []}}\` → BOM \`{"canal": "Founder-Led LinkedIn / Social Selling", "justificativaEstagioIcp": {"text": "A eficácia do canal depende de o decisor reconhecer o fundador; a origem dos contratos atuais não está registrada e precisa ser apurada.", "status": "HIPOTESE", "evidenceIds": ["E1"], "howToValidate": "Cruzar a origem de cada contrato fechado no período com o canal de entrada registrado no CRM."}}\`
 `;
 
 export const motorDemandaPromptSpec: PromptSpec<MotorDemandaInput, MotorDemandaOutput> = {
   id: 'module.motor_demanda',
-  version: '2.0.0',
+  version: '2.0.1',
   task: 'module',
   system: SHARED_SYSTEM_PREAMBLE + SYSTEM_ADDEND_RULE,
   buildUser(input: MotorDemandaInput): string {

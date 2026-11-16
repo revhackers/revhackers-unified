@@ -73,7 +73,7 @@ Atuar como o estrategista sênior de GTM construindo o Dossiê Estratégico, o a
 
 ## 2. Metodologia Passo a Passo de Análise
 1. Triagem exaustiva de todas as evidências coletadas (E1..En) provenientes da homepage, páginas de preços, sobre, cases e concorrentes. O bloco FATOS EXTRAÍDOS COM CITAÇÃO CONFERIDA é a leitura já conferida de cada página: use-o junto das evidências.
-2. Sintetizar a tese central do negócio em uma frase incisiva e memorável focada em valor B2B SaaS.
+2. Sintetizar a tese central do negócio em uma única frase, sem nenhum número, focada em valor B2B SaaS. Quantificação vai nos achados do Raio-X, nunca na tese.
 3. Contrastar rigorosamente a fase declarada pela empresa com a realidade auditada nas evidências e dados de CNPJ (idade, porte, UF), destacando contradições estruturais (ex: CNPJ antigo com site raso).
 4. Identificar o modelo de negócio predominante (PLG, Enterprise Sales, Self-Service + Inside Sales, Marketplace, Agency/Service-led) amparado por evidências.
 5. Mapear o ICP firmográfico atual com base estrita no texto do site e concorrentes.
@@ -84,7 +84,7 @@ Atuar como o estrategista sênior de GTM construindo o Dossiê Estratégico, o a
 10. Liste cada cliente, logo ou depoimento nomeado nas evidências com o setor aparente e compare com o ICP declarado.
 
 ## 3. Guia Detalhado Campo a Campo
-- \`teseCentral\`: Frase síntese de posicionamento e valor diferenciado no mercado B2B brasileiro.
+- \`teseCentral\`: Exatamente 1 frase de posicionamento e valor diferenciado no mercado B2B brasileiro, sem nenhum número (percentual, valor, prazo ou quantidade). Quantificação vai nos achados do Raio-X, nunca na tese.
 - \`estagioRealVsDeclarado\`: Análise crítica confrontando o discurso do fundador com dados reais de CNPJ e site. \`contradicoesEncontradas\` lista cada divergência como Claim.
 - \`modeloNegocio\`: Classificação exata do modelo e monetização com Claims fundamentados.
 - \`icpAtualFirmografico\`: Segmento, porte de funcionários, faixa de faturamento e sinais/tecnologias.
@@ -98,12 +98,15 @@ Atuar como o estrategista sênior de GTM construindo o Dossiê Estratégico, o a
 ## 4. Padrão de Qualidade & Exemplo (B2B SaaS Brasil)
 - BOM: \`{"text": "A empresa opera no modelo Self-Service + Inside Sales: a página de planos [E2] publica preços e o botão principal leva a um teste gratuito.", "status": "VERIFICADO", "evidenceIds": ["E2"]}\`
 - MAL: \`{"text": "A empresa tem um modelo de negócios excelente e escalável para todos os setores.", "status": "VERIFICADO", "evidenceIds": []}\`
+- \`teseCentral\` BOM: "A empresa precisa decidir entre vender autoatendimento e vender implantação consultiva: a home [E1] promete o primeiro e a página de cases [E3] vende o segundo."
+- \`teseCentral\` MAL: "Perda de [N]% das oportunidades por falta de follow-up: a empresa precisa de um SDR."
 
 ## 5. Antipadrões a Evitar
 - Nunca omitir divergências entre o CNPJ antigo e a ausência de tração digital.
 - Nunca inventar faturamento ou número de clientes ausentes das evidências.
 - Nunca tratar a copy de venda do site como prova do que o cliente sente.
 - Nunca listar como cliente uma empresa que não aparece nomeada nas evidências.
+- Nunca colocar número na \`teseCentral\`: quantificação vai nos achados.
 `;
 
 /** Uma linha por fato extraído, com a citação literal que o sustenta. Sem fato conferido, uma linha de ausência. */
@@ -137,7 +140,7 @@ function renderExtract(evidenceId: string, extract: ExtractOutput): string {
 
 export const dossierPromptSpec: PromptSpec<DossierInput, DossierOutput> = {
   id: 'dossier.build',
-  version: '2.0.0',
+  version: '2.0.1',
   task: 'dossier',
   system: DOSSIER_SYSTEM_PROMPT,
   buildUser(input: DossierInput): string {

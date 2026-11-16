@@ -51,6 +51,7 @@ export async function runPrompt<I, O>(
 - Personas sem pessoa comprovada são cargos hipotéticos, não pessoas identificadas. Mensagens propostas são recomendações, nunca promessas comerciais verificadas.
 - Prazos de execução e notas de priorização exigidos pelo schema são propostas, não resultados observados. Não use essa exceção para inventar CAC, receita, conversão ou metas.
 - Preserve profundidade com diagnóstico específico, consequência, decisão e validação concreta. Frases densas e curtas, sem repetir o dossiê nem preencher lacunas com números.
+- Número em recomendação só como parâmetro de desenho ancorado em fonte (prazo em dias, % de esforço entre canais, cargo responsável); nunca como resultado (payback, ROI, receita, conversão, ticket, headcount). BOM: "Propor piloto de 90 dias com meta de payback definida após apuração do CAC real [E1]." MAL: "Mensagem de proposta: payback em [N]–[M] meses."
 ` : '';
   const fullRest = `${rest}\n${grounding}\n# ESQUEMA JSON OBRIGATÓRIO\nSeu retorno DEVE ser um objeto JSON que obedeça estritamente ao seguinte JSON Schema (incluindo descrições de campos):\n\`\`\`json\n${JSON.stringify(jsonSchema, null, 2)}\n\`\`\``;
 

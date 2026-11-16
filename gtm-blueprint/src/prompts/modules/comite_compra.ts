@@ -45,7 +45,7 @@ Mapear com precisão cirúrgica a dinâmica política, as dores e o processo de 
 5. Definir a mensagem-chave da proposta comercial direcionada a cada stakeholder.
 
 ## 3. Guia Detalhado Campo a Campo
-- \`membrosComite\`: Array com papel, cargo (sem nome de pessoa), dor primária, gatilho, objeção, critério de avaliação (Claims) e mensagem-chave (recomendação).
+- \`membrosComite\`: Array com papel, cargo (sem nome de pessoa), dor primária, gatilho, objeção, critério de avaliação (Claims) e mensagem-chave (recomendação). O critério descreve o que o membro mede, sem valor-alvo: payback, ROI e redução de CAC aparecem como critério a apurar, nunca como resultado.
 - \`dinamicaAprovacao\`: Explicação de como o comitê delibera e quem tem veto.
 - \`decisao\`: Ação tática imediata para engajamento do comitê.
 - \`proximosPassos\`: Passos operacionais com prazos.
@@ -58,11 +58,12 @@ Mapear com precisão cirúrgica a dinâmica política, as dores e o processo de 
 - Nunca inventar personas desconectadas do Dossiê Estratégico.
 - Nunca ignorar a figura do Bloqueador Financeiro/CFO no processo de aprovação B2B no Brasil.
 - Nunca tratar a dor de uma persona como fato observado na empresa.
+- Anti-exemplo real (eval): MAL \`"mensagemChaveProposta": {"text": "Investimento de R$ [X] em [N] dias gera retorno de R$ [Y] via redução de CAC de [N]%.", "baseadoEm": []}\` → BOM \`"mensagemChaveProposta": {"text": "Piloto com escopo e custo fechados em proposta; o retorno é medido no CRM com o CAC apurado antes da assinatura [E1].", "baseadoEm": ["E1"]}\`
 `;
 
 export const comiteCompraPromptSpec: PromptSpec<ComiteCompraInput, ComiteCompraOutput> = {
   id: 'module.comite_compra',
-  version: '2.0.0',
+  version: '2.0.1',
   task: 'module',
   system: SHARED_SYSTEM_PREAMBLE + SYSTEM_ADDENDUM,
   buildUser(input: ComiteCompraInput): string {

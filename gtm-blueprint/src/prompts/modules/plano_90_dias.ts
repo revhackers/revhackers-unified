@@ -55,7 +55,7 @@ Consolidar todas as recomendações analíticas dos 7 módulos anteriores em um 
 
 ## 3. Guia Detalhado Campo a Campo
 - \`ondasExecucao\`: Array com \`onda\` (usando chaves curtas \`onda_1\`, \`onda_2\`, \`onda_3\`), foco principal e iniciativas práticas com notas ICE. \`focoPrincipal\` e \`descricao\` são recomendações.
-- \`metricasSucesso90Dias\`: Indicadores verificáveis para o trimestre, definidos como forma de medir (não como meta numérica inventada).
+- \`metricasSucesso90Dias\`: Indicadores verificáveis para o trimestre, definidos como forma de medir (não como meta numérica inventada). CAC, ARPU e payback entram como métrica a apurar na onda 1, nunca como valor-alvo.
 - \`criteriosPerseverarOuPivotar\`: Regras de decisão estratégica ao final dos 90 dias.
 - \`decisao\` & \`proximosPassos\`: Execução e governança.
 
@@ -66,11 +66,12 @@ Consolidar todas as recomendações analíticas dos 7 módulos anteriores em um 
 ## 5. Antipadrões a Evitar
 - Nunca usar valores de onda diferentes de \`onda_1\`, \`onda_2\` ou \`onda_3\`.
 - Nunca atribuir notas 10 em tudo sem critério analítico.
+- Anti-exemplo real (eval): MAL \`{"titulo": "Calculadora de ROI", "descricao": {"text": "Calculadora que devolve payback em meses a partir do investimento do piloto.", "baseadoEm": []}}\` → BOM \`{"titulo": "Calculadora de payback do piloto", "descricao": {"text": "Calculadora alimentada pelo CAC e pelo ARPU apurados na onda 1; sem esses insumos, não publicar prazo de payback.", "baseadoEm": []}}\`
 `;
 
 export const plano90DiasPromptSpec: PromptSpec<Plano90DiasInput, Plano90DiasOutput> = {
   id: 'module.plano_90_dias',
-  version: '2.0.0',
+  version: '2.0.1',
   task: 'module',
   system: SHARED_SYSTEM_PREAMBLE + SYSTEM_ADDENDUM,
   buildUser(input: Plano90DiasInput): string {

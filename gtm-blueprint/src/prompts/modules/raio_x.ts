@@ -42,7 +42,7 @@ Fornecer ao CEO, fundadores e CRO uma visão cirúrgica e implacável dos 3 maio
 
 ## 3. Guia Detalhado Campo a Campo
 - \`resumoExecutivo\`: Panorama analítico de 2 parágrafos apontando a saúde de GTM.
-- \`achadosCriticosReceita\`: Exatamente 3 gargalos principais com título, impacto qualitativo na receita, Claim associado e custo de inação. \`impactoNaReceita\` não leva percentual nem valor.
+- \`achadosCriticosReceita\`: Exatamente 3 gargalos principais com título, impacto qualitativo na receita, Claim associado e custo de inação. \`impactoNaReceita\` não leva percentual, valor nem quantidade de usuários ou contas, salvo quando a quantidade vier do CRM ou de evidência citada.
 - \`decisao\`: A decisão crítica imediata para a semana.
 - \`proximosPassos\`: Ações práticas com papéis e prazos.
 
@@ -53,11 +53,12 @@ Fornecer ao CEO, fundadores e CRO uma visão cirúrgica e implacável dos 3 maio
 ## 5. Antipadrões a Evitar
 - Nunca inventar percentuais de perda de leads ou faturamento sem suporte nas evidências.
 - Nunca emitir conselhos genéricos como "melhorar o site".
+- Anti-exemplo real (eval): MAL \`"impactoNaReceita": "Perda de [N] usuários por mês por falta de plano Enterprise."\` → BOM \`"impactoNaReceita": "Contas que pedem plano sob medida não encontram caminho de contato comercial na página de planos [E2]; o custo é qualitativo até o CRM mostrar o volume."\`
 `;
 
 export const raioXPromptSpec: PromptSpec<RaioXInput, RaioXOutput> = {
   id: 'module.raio_x',
-  version: '2.0.0',
+  version: '2.0.1',
   task: 'module',
   system: SHARED_SYSTEM_PREAMBLE + SYSTEM_ADDENDUM,
   buildUser(input: RaioXInput): string {

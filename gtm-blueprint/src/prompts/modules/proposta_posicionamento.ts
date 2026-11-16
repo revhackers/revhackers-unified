@@ -43,7 +43,7 @@ Ajustar e blindar o posicionamento de mercado da empresa para desbancar os conco
 
 ## 3. Guia Detalhado Campo a Campo
 - \`declaracaoPosicionamento\`: Recomendação (\`{ text, baseadoEm }\`) com ICP, categoria, benefício, concorrente contrastado e diferencial. Não afirma resultado.
-- \`pilaresDiferenciacao\`: Pilares estratégicos com descrição e defensibilidade baseada em Claims.
+- \`pilaresDiferenciacao\`: Pilares estratégicos com descrição e defensibilidade baseada em Claims. Comparação percentual de preço com concorrente só entra como hipótese a validar com tabela pública em moeda local.
 - \`provasNecessariasAusentes\`: O que falta publicar no site para validar a promessa.
 
 ## 4. Padrão de Qualidade & Exemplo (B2B SaaS Brasil)
@@ -53,11 +53,12 @@ Ajustar e blindar o posicionamento de mercado da empresa para desbancar os conco
 ## 5. Antipadrões a Evitar
 - Nunca omitir o contraste com concorrentes reais nomeados nas evidências.
 - Nunca emitir promessas genéricas de "inovação e qualidade".
+- Anti-exemplo real (eval): MAL \`{"pilar": "Preço", "descricao": {"text": "Preço [N]% menor que o concorrente [E7].", "status": "VERIFICADO", "evidenceIds": ["E7"]}}\` → BOM \`{"pilar": "Preço", "descricao": {"text": "O preço publicado do concorrente [E7] ainda não foi comparado em reais para o mesmo perfil de usuário.", "status": "HIPOTESE", "evidenceIds": ["E7"], "howToValidate": "Coletar a tabela em reais do concorrente para o plano equivalente e calcular a diferença por usuário."}}\`
 `;
 
 export const propostaPosicionamentoPromptSpec: PromptSpec<PropostaPosicionamentoInput, PropostaPosicionamentoOutput> = {
   id: 'module.proposta_posicionamento',
-  version: '2.0.0',
+  version: '2.0.1',
   task: 'module',
   system: SHARED_SYSTEM_PREAMBLE + SYSTEM_ADDENDUM,
   buildUser(input: PropostaPosicionamentoInput): string {

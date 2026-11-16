@@ -39,7 +39,7 @@ Interpretar a saúde financeira da aquisição de clientes a partir dos valores 
 
 ## 3. Guia Detalhado Campo a Campo
 - \`leituraFinanceira\`: Leitura dos valores calculados, ou da lacuna quando o status for AUSENTES.
-- \`travaFinanceiraRisco\`: Análise crítica de risco financeiro.
+- \`travaFinanceiraRisco\`: Análise crítica de risco financeiro sobre os valores calculados. Sem CAC ou ARPU, o risco é descrito como lacuna, não quantificado.
 - \`dadosParaColetarSeAusentes\`: O que auditar no ERP/CRM.
 - \`decisao\` & \`proximosPassos\`: Governança financeira.
 
@@ -50,11 +50,12 @@ Interpretar a saúde financeira da aquisição de clientes a partir dos valores 
 ## 5. Antipadrões a Evitar
 - Nunca inventar CAC, LTV, ARPU ou benchmark quando o valor estiver nulo em \`calculado\`.
 - Nunca recalcular LTV, payback ou LTV/CAC com fórmula própria.
+- Anti-exemplo real (eval): MAL \`{"travaFinanceiraRisco": {"text": "CAC acima de R$ [X] queima caixa e o payback passa de [N] meses.", "status": "VERIFICADO", "evidenceIds": []}}\` → BOM \`{"travaFinanceiraRisco": {"text": "O risco de queima de caixa não pode ser medido: o CAC não consta em calculado, e sem ele o payback não tem base.", "status": "HIPOTESE", "evidenceIds": [], "howToValidate": "Somar o gasto com mídia e comercial do período e dividir pelo número de clientes novos do mesmo período."}}\`
 `;
 
 export const unitEconomicsPromptSpec: PromptSpec<UnitEconomicsInput, UnitEconomicsOutput> = {
   id: 'module.unit_economics',
-  version: '2.0.0',
+  version: '2.0.1',
   task: 'module',
   system: SHARED_SYSTEM_PREAMBLE + SYSTEM_ADDENDUM,
   buildUser(input: UnitEconomicsInput): string {
