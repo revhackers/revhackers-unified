@@ -68,6 +68,8 @@ const PublicKickoffValidation = lazy(() => import("./pages/public/PublicKickoffV
 const GrowthScore = lazy(() => import("./pages/GrowthScore"));
 const SiteScore = lazy(() => import("./pages/SiteScore"));
 const FounderScore = lazy(() => import("./pages/FounderScore"));
+const GtmDiagnostico = lazy(() => import("./pages/GtmDiagnostico"));
+const GtmDiagnosticoResultado = lazy(() => import("./pages/GtmDiagnosticoResultado"));
 const RevenueScore = lazy(() => import("./pages/RevenueScore"));
 const EnrichedDiagnostic = lazy(() => import("./pages/EnrichedDiagnostic"));
 
@@ -219,6 +221,8 @@ const App = () => (
               <Route path="/score-site" element={<PageErrorBoundary><SiteScore /></PageErrorBoundary>} />
               <Route path="/score-revenue" element={<PageErrorBoundary><RevenueScore /></PageErrorBoundary>} />
               <Route path="/score-founder" element={<PageErrorBoundary><FounderScore /></PageErrorBoundary>} />
+              <Route path="/diagnostico-gtm" element={<PageErrorBoundary><GtmDiagnostico /></PageErrorBoundary>} />
+              <Route path="/diagnostico-gtm/r/:id" element={<PageErrorBoundary><GtmDiagnosticoResultado /></PageErrorBoundary>} />
               <Route path="/diagnostico/v2" element={<PageErrorBoundary><EnrichedDiagnostic /></PageErrorBoundary>} />
 
               {/* Auth Routes */}

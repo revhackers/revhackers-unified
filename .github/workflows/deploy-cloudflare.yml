@@ -47,6 +47,8 @@ jobs:
         run: npm ci
 
       - name: Compilar Build de Produção (Cloudflare-only)
+        env:
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
         run: npx vite build
 
       - name: Gerar OG HTML

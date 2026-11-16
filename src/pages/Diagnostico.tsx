@@ -1,6 +1,6 @@
 import PageLayout from '@/components/layout/PageLayout';
 import Section from '@/components/ui/Section';
-import { ArrowUpRight, BarChart2, Globe, TrendingUp, User } from 'lucide-react';
+import { ArrowUpRight, BarChart2, Globe, Target, TrendingUp, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SEO from '@/components/shared/SEO';
 import ModernTechnicalBackground from '@/components/shared/ModernTechnicalBackground';
@@ -9,6 +9,14 @@ const DiagnosticoGateway = () => {
   const navigate = useNavigate();
 
   const diagnostics = [
+    {
+      id: 'gtm',
+      title: 'Diagnóstico de GTM',
+      description: 'Lemos seu site, cruzamos com o que você declara e entregamos tese, contradições e plano de 90 dias com a fonte de cada afirmação.',
+      badge: 'GTM',
+      icon: Target,
+      path: '/diagnostico-gtm',
+    },
     {
       id: 'growth',
       title: 'Diagnóstico 360º de Growth',
