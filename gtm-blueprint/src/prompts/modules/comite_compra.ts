@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { PromptSpec } from '../types';
 import { SHARED_SYSTEM_PREAMBLE } from '../shared';
-import { ClaimSchema } from '../evidence';
+import { ClaimSchema, RecomendacaoSchema } from '../evidence';
 
 export const ComiteCompraInputSchema = z.object({
   dossierSummary: z.record(z.any()),
@@ -13,12 +13,12 @@ export type ComiteCompraInput = z.infer<typeof ComiteCompraInputSchema>;
 export const ComiteCompraOutputSchema = z.object({
   membrosComite: z.array(z.object({
     papel: z.enum(['Decisor (C-Level/Diretor)', 'Influenciador Técnico', 'Usuário Final', 'Bloqueador/Financeiro']),
-    nomeCargo: z.string().describe('Ex: Renata Silveira (Head de RevOps)'),
+    cargo: z.string().describe('Cargo e contexto, sem nome de pessoa. Ex: CRO de SaaS B2B mid-market'),
     dorPrimaria: ClaimSchema,
     gatilhoConversao: ClaimSchema,
     objecaoChave: ClaimSchema,
     criterioAvaliacao: ClaimSchema,
-    mensagemChaveProposta: ClaimSchema,
+    mensagemChaveProposta: RecomendacaoSchema,
   })).min(3).max(4),
   dinamicaAprovacao: ClaimSchema.describe('Como o comitê interage e quem tem veto final na decisão de compra'),
   decisao: z.string(),
@@ -35,34 +35,34 @@ const SYSTEM_ADDENDUM = `
 # Módulo 3: Comitê de Compra B2B (Buying Committee)
 
 ## 1. Objetivo Executivo e Estratégico
-Mapear com precisão cirúrgica a dinâmica política, as dores e o processo de aprovação do comitê de compra B2B para o ICP definido no Módulo 2 e no Dossiê. É fundamental reutilizar as personas e cargos definidos no Dossiê por nome, detalhando critérios de avaliação, objeções-chave e a mensagem exata para desarmar resistências.
+Mapear com precisão cirúrgica a dinâmica política, as dores e o processo de aprovação do comitê de compra B2B para o ICP definido no Módulo 2 e no Dossiê. É fundamental reutilizar as personas e cargos definidos no Dossiê, detalhando critérios de avaliação, objeções-chave e a mensagem exata para desarmar resistências. Persona é cargo arquetípico: não há nome de pessoa.
 
 ## 2. Metodologia Passo a Passo de Análise
-1. Resgatar as personas do comitê de compra estabelecidas no Dossiê Estratégico.
-2. Detalhar para cada membro (Decisor, Influenciador, Usuário, Bloqueador/Financeiro) a dor primária, o gatilho de conversão e a objeção principal.
+1. Resgatar as personas do comitê de compra estabelecidas no Dossiê Estratégico, pelo cargo.
+2. Detalhar para cada membro (Decisor, Influenciador, Usuário, Bloqueador/Financeiro) a dor primária, o gatilho de conversão e a objeção principal. Esses itens são hipótese até haver entrevista ou dado do cliente.
 3. Especificar os critérios objetivos de avaliação de ROI/valor que cada membro utiliza na tomada de decisão.
 4. Desenhar a dinâmica de aprovação corporativa, explicitando quem detém o poder de veto final (geralmente CFO ou CEO).
 5. Definir a mensagem-chave da proposta comercial direcionada a cada stakeholder.
 
 ## 3. Guia Detalhado Campo a Campo
-- \`membrosComite\`: Array com papel, nome/cargo, dor primária, gatilho, objeção, critério de avaliação e mensagem-chave.
+- \`membrosComite\`: Array com papel, cargo (sem nome de pessoa), dor primária, gatilho, objeção, critério de avaliação (Claims) e mensagem-chave (recomendação).
 - \`dinamicaAprovacao\`: Explicação de como o comitê delibera e quem tem veto.
 - \`decisao\`: Ação tática imediata para engajamento do comitê.
 - \`proximosPassos\`: Passos operacionais com prazos.
 
 ## 4. Padrão de Qualidade & Exemplo (B2B SaaS Brasil)
-- BOM: \`{"papel": "Decisor (C-Level/Diretor)", "nomeCargo": "Carlos Alberto (CRO)", "dorPrimaria": {"text": "Previsibilidade de forecast e redução de ciclo de vendas em ciclos Enterprise, conforme tese do Dossiê.", "status": "VERIFICADO", "evidenceIds": ["E1"]}}\`
-- MAL: \`{"papel": "Decisor", "nomeCargo": "Chefe", "dorPrimaria": {"text": "Quer vender mais.", "status": "VERIFICADO", "evidenceIds": []}}\`
+- BOM: \`{"papel": "Decisor (C-Level/Diretor)", "cargo": "CRO de SaaS B2B mid-market", "dorPrimaria": {"text": "Previsibilidade de forecast e ciclo de vendas longo em contas Enterprise; hipótese a partir da tese do Dossiê.", "status": "HIPOTESE", "evidenceIds": [], "howToValidate": "Entrevistar três CROs de clientes e prospects sobre o forecast mensal."}}\`
+- MAL: \`{"papel": "Decisor", "cargo": "Chefe", "dorPrimaria": {"text": "Quer vender mais.", "status": "VERIFICADO", "evidenceIds": []}}\`
 
 ## 5. Antipadrões a Evitar
 - Nunca inventar personas desconectadas do Dossiê Estratégico.
 - Nunca ignorar a figura do Bloqueador Financeiro/CFO no processo de aprovação B2B no Brasil.
-- Nunca escrever textos longos: limite cada campo \`text\` e \`howToValidate\` a 2 frases curtas (máx. ~400 caracteres cada). Saída longa é cortada pelo limite de tokens e invalida o módulo inteiro.
+- Nunca tratar a dor de uma persona como fato observado na empresa.
 `;
 
 export const comiteCompraPromptSpec: PromptSpec<ComiteCompraInput, ComiteCompraOutput> = {
   id: 'module.comite_compra',
-  version: '1.1.0',
+  version: '2.0.0',
   task: 'module',
   system: SHARED_SYSTEM_PREAMBLE + SYSTEM_ADDENDUM,
   buildUser(input: ComiteCompraInput): string {

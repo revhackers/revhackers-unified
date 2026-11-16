@@ -37,12 +37,16 @@ export function routeKind(userPrompt: string): PromptKind {
   return module ? module[1] : 'unknown';
 }
 
-const hipotese = (text = 'Hipótese de teste sobre a empresa.') => ({
+/** Claim com hipótese válida (status HIPOTESE exige howToValidate). */
+export const hipotese = (text = 'Hipótese de teste sobre a empresa.') => ({
   text,
   status: 'HIPOTESE' as const,
   evidenceIds: [],
   howToValidate: 'Validar em entrevistas de discovery.',
 });
+
+/** Recomendação sem referências. */
+export const recomendacao = (text = 'Recomendação de teste.') => ({ text, baseadoEm: [] as string[] });
 
 const NEXT_STEPS = [{ acao: 'Revisar a página de planos', responsavelRole: 'Head de Growth', prazoDias: 7 }];
 
@@ -62,7 +66,7 @@ const DEFAULTS: Record<PromptKind, Responder> = {
     estagioRealVsDeclarado: {
       declarado: 'Estruturação Inicial',
       realidadeAuditada: 'Site institucional com proposta de valor genérica.',
-      contradiçõesEncontradas: [hipotese()],
+      contradicoesEncontradas: [hipotese()],
     },
     modeloNegocio: { tipo: 'Self-Service + Inside Sales', monetizacao: hipotese(), ticketMedioEstimado: hipotese() },
     icpAtualFirmografico: {
@@ -71,10 +75,11 @@ const DEFAULTS: Record<PromptKind, Responder> = {
       faturamentoAnualOuFaixa: hipotese(),
       tecnologiasOuSinaisChave: hipotese(),
     },
+    icpDeclaradoVsClientes: { clientesObservados: [], alinhamento: 'SEM_PROVA_SOCIAL', leitura: hipotese() },
     comiteCompraB2B: [
-      { papel: 'Decisor (C-Level/Diretor)', nomeFantasiaPersona: 'Persona A', dorPrincipal: hipotese(), gatilhoDeCompra: hipotese(), objecaoPrincipal: hipotese() },
-      { papel: 'Influenciador Técnico', nomeFantasiaPersona: 'Persona B', dorPrincipal: hipotese(), gatilhoDeCompra: hipotese(), objecaoPrincipal: hipotese() },
-      { papel: 'Usuário Final', nomeFantasiaPersona: 'Persona C', dorPrincipal: hipotese(), gatilhoDeCompra: hipotese(), objecaoPrincipal: hipotese() },
+      { papel: 'Decisor (C-Level/Diretor)', cargoArquetipo: 'CRO de SaaS B2B', dorPrincipal: hipotese(), gatilhoDeCompra: hipotese(), objecaoPrincipal: hipotese() },
+      { papel: 'Influenciador Técnico', cargoArquetipo: 'Head de RevOps', dorPrincipal: hipotese(), gatilhoDeCompra: hipotese(), objecaoPrincipal: hipotese() },
+      { papel: 'Usuário Final', cargoArquetipo: 'Gerente de Growth', dorPrincipal: hipotese(), gatilhoDeCompra: hipotese(), objecaoPrincipal: hipotese() },
     ],
     concorrentesReais: [],
     sinaisMaturidadeGtm: [hipotese()],
@@ -85,7 +90,7 @@ const DEFAULTS: Record<PromptKind, Responder> = {
     resumoExecutivo: 'Resumo executivo de teste.',
     achadosCriticosReceita: [0, 1, 2].map((i) => ({
       titulo: `Achado ${i}`,
-      impactoFinanceiroEstimado: 'Impacto qualitativo de teste.',
+      impactoNaReceita: 'Impacto qualitativo de teste.',
       evidenciaOuHipotese: hipotese(),
       custoDeInacao: 'Custo de inação de teste.',
     })),
@@ -93,9 +98,13 @@ const DEFAULTS: Record<PromptKind, Responder> = {
     proximosPassos: NEXT_STEPS,
   }),
   icp_mercado: () => ({
-    icpPrioritario: { descricaoFirmografica: hipotese(), criteriosQualificacao: [hipotese()], sinaisDeMomentoTrigger: [hipotese()] },
-    antiIcp: { descricaoEvitar: hipotese(), motivoDescarte: hipotese() },
-    tamSamSomInterpretacao: { analiseMercado: hipotese(), potencialReceitaAnualSom: 'Não calculado.' },
+    icpPrioritario: {
+      descricaoFirmografica: recomendacao(),
+      criteriosQualificacao: [recomendacao()],
+      sinaisDeMomentoTrigger: [recomendacao()],
+    },
+    antiIcp: { descricaoEvitar: recomendacao(), motivoDescarte: recomendacao() },
+    tamSamSomInterpretacao: { analiseMercado: hipotese() },
     criteriosPriorizacaoContas: ['Critério A', 'Critério B', 'Critério C'],
     decisao: 'Decisão de ICP de teste.',
     proximosPassos: NEXT_STEPS,
@@ -103,19 +112,19 @@ const DEFAULTS: Record<PromptKind, Responder> = {
   comite_compra: () => ({
     membrosComite: [0, 1, 2].map((i) => ({
       papel: ['Decisor (C-Level/Diretor)', 'Influenciador Técnico', 'Usuário Final'][i],
-      nomeCargo: `Cargo ${i}`,
+      cargo: `Cargo ${i}`,
       dorPrimaria: hipotese(),
       gatilhoConversao: hipotese(),
       objecaoChave: hipotese(),
       criterioAvaliacao: hipotese(),
-      mensagemChaveProposta: hipotese(),
+      mensagemChaveProposta: recomendacao(),
     })),
     dinamicaAprovacao: hipotese(),
     decisao: 'Decisão de comitê de teste.',
     proximosPassos: NEXT_STEPS,
   }),
   proposta_posicionamento: () => ({
-    declaracaoPosicionamento: hipotese('Para times comerciais B2B, a Acme é a plataforma de prospecção.'),
+    declaracaoPosicionamento: recomendacao('Para times comerciais B2B, a Acme é a plataforma de prospecção.'),
     pilaresDiferenciacao: [0, 1, 2].map((i) => ({ pilar: `Pilar ${i}`, descricao: hipotese(), defensibilidade: hipotese() })),
     provasNecessariasAusentes: [hipotese()],
     decisao: 'Decisão de posicionamento de teste.',
@@ -123,30 +132,27 @@ const DEFAULTS: Record<PromptKind, Responder> = {
   }),
   motor_demanda: () => ({
     mixCanaisPrioritarios: [
-      { canal: 'Outbound Rigoroso', alocacaoEsforcoPercentual: 50, justificativaEstagioIcp: hipotese(), playConcretoExecucao: hipotese() },
-      { canal: 'Founder-Led LinkedIn / Social Selling', alocacaoEsforcoPercentual: 30, justificativaEstagioIcp: hipotese(), playConcretoExecucao: hipotese() },
-      { canal: 'Inbound / SEO Técnico', alocacaoEsforcoPercentual: 20, justificativaEstagioIcp: hipotese(), playConcretoExecucao: hipotese() },
+      { canal: 'Outbound Rigoroso', alocacaoEsforcoPercentual: 50, justificativaEstagioIcp: hipotese(), playConcretoExecucao: recomendacao() },
+      { canal: 'Founder-Led LinkedIn / Social Selling', alocacaoEsforcoPercentual: 30, justificativaEstagioIcp: hipotese(), playConcretoExecucao: recomendacao() },
+      { canal: 'Inbound / SEO Técnico', alocacaoEsforcoPercentual: 20, justificativaEstagioIcp: hipotese(), playConcretoExecucao: recomendacao() },
     ],
-    ritualOperacionalGtm: hipotese(),
+    ritualOperacionalGtm: recomendacao(),
     decisao: 'Decisão de canais de teste.',
     proximosPassos: NEXT_STEPS,
   }),
   funil_revops: () => ({
-    etapasFunilB2B: [0, 1, 2, 3].map((i) => ({ estagio: `Etapa ${i}`, criterioAvancoSla: hipotese(), conversaoEsperadaBenchmark: hipotese() })),
-    slasSdrAeCs: [0, 1].map((i) => ({ transicao: `Transição ${i}`, slaTempoMaximo: hipotese(), regraPassagem: hipotese() })),
+    etapasFunilB2B: [0, 1, 2, 3].map((i) => ({
+      estagio: `Etapa ${i}`,
+      criterioAvancoSla: recomendacao(),
+      comoMedirConversao: recomendacao(),
+    })),
+    slasSdrAeCs: [0, 1].map((i) => ({ transicao: `Transição ${i}`, slaTempoMaximo: recomendacao(), regraPassagem: recomendacao() })),
     gapsProcessoCRM: [hipotese()],
     decisao: 'Decisão de funil de teste.',
     proximosPassos: NEXT_STEPS,
   }),
   unit_economics: () => ({
-    statusDados: 'DADOS AUSENTES - NECESSITA COLETA',
-    metricasCalculadasOuBenchmark: {
-      arpu: hipotese(),
-      cac: hipotese(),
-      ltv: hipotese(),
-      paybackMeses: hipotese(),
-      ltvCacRatio: hipotese(),
-    },
+    leituraFinanceira: hipotese('Ticket médio, CAC, churn e ciclo de vendas não foram informados: não é possível concluir o retorno por cliente.'),
     travaFinanceiraRisco: hipotese(),
     dadosParaColetarSeAusentes: ['Extrato de vendas do ERP'],
     decisao: 'Decisão financeira de teste.',
@@ -155,10 +161,10 @@ const DEFAULTS: Record<PromptKind, Responder> = {
   plano_90_dias: () => ({
     ondasExecucao: (['onda_1', 'onda_2', 'onda_3'] as const).map((onda) => ({
       onda,
-      focoPrincipal: hipotese(),
+      focoPrincipal: recomendacao(),
       iniciativasPraticas: [0, 1].map((i) => ({
         titulo: `Iniciativa ${onda} ${i}`,
-        descricao: hipotese(),
+        descricao: recomendacao(),
         impactoEstimado1a10: 8,
         confianca1a10: 7,
         facilidade1a10: 6,
@@ -166,8 +172,8 @@ const DEFAULTS: Record<PromptKind, Responder> = {
         prazoDias: 14,
       })),
     })),
-    metricasSucesso90Dias: [hipotese(), hipotese(), hipotese()],
-    criteriosPerseverarOuPivotar: { criterioPerseverar: hipotese(), criterioPivotar: hipotese() },
+    metricasSucesso90Dias: [recomendacao(), recomendacao(), recomendacao()],
+    criteriosPerseverarOuPivotar: { criterioPerseverar: recomendacao(), criterioPivotar: recomendacao() },
     decisao: 'Decisão de plano de teste.',
     proximosPassos: NEXT_STEPS,
   }),

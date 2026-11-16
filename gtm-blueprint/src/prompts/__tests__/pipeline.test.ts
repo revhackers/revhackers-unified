@@ -63,4 +63,23 @@ describe('runGtmPipeline', () => {
     expect(dossierPrompt).toContain('- Concorrentes informados sem coleta (não analisar): https://rival.test');
     expect(dossierPrompt).toContain('- Concorrentes informados e coletados: nenhum');
   });
+
+  it('calcula unit economics por código e entrega o cálculo como C1 ao dossiê, ao módulo e ao crítico', async () => {
+    stubFetch({ 'https://acme.test': HOME_HTML });
+    const { provider, prompts } = fakeLlm();
+
+    await runGtmPipeline({
+      ...BASE,
+      crmOrFinancialInputs: { arpuMonthly: 2500, cacEstimated: 4000, churnMonthlyRate: 0.035, salesCycleDays: 90 },
+      providers: { bedrock: provider },
+    });
+
+    const dossierPrompt = prompts.find((p) => p.kind === 'dossier')?.user ?? '';
+    expect(dossierPrompt).toContain('[C1] (computed)');
+    const unitPrompt = prompts.find((p) => p.kind === 'unit_economics')?.user ?? '';
+    expect(unitPrompt).toContain('"status": "DADOS REAIS FORNECIDOS"');
+    expect(unitPrompt).toContain('"paybackMeses": 1.6');
+    const criticPrompt = prompts.find((p) => p.kind === 'critic')?.user ?? '';
+    expect(criticPrompt).toContain('"calculado":');
+  });
 });

@@ -9,6 +9,7 @@ export const EvidenceKindSchema = z.enum([
   'market_count',
   'user_input',
   'file',
+  'computed',
 ]);
 
 export const EvidenceSchema = z.object({
@@ -24,7 +25,7 @@ export type Evidence = z.infer<typeof EvidenceSchema>;
 export const ClaimStatusSchema = z.enum(['VERIFICADO', 'HIPOTESE']);
 
 const ClaimObjectSchema = z.object({
-  text: z.string().describe('Afirmação factual ou analítica'),
+  text: z.string().describe('Fato observado ou hipótese sobre a empresa ou o mercado'),
   status: ClaimStatusSchema.describe('VERIFICADO exige evidenceIds válidos; HIPOTESE exige howToValidate'),
   evidenceIds: z.array(z.string()).default([]).describe('IDs das evidências que sustentam a afirmação (obrigatório se VERIFICADO). Use SOMENTE ids da lista de evidências recebida (E1, E2...). Nunca crie ids.'),
   howToValidate: z.string().optional().describe('Como validar a hipótese em campo (obrigatório se HIPOTESE)'),
@@ -44,6 +45,26 @@ export const ClaimSchema = z.preprocess((v) => {
 }, ClaimObjectSchema);
 
 export type Claim = z.infer<typeof ClaimSchema>;
+
+/**
+ * Recomendação: ação, desenho de processo, mensagem ou alvo proposto. Não é fato observado e não tem status.
+ * Uma string solta ou uma lista de strings vira recomendação sem referências.
+ */
+export const RecomendacaoSchema = z.preprocess(
+  (v) => {
+    if (typeof v === 'string') return { text: v, baseadoEm: [] };
+    if (Array.isArray(v)) {
+      return { text: v.filter((x): x is string => typeof x === 'string').join(' '), baseadoEm: [] };
+    }
+    return v;
+  },
+  z.object({
+    text: z.string().describe('Ação, desenho de processo, mensagem ou alvo proposto. Não é fato observado.'),
+    baseadoEm: z.array(z.string()).default([]).describe('IDs das evidências que motivam a recomendação. Use somente ids recebidos.'),
+  }),
+);
+
+export type Recomendacao = z.infer<typeof RecomendacaoSchema>;
 
 const SOURCE_HEADER_MAX = 200;
 const OMISSION_MARKER_RESERVE = 80;
@@ -128,9 +149,14 @@ function isClaimLike(v: unknown): v is { text: unknown; status: unknown; evidenc
   return typeof v === 'object' && v !== null && 'text' in v && 'status' in v && 'evidenceIds' in v;
 }
 
+function isRecomendacaoLike(v: unknown): v is { text: unknown; baseadoEm: unknown } {
+  return typeof v === 'object' && v !== null && 'text' in v && 'baseadoEm' in v && !('status' in v);
+}
+
 /**
  * Trava epistêmica aplicada por código (não depende do modelo obedecer):
- * remove evidenceIds inexistentes e rebaixa para HIPOTESE todo VERIFICADO sem evidência válida.
+ * - remove evidenceIds inexistentes e rebaixa para HIPOTESE todo VERIFICADO sem evidência válida;
+ * - remove de `baseadoEm` das recomendações os ids inexistentes.
  * Devolve o total de rebaixamentos para auditoria.
  */
 export function enforceEvidence<T>(value: T, validIds: ReadonlySet<string>): { value: T; downgraded: number } {
@@ -150,8 +176,60 @@ export function enforceEvidence<T>(value: T, validIds: ReadonlySet<string>): { v
           : 'Rebaixado automaticamente: a afirmação não cita evidência coletada. Validar com dado do cliente ou fonte pública antes de usar.';
         downgraded += 1;
       }
+    } else if (isRecomendacaoLike(obj)) {
+      obj.baseadoEm = Array.isArray(obj.baseadoEm)
+        ? obj.baseadoEm.filter((id): id is string => typeof id === 'string' && validIds.has(id))
+        : [];
     }
     return obj;
   };
   return { value: walk(value) as T, downgraded };
+}
+
+// Chaves onde moram as personas do comitê (dossiê e módulo 3) e as dores/objeções que nenhum dado do site comprova.
+const PERSONA_GROUP_KEYS: Record<string, true> = { comiteCompraB2B: true, membrosComite: true };
+const PERSONA_CLAIM_KEYS: Record<string, true> = {
+  dorPrincipal: true, gatilhoDeCompra: true, objecaoPrincipal: true, dorPrimaria: true,
+  gatilhoConversao: true, objecaoChave: true, criterioAvaliacao: true,
+};
+const PERSONA_VALIDATION = 'Validar em entrevistas de discovery ou win/loss com clientes e prospects.';
+const CLIENT_LIST_KEY = 'clientesObservados';
+
+/**
+ * Trava de persona por código: dor, gatilho, objeção e critério de uma persona nunca são fato verificado.
+ * Claims VERIFICADO sob as chaves de persona viram HIPOTESE com `howToValidate` (existente ou padrão).
+ * Em `clientesObservados`, entradas cujo `evidenceId` não existe são removidas.
+ * Devolve o total de rebaixamentos de persona para auditoria.
+ */
+export function enforcePersonaHypothesis<T>(value: T, validIds: ReadonlySet<string>): { value: T; downgraded: number } {
+  let downgraded = 0;
+  const walk = (v: unknown, inPersonaGroup: boolean): unknown => {
+    if (Array.isArray(v)) return v.map((item) => walk(item, inPersonaGroup));
+    if (typeof v !== 'object' || v === null) return v;
+    const obj: Record<string, unknown> = {};
+    for (const [key, child] of Object.entries(v)) {
+      if (key === CLIENT_LIST_KEY && Array.isArray(child)) {
+        obj[key] = child.filter((client) => {
+          const evidenceId = typeof client === 'object' && client !== null && 'evidenceId' in client ? client.evidenceId : undefined;
+          return typeof evidenceId === 'string' && validIds.has(evidenceId);
+        });
+        continue;
+      }
+      obj[key] = walk(child, inPersonaGroup || PERSONA_GROUP_KEYS[key] === true);
+    }
+    if (inPersonaGroup) {
+      for (const key of Object.keys(PERSONA_CLAIM_KEYS)) {
+        const claim = obj[key];
+        if (!isClaimLike(claim) || claim.status !== 'VERIFICADO') continue;
+        obj[key] = {
+          ...claim,
+          status: 'HIPOTESE',
+          howToValidate: typeof claim.howToValidate === 'string' && claim.howToValidate.trim() ? claim.howToValidate : PERSONA_VALIDATION,
+        };
+        downgraded += 1;
+      }
+    }
+    return obj;
+  };
+  return { value: walk(value, false) as T, downgraded };
 }

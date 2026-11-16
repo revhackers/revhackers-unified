@@ -1,11 +1,12 @@
 import type { LlmProvider } from './ai/types.js';
 import { runPrompt } from './ai/run.js';
 import type { PromptSpec } from './prompts/types.js';
-import { enforceEvidence, renderEvidenceCompact } from './prompts/evidence.js';
+import { enforceEvidence, enforcePersonaHypothesis, renderEvidenceCompact } from './prompts/evidence.js';
 import { enforceNumberProvenance, userInputEvidence, type NumericFinding } from './prompts/numberGuard.js';
 import { fetchCnpjData } from './compute/cnpj.js';
 import { collectSiteData, type CollectionResult } from './collect/site.js';
-import { computeAndSortIce } from './compute/ice.js';
+import { computeAndSortIce, type Plano90DiasData } from './compute/ice.js';
+import { computeUnitEconomics, computeSomAnual, computedEvidence } from './compute/unitEconomics.js';
 import { extractPromptSpec, type ExtractInput, type ExtractOutput } from './prompts/extract.js';
 import { dossierPromptSpec, type DossierInput, type DossierOutput } from './prompts/dossier.js';
 import { raioXPromptSpec, type RaioXInput, type RaioXOutput } from './prompts/modules/raio_x.js';
@@ -29,7 +30,7 @@ export interface PipelineInput {
   crmOrFinancialInputs?: {
     arpuMonthly?: number | null;
     cacEstimated?: number | null;
-    // Fração mensal: 0,035 = 3,5% ao mês (mesma convenção de unit_economics: LTV = ARPU / churn).
+    // Fração mensal: 0,035 = 3,5% ao mês (LTV = ARPU ÷ churn mensal).
     churnMonthlyRate?: number | null;
     salesCycleDays?: number | null;
   };
@@ -120,10 +121,19 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
   }
   allEvidences.push(...collection.evidences);
 
+  // Unit economics e SOM anual são calculados por código: os módulos interpretam, não calculam.
+  const unitCalc = computeUnitEconomics(input.crmOrFinancialInputs);
+  const somAnual = computeSomAnual(input.tamBottomUpData);
+  const calcEvidence = computedEvidence(unitCalc, somAnual);
+
   // Every Claim is checked in code against the evidence actually collected: invented ids are dropped
   // and VERIFICADO without valid evidence is downgraded to HIPOTESE (the model is not trusted for this).
-  // Client-declared numbers are citable as U1; they stay out of allEvidences so the extraction loop skips them.
-  const citableEvidences: Evidence[] = [...allEvidences, userInputEvidence(input, collection.competitors)];
+  // Client-declared numbers are citable as U1 and computed values as C1; both stay out of allEvidences so the extraction loop skips them.
+  const citableEvidences: Evidence[] = [
+    ...allEvidences,
+    userInputEvidence(input, collection.competitors),
+    ...(calcEvidence ? [calcEvidence] : []),
+  ];
   const validEvidenceIds = new Set(citableEvidences.map((e) => e.id));
   let downgradedClaims = 0;
   const numericFindings: NumericFinding[] = [];
@@ -131,7 +141,9 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
     const res = await runPrompt(spec, promptInput, { providers: input.providers });
     const checked = enforceEvidence(res.data, validEvidenceIds);
     downgradedClaims += checked.downgraded;
-    const guarded = enforceNumberProvenance(checked.value, { evidences: citableEvidences }, { pathPrefix: spec.id });
+    const personas = enforcePersonaHypothesis(checked.value, validEvidenceIds);
+    downgradedClaims += personas.downgraded;
+    const guarded = enforceNumberProvenance(personas.value, { evidences: citableEvidences }, { pathPrefix: spec.id });
     downgradedClaims += guarded.downgradedClaims;
     numericFindings.push(...guarded.findings);
     return { ...res, data: guarded.value };
@@ -182,20 +194,17 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
   };
 
   // 5. Module 1: Raio-X
-  const raioXInput: RaioXInput = {
-    dossierSummary,
-    computedMetrics: {},
-  };
+  const raioXInput: RaioXInput = { dossierSummary };
   const raioXRes = await run(raioXPromptSpec, raioXInput);
   recordCall(raioXPromptSpec.id, raioXRes.costUsd, raioXRes.raw);
   const raioX = raioXRes.data;
 
   // Module 2: ICP & Mercado
   // No invented defaults: without real market data the module receives null and must say what to collect.
-  const tamData = input.tamBottomUpData ?? null;
   const icpInput: IcpMercadoInput = {
     dossierSummary,
-    tamBottomUpData: tamData,
+    tamBottomUpData: input.tamBottomUpData ?? null,
+    somAnualCalculado: somAnual,
   };
   const icpRes = await run(icpMercadoPromptSpec, icpInput);
   recordCall(icpMercadoPromptSpec.id, icpRes.costUsd, icpRes.raw);
@@ -240,24 +249,12 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
   // Module 7: Unit Economics
   const unitInput: UnitEconomicsInput = {
     dossierSummary,
-    crmOrFinancialInputs: input.crmOrFinancialInputs || {
-      arpuMonthly: null,
-      cacEstimated: null,
-      churnMonthlyRate: null,
-      salesCycleDays: null,
-    },
+    calculado: unitCalc,
   };
   const unitRes = await run(unitEconomicsPromptSpec, unitInput);
   recordCall(unitEconomicsPromptSpec.id, unitRes.costUsd, unitRes.raw);
   const unit_economics = unitRes.data;
-  const hasRealCrmData = Boolean(
-    input.crmOrFinancialInputs &&
-    (input.crmOrFinancialInputs.arpuMonthly != null ||
-     input.crmOrFinancialInputs.cacEstimated != null ||
-     input.crmOrFinancialInputs.churnMonthlyRate != null ||
-     input.crmOrFinancialInputs.salesCycleDays != null)
-  );
-  unit_economics.statusDados = hasRealCrmData ? 'DADOS REAIS FORNECIDOS' : 'BASEADO EM BENCHMARK DE MERCADO';
+
   // Module 8: Plano de Ação 90 Dias
   const allPreviousModulesSummary = {
     raio_x: raioX.resumoExecutivo,
@@ -265,7 +262,7 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
     proposta_posicionamento: proposta_posicionamento.declaracaoPosicionamento,
     motor_demanda: motor_demanda.mixCanaisPrioritarios,
     funil_revops: funil_revops.etapasFunilB2B,
-    unit_economics: unit_economics.metricasCalculadasOuBenchmark,
+    unit_economics: unit_economics.leituraFinanceira,
   };
   const planoInput: Plano90DiasInput = {
     dossierSummary,
@@ -274,8 +271,9 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
   const planoRes = await run(plano90DiasPromptSpec, planoInput);
   recordCall(plano90DiasPromptSpec.id, planoRes.costUsd, planoRes.raw);
 
-  // Compute ICE and sort initiatives deterministically
-  const plano_90_dias = computeAndSortIce(planoRes.data) as Plano90DiasOutput;
+  // Compute ICE and sort initiatives deterministically. ice.ts ainda tipa descricao/focoPrincipal como Claim;
+  // a ordenação lê apenas as notas, então a conversão para o tipo de entrada não altera o conteúdo.
+  const plano_90_dias = computeAndSortIce(planoRes.data as unknown as Plano90DiasData) as unknown as Plano90DiasOutput;
 
   const modules = {
     raio_x: raioX,
@@ -289,9 +287,10 @@ export async function runGtmPipeline(input: PipelineInput): Promise<PipelineOutp
   };
 
   // 6. Critic Audit. Sem `run`: o crítico lê a saída já guardada e não pode ter a própria saída alterada pelas travas.
+  // Recebe o cálculo de unit economics junto da saída do módulo, para não reprovar número que o código calculou.
   const criticInput: CriticInput = {
     dossier: dossier as unknown as Record<string, unknown>,
-    modules: modules as unknown as Record<string, unknown>,
+    modules: { ...modules, unit_economics: { ...unit_economics, calculado: unitCalc } } as unknown as Record<string, unknown>,
     evidences: citableEvidences,
   };
   const criticRes = await runPrompt(criticPromptSpec, criticInput, { providers: input.providers });

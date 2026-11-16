@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { PromptSpec } from '../types';
 import { SHARED_SYSTEM_PREAMBLE } from '../shared';
-import { ClaimSchema } from '../evidence';
+import { ClaimSchema, RecomendacaoSchema } from '../evidence';
 
 export const MotorDemandaInputSchema = z.object({
   dossierSummary: z.record(z.any()),
@@ -15,9 +15,9 @@ export const MotorDemandaOutputSchema = z.object({
     canal: z.enum(['ABM (Account-Based Marketing)', 'Outbound Rigoroso', 'Founder-Led LinkedIn / Social Selling', 'Inbound / SEO Técnico', 'Parcerias e Canais / Ecossistema']),
     alocacaoEsforcoPercentual: z.number().describe('Percentual de alocação de esforço da equipe (soma deve ser 100%)'),
     justificativaEstagioIcp: ClaimSchema,
-    playConcretoExecucao: ClaimSchema,
+    playConcretoExecucao: RecomendacaoSchema,
   })).min(3).max(4),
-  ritualOperacionalGtm: ClaimSchema.describe('Rotina semanal de prospecção e alinhamento Marketing/Vendas'),
+  ritualOperacionalGtm: RecomendacaoSchema.describe('Rotina semanal de prospecção e alinhamento Marketing/Vendas'),
   decisao: z.string(),
   proximosPassos: z.array(z.object({
     acao: z.string(),
@@ -42,13 +42,13 @@ Definir a matriz de canais de aquisição B2B mais eficiente para o estágio atu
 5. Desenhar o ritual operacional semanal de alinhamento entre Marketing e Vendas (SrevOps).
 
 ## 3. Guia Detalhado Campo a Campo
-- \`mixCanaisPrioritarios\`: Array de canais com alocação de esforço (recursos/equipe), justificativa alinhada ao estágio e play tático de execução.
-- \`ritualOperacionalGtm\`: Rotina de cadência semanal de alinhamento comercial.
+- \`mixCanaisPrioritarios\`: Array de canais com alocação de esforço (recursos/equipe), justificativa alinhada ao estágio (Claim) e play tático de execução (recomendação).
+- \`ritualOperacionalGtm\`: Rotina de cadência semanal de alinhamento comercial (recomendação).
 - \`decisao\`: Decisão imediata sobre canais.
 - \`proximosPassos\`: Ações operacionais com prazos.
 
 ## 4. Padrão de Qualidade & Exemplo (B2B SaaS Brasil)
-- BOM: \`{"canal": "Founder-Led LinkedIn / Social Selling", "alocacaoEsforcoPercentual": 40, "justificativaEstagioIcp": {"text": "Adequado à fase de tração inicial onde o fundador possui autoridade técnica perante C-Levels, conforme Dossiê.", "status": "VERIFICADO", "evidenceIds": ["E1"]}, "playConcretoExecucao": {"text": "Publicação diária de teardown de processos e abordagem direta via LinkedIn Sales Nav aos diretores mapeados.", "status": "HIPOTESE", "howToValidate": "Enviar 30 conexões semanais personalizadas e medir taxa de aceite."}}\`
+- BOM: \`{"canal": "Founder-Led LinkedIn / Social Selling", "alocacaoEsforcoPercentual": 40, "justificativaEstagioIcp": {"text": "Adequado à fase de tração inicial onde o fundador possui autoridade técnica perante C-Levels, conforme Dossiê.", "status": "VERIFICADO", "evidenceIds": ["E1"]}, "playConcretoExecucao": {"text": "Publicar teardowns semanais de processo comercial e enviar convites personalizados aos decisores mapeados no Dossiê; medir a taxa de aceite no próprio LinkedIn.", "baseadoEm": ["E1"]}}\`
 - MAL: \`{"canal": "Marketing Digital", "alocacaoEsforcoPercentual": 50, "justificativaEstagioIcp": {"text": "Fazer anúncios.", "status": "VERIFICADO", "evidenceIds": []}}\`
 
 ## 5. Antipadrões a Evitar
@@ -58,7 +58,7 @@ Definir a matriz de canais de aquisição B2B mais eficiente para o estágio atu
 
 export const motorDemandaPromptSpec: PromptSpec<MotorDemandaInput, MotorDemandaOutput> = {
   id: 'module.motor_demanda',
-  version: '1.0.0',
+  version: '2.0.0',
   task: 'module',
   system: SHARED_SYSTEM_PREAMBLE + SYSTEM_ADDEND_RULE,
   buildUser(input: MotorDemandaInput): string {

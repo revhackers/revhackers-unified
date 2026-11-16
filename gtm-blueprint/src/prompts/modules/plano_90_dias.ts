@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { PromptSpec } from '../types';
 import { SHARED_SYSTEM_PREAMBLE } from '../shared';
-import { ClaimSchema } from '../evidence';
+import { RecomendacaoSchema } from '../evidence';
 
 export const Plano90DiasInputSchema = z.object({
   dossierSummary: z.record(z.any()),
@@ -13,10 +13,10 @@ export type Plano90DiasInput = z.infer<typeof Plano90DiasInputSchema>;
 export const Plano90DiasOutputSchema = z.object({
   ondasExecucao: z.array(z.object({
     onda: z.enum(['onda_1', 'onda_2', 'onda_3']).describe('onda_1: Fundação & Estancamento (Dias 1-30), onda_2: Tração & Validação de Canais (Dias 31-60), onda_3: Escala & Predictibilidade (Dias 61-90)'),
-    focoPrincipal: ClaimSchema,
+    focoPrincipal: RecomendacaoSchema,
     iniciativasPraticas: z.array(z.object({
       titulo: z.string(),
-      descricao: ClaimSchema,
+      descricao: RecomendacaoSchema,
       impactoEstimado1a10: z.number().min(1).max(10),
       confianca1a10: z.number().min(1).max(10),
       facilidade1a10: z.number().min(1).max(10),
@@ -25,10 +25,10 @@ export const Plano90DiasOutputSchema = z.object({
       prazoDias: z.number(),
     })).min(2).max(4),
   })).min(3).max(3),
-  metricasSucesso90Dias: z.array(ClaimSchema).min(3),
+  metricasSucesso90Dias: z.array(RecomendacaoSchema).min(3),
   criteriosPerseverarOuPivotar: z.object({
-    criterioPerseverar: ClaimSchema,
-    criterioPivotar: ClaimSchema,
+    criterioPerseverar: RecomendacaoSchema,
+    criterioPivotar: RecomendacaoSchema,
   }),
   decisao: z.string(),
   proximosPassos: z.array(z.object({
@@ -50,17 +50,17 @@ Consolidar todas as recomendações analíticas dos 7 módulos anteriores em um 
 1. Sintetizar os aprendizados do Dossiê e módulos anteriores (Raio-X, ICP, Comitê, Posicionamento, Motor, Funil, Unit Economics).
 2. Distribuir as iniciativas cirúrgicas nas 3 ondas (\`onda_1\` dias 1-30, \`onda_2\` dias 31-60, \`onda_3\` dias 61-90).
 3. Atribuir notas realistas de Impacto (I), Confiança (C) e Facilidade (E) de 1 a 10 para cada iniciativa.
-4. Definir métricas claras de sucesso para o horizonte de 90 dias e critérios objetivos de perseverar vs pivotar.
+4. Definir indicadores verificáveis para o horizonte de 90 dias e critérios objetivos de perseverar vs pivotar.
 5. Estabelecer governança executiva e prazos.
 
 ## 3. Guia Detalhado Campo a Campo
-- \`ondasExecucao\`: Array com \`onda\` (usando chaves curtas \`onda_1\`, \`onda_2\`, \`onda_3\`), foco principal e iniciativas práticas com notas ICE.
-- \`metricasSucesso90Dias\`: Metas quantificáveis ou verificáveis para o trimestre.
+- \`ondasExecucao\`: Array com \`onda\` (usando chaves curtas \`onda_1\`, \`onda_2\`, \`onda_3\`), foco principal e iniciativas práticas com notas ICE. \`focoPrincipal\` e \`descricao\` são recomendações.
+- \`metricasSucesso90Dias\`: Indicadores verificáveis para o trimestre, definidos como forma de medir (não como meta numérica inventada).
 - \`criteriosPerseverarOuPivotar\`: Regras de decisão estratégica ao final dos 90 dias.
 - \`decisao\` & \`proximosPassos\`: Execução e governança.
 
 ## 4. Padrão de Qualidade & Exemplo (B2B SaaS Brasil)
-- BOM: \`{"onda": "onda_1", "focoPrincipal": {"text": "Estancar sangria de conversão na página de preços e ajustar tiering.", "status": "VERIFICADO", "evidenceIds": ["E2"]}, "iniciativasPraticas": [{"titulo": "Redesenhar página de preços com tiering Enterprise", "descricao": {"text": "Incluir opção de contato customizado para contas acima de 50 licenças.", "status": "HIPOTESE", "howToValidate": "Publicar landing page de preços atualizada e medir cliques no botão de vendas."}, "impactoEstimado1a10": 9, "confianca1a10": 8, "facilidade1a10": 7, "ownerRole": "Head de Produto", "prazoDias": 14}]}\`
+- BOM: \`{"onda": "onda_1", "focoPrincipal": {"text": "Estancar a perda de conversão na página de preços e publicar o tiering.", "baseadoEm": ["E2"]}, "iniciativasPraticas": [{"titulo": "Redesenhar página de preços com tiering e contato comercial", "descricao": {"text": "Incluir opção de contato comercial para contas que pedem planos customizados; medir cliques no botão de vendas antes e depois.", "baseadoEm": ["E2"]}, "impactoEstimado1a10": 9, "confianca1a10": 8, "facilidade1a10": 7, "ownerRole": "Head de Produto", "prazoDias": 14}]}\`
 - MAL: \`{"onda": "onda_1", "iniciativasPraticas": [{"titulo": "Fazer tudo", "impactoEstimado1a10": 10, "confianca1a10": 10, "facilidade1a10": 10, "ownerRole": "Todo mundo", "prazoDias": 1}]}]}}\`
 
 ## 5. Antipadrões a Evitar
@@ -70,7 +70,7 @@ Consolidar todas as recomendações analíticas dos 7 módulos anteriores em um 
 
 export const plano90DiasPromptSpec: PromptSpec<Plano90DiasInput, Plano90DiasOutput> = {
   id: 'module.plano_90_dias',
-  version: '1.0.0',
+  version: '2.0.0',
   task: 'module',
   system: SHARED_SYSTEM_PREAMBLE + SYSTEM_ADDENDUM,
   buildUser(input: Plano90DiasInput): string {

@@ -6,9 +6,10 @@ import type { PipelineInput } from '../pipeline.js';
  * Guarda de proveniência numérica.
  *
  * Regra: toda métrica (valor com unidade, ou número de contagem/duração em contexto de métrica) em um campo
- * textual precisa ser sustentada por uma evidência CITADA no mesmo campo (evidenceIds do claim ou [ID] inline).
- * Se qualquer métrica de um campo não tiver suporte, o campo INTEIRO vira texto neutro. Repetir um número
- * permitido em outra frase do mesmo campo não libera a frase com número sem fonte.
+ * textual precisa ser sustentada por uma evidência citada no mesmo campo (evidenceIds do claim ou [ID] inline).
+ * Frase com métrica sem suporte sai do campo; as demais frases permanecem. Campo sem frase restante vira texto
+ * neutro (BLOCKED_NARRATIVE_TEXT, ou BLOCKED_HOWTO_TEXT em howToValidate).
+ * Recomendação ({ text, baseadoEm }) não afirma fato observado e não é checada por esta guarda.
  *
  * LIMITE: esta checagem é mecânica. Verifica que um valor normalizado (mesma unidade e magnitude) existe no
  * conteúdo da evidência citada. NÃO prova que a fonte sustenta a afirmação semanticamente (sujeito, população,
@@ -40,17 +41,16 @@ export interface NumberGuardResult<T> {
   findings: NumericFinding[];
 }
 
-export const BLOCKED_NARRATIVE_TEXT = 'Dado quantitativo não disponível nas fontes consultadas; validar antes de decidir.';
+export const BLOCKED_NARRATIVE_TEXT = 'A coletar: as fontes consultadas não trazem este dado.';
 export const BLOCKED_HOWTO_TEXT = 'Obter o número na fonte primária (CRM, extrato financeiro ou fonte pública citada) antes de usar esta afirmação.';
 
 // Tokens numéricos isolados: não colam em letras, dígitos, separadores de código (B2B, E1, gpt-5.6, v1:0).
-const NUM_RE = /(?<![A-Za-z0-9_\-.\/:])(\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d{1,3}(?:,\d{3})+|\d+,\d+|\d+\.\d{1,2}|\d+)(?!\d)(?![.,]\d)/g;
+// Hífen não cola número a letra ("gpt-5"), mas separa faixas: em "30-40%" o 40 é número isolado.
+const NUM_RE = /(?<![A-Za-z0-9_.\/:])(?<![A-Za-z]-)(\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d{1,3}(?:,\d{3})+|\d+,\d+|\d+\.\d{1,2}|\d+)(?!\d)(?![.,]\d)/g;
 const URL_RE = /https?:\/\/\S+|www\.\S+|[\w-]+\.(?:com|br|io|net|org|app|dev)\S*/gi;
 const CITE_RE = /\[([A-Za-z_]+\d*(?:\s*,\s*[A-Za-z_]+\d*)*)\]/g;
-const CLAUSE_SPLIT_RE = /[;\n!?]+|\.(?!\d)/;
-// Cláusula de proposta/meta não é fato medido. Risco: frase factual com "meta" passa sem checagem.
-const PROPOSAL_RE = /\b(meta|metas|alvo|proposta|propor|proposto|sugerid[oa]|recomend\w*|validar|prazo|onda)\b/i;
-const ICE_RE = /\bICE\b/;
+// Captura o delimitador: índices pares são frases, índices ímpares são os delimitadores.
+const CLAUSE_SPLIT_RE = /([;\n!?]+|\.(?!\d))/;
 const CURRENCY_PREFIX_RE = /(?:R\$|US\$|USD)\s*$/;
 const PCT_SUFFIX_RE = /^\s*(?:%|por cento)/i;
 const X_SUFFIX_RE = /^\s*(?:x|vezes)(?![\p{L}])/iu;
@@ -73,9 +73,12 @@ const DURATION_CONTEXT_RE = /CAC|LTV|payback|churn|ARPU|ciclo de vendas|convers|
 const METRIC_KEYWORD_RE = /convers|churn|CAC|LTV|payback|ARPU|margem|ticket|MRR|ARR|NPS|ROI|faturamento|receita|taxa|CPL|CPA/i;
 
 // Tabelas estáticas de chaves: `Record<string, true>` com lookup `=== true` (ts-set-map). Evita herdar chaves do protótipo (ex.: `constructor`).
+// Chaves de texto livre que não são afirmação sobre a empresa, ou que são rótulos/identificadores.
 const IGNORED_KEYS: Record<string, true> = {
   id: true, url: true, source: true, onda: true, status: true, evidenceIds: true, ownerRole: true, responsavelRole: true,
   locationPath: true, fetchedAt: true, severidade: true, tipoProblema: true,
+  decisao: true, acao: true, titulo: true, criteriosPriorizacaoContas: true, pilar: true, canal: true, estagio: true,
+  transicao: true, papel: true, cargo: true, cargoArquetipo: true, nome: true, setorAparente: true, alinhamento: true,
 };
 const CLAIM_FIELDS: Record<string, true> = { text: true, status: true, evidenceIds: true, howToValidate: true };
 const NO_KEYS: Record<string, true> = {};
@@ -144,12 +147,10 @@ function unitOf(before: string, rest: string, clause: string, isSource: boolean)
   return unit ? { unit, factor: 1, prefix: '', suffix: duration[0] } : null;
 }
 
-// Fonte: todo número vira métrica (sem unidade vira `num`). Afirmação: sem unidade só conta com palavra-chave de métrica,
-// e cláusulas de proposta ou ICE são ignoradas.
+// Fonte: todo número vira métrica (sem unidade vira `num`). Afirmação: sem unidade só conta com palavra-chave de métrica.
 function metricsIn(text: string, isSource: boolean): Metric[] {
   const metrics: Metric[] = [];
   for (const clause of text.split(CLAUSE_SPLIT_RE)) {
-    if (!isSource && (PROPOSAL_RE.test(clause) || ICE_RE.test(clause))) continue;
     const keyword = METRIC_KEYWORD_RE.test(clause);
     for (const hit of clause.matchAll(NUM_RE)) {
       const token = hit[1] ?? '';
@@ -183,17 +184,42 @@ function buildIndex(evidences: Evidence[]): SupportIndex {
   return index;
 }
 
-function unsupportedMetrics(text: string, claimIds: string[], index: SupportIndex): { labels: string[]; cited: string[] } {
-  const body = text.replace(URL_RE, ' ');
-  const inline = [...body.matchAll(CITE_RE)].flatMap((hit) => (hit[1] ?? '').split(',').map((id) => id.trim()));
-  const cited = [...new Set([...claimIds, ...inline])];
+// Rótulos das métricas de `text` que nenhuma evidência citada sustenta.
+function unsupportedLabels(text: string, cited: string[], index: SupportIndex): string[] {
   const labels: string[] = [];
-  for (const { token, spec } of metricsIn(body, false)) {
+  for (const { token, spec } of metricsIn(text.replace(URL_RE, ' '), false)) {
     const keys = valueCandidates(token, false).map((value) => factKey(spec.unit, value * spec.factor));
     const supported = cited.some((id) => keys.some((key) => index.get(id)?.has(key)));
     if (!supported) labels.push(`${spec.prefix}${token}${spec.suffix}`.trim());
   }
-  return { labels, cited };
+  return labels;
+}
+
+/**
+ * Remove as frases com métrica sem suporte (com o delimitador que as segue) e junta o restante.
+ * `cited` vale para o texto inteiro: ids do claim e citações [ID] em qualquer frase.
+ */
+function redactUnsupported(text: string, claimIds: string[], index: SupportIndex): { text: string; labels: string[]; cited: string[] } {
+  const inline = [...text.replace(URL_RE, ' ').matchAll(CITE_RE)].flatMap((hit) => (hit[1] ?? '').split(',').map((id) => id.trim()));
+  const cited = [...new Set([...claimIds, ...inline])];
+  const parts = text.split(CLAUSE_SPLIT_RE);
+  const labels: string[] = [];
+  const kept: string[] = [];
+  for (let i = 0; i < parts.length; i += 2) {
+    const sentence = parts[i] ?? '';
+    const delimiter = parts[i + 1] ?? '';
+    const missing = unsupportedLabels(sentence, cited, index);
+    if (missing.length > 0) {
+      labels.push(...missing);
+      continue;
+    }
+    kept.push(sentence, delimiter);
+  }
+  return { text: kept.join('').replace(/\s+/g, ' ').trim(), labels, cited };
+}
+
+function hasLetters(text: string): boolean {
+  return /\p{L}/u.test(text);
 }
 
 function reasonFor(labels: string[], cited: string[]): string {
@@ -228,32 +254,37 @@ function walkObject(
 }
 
 function guardText(text: string, path: string, state: GuardState): string {
-  const { labels, cited } = unsupportedMetrics(text, [], state.index);
-  if (labels.length === 0) return text;
-  state.findings.push({ path: joinPath(state.prefix, path), reason: reasonFor(labels, cited) });
-  return BLOCKED_NARRATIVE_TEXT;
+  const redacted = redactUnsupported(text, [], state.index);
+  if (redacted.labels.length === 0) return text;
+  state.findings.push({ path: joinPath(state.prefix, path), reason: reasonFor(redacted.labels, redacted.cited) });
+  return hasLetters(redacted.text) ? redacted.text : BLOCKED_NARRATIVE_TEXT;
 }
 
-// Afirmação com métrica sem suporte: `text` e `howToValidate` viram texto neutro e status HIPOTESE.
+// Afirmação com métrica sem suporte: frases ofensoras saem de `text` e de `howToValidate`, e o status vira HIPOTESE.
 // Um finding por campo ofensor. Downgrade conta apenas quando o status muda de VERIFICADO para HIPOTESE.
 function guardClaim(claim: Record<string, unknown>, path: string, state: GuardState): Record<string, unknown> {
   const claimIds = Array.isArray(claim.evidenceIds)
     ? claim.evidenceIds.filter((id): id is string => typeof id === 'string')
     : [];
-  const checks = ['text', 'howToValidate']
-    .filter((key) => typeof claim[key] === 'string')
-    .map((key) => ({ key, ...unsupportedMetrics(String(claim[key]), claimIds, state.index) }))
-    .filter((check) => check.labels.length > 0);
+  const text = typeof claim.text === 'string' ? redactUnsupported(claim.text, claimIds, state.index) : null;
+  const how = typeof claim.howToValidate === 'string' ? redactUnsupported(claim.howToValidate, claimIds, state.index) : null;
   const others = walkObject(claim, path, state, CLAIM_FIELDS);
-  if (checks.length === 0) return others;
-  for (const check of checks) {
-    state.findings.push({
-      path: joinPath(state.prefix, joinPath(path, check.key)),
-      reason: reasonFor(check.labels, check.cited),
-    });
+  const textHit = text !== null && text.labels.length > 0;
+  const howHit = how !== null && how.labels.length > 0;
+  if (!textHit && !howHit) return others;
+
+  if (text && textHit) {
+    state.findings.push({ path: joinPath(state.prefix, joinPath(path, 'text')), reason: reasonFor(text.labels, text.cited) });
+  }
+  if (how && howHit) {
+    state.findings.push({ path: joinPath(state.prefix, joinPath(path, 'howToValidate')), reason: reasonFor(how.labels, how.cited) });
   }
   if (claim.status === 'VERIFICADO') state.downgradedClaims += 1;
-  return { ...others, text: BLOCKED_NARRATIVE_TEXT, status: 'HIPOTESE', howToValidate: BLOCKED_HOWTO_TEXT };
+
+  const nextText = text && textHit ? (hasLetters(text.text) ? text.text : BLOCKED_NARRATIVE_TEXT) : claim.text;
+  const nextHow = how && howHit ? (hasLetters(how.text) ? how.text : BLOCKED_HOWTO_TEXT) : claim.howToValidate;
+  const howFinal = typeof nextHow === 'string' && nextHow.trim() ? nextHow : BLOCKED_HOWTO_TEXT;
+  return { ...others, text: nextText, status: 'HIPOTESE', howToValidate: howFinal };
 }
 
 function walk(node: unknown, path: string, state: GuardState): unknown {
@@ -261,6 +292,8 @@ function walk(node: unknown, path: string, state: GuardState): unknown {
   if (Array.isArray(node)) return node.map((item, i) => walk(item, `${path}[${i}]`, state));
   if (!node || typeof node !== 'object') return node;
   if (isClaimLike(node)) return guardClaim(node, path, state);
+  // Recomendação ({ text, baseadoEm }) não afirma fato: não é percorrida.
+  if ('baseadoEm' in node) return node;
   return walkObject(node as Record<string, unknown>, path, state, NO_KEYS);
 }
 
@@ -285,7 +318,7 @@ export function enforceNumberProvenance<T>(
 }
 
 // Número pt-BR sem separador de milhar: "0,035" (ponto seguido de 3 dígitos seria lido como milhar pela guarda).
-function formatPtBr(value: number): string {
+export function formatPtBr(value: number): string {
   return value.toFixed(6).replace(/\.?0+$/, '').replace('.', ',');
 }
 

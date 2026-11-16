@@ -44,7 +44,9 @@ export async function runPrompt<I, O>(
   const grounding = spec.task === 'dossier' || spec.task === 'module' ? `
 # ATERRAMENTO DOS REDATORES
 - Fatos da empresa exigem fonte que sustente a afirmação inteira, não apenas um ID existente. Nunca transforme dores de uma persona em fatos observados na empresa.
+- Copy de venda do site prova o que a empresa afirma sobre o cliente, não o que o cliente sente.
 - Métricas financeiras, percentuais, volumes, tamanhos de mercado e benchmarks só podem repetir dados explicitamente fornecidos, com a fonte correspondente. Número encontrado no concorrente não descreve a empresa analisada.
+- Benchmark de mercado não existe nas entradas: não cite faixa, média nem "típico do setor".
 - Sem dado, explique qualitativamente a lacuna e como coletá-lo. Não invente faixas, exemplos numéricos, garantias comerciais, nomes de pessoas ou resultados, nem mesmo dentro de HIPOTESE ou howToValidate.
 - Personas sem pessoa comprovada são cargos hipotéticos, não pessoas identificadas. Mensagens propostas são recomendações, nunca promessas comerciais verificadas.
 - Prazos de execução e notas de priorização exigidos pelo schema são propostas, não resultados observados. Não use essa exceção para inventar CAC, receita, conversão ou metas.

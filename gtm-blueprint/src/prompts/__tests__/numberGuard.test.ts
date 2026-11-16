@@ -42,7 +42,7 @@ describe('enforceNumberProvenance (checagem mecânica)', () => {
     expect(result.findings[0]?.path).toBe('raio_x.descricao');
   });
 
-  it('rebaixa claim VERIFICADO com métrica não sustentada e troca howToValidate', () => {
+  it('rebaixa claim VERIFICADO cuja única frase tem métrica não sustentada e mantém howToValidate válido', () => {
     const result = enforceNumberProvenance(
       {
         claim: {
@@ -57,33 +57,42 @@ describe('enforceNumberProvenance (checagem mecânica)', () => {
     );
     expect(result.value.claim.text).toBe(BLOCKED_NARRATIVE_TEXT);
     expect(result.value.claim.status).toBe('HIPOTESE');
-    expect(result.value.claim.howToValidate).toBe(BLOCKED_HOWTO_TEXT);
+    expect(result.value.claim.howToValidate).toBe('Validar no CRM.');
     expect(result.downgradedClaims).toBe(1);
     expect(result.findings.map((f) => f.path)).toEqual(['raio_x.claim.text']);
   });
 
-  it('bloqueia o campo inteiro quando uma métrica da frase não tem suporte', () => {
-    const supported = enforceNumberProvenance(
-      { claim: { text: 'A base tem 12.000 contas [E1].', status: 'VERIFICADO', evidenceIds: ['E1'], howToValidate: 'Conferir.' } },
-      { evidences: [E1] },
-    );
-    expect(supported.findings).toEqual([]);
+  it('remove só a frase com métrica sem suporte e preserva as frases vizinhas', () => {
+    const claim = {
+      text: 'A base tem 12.000 contas [E1]. O LTV é de R$ 125.000. A empresa vende software para equipes comerciais.',
+      status: 'VERIFICADO',
+      evidenceIds: ['E1'],
+      howToValidate: 'Conferir.',
+    };
+    const result = enforceNumberProvenance({ claim }, { evidences: [E1] });
 
+    expect(result.value.claim.text).toBe('A base tem 12.000 contas [E1]. A empresa vende software para equipes comerciais.');
+    expect(result.value.claim.status).toBe('HIPOTESE');
+    expect(result.downgradedClaims).toBe(1);
+    expect(result.findings).toHaveLength(1);
+    expect(result.findings[0]?.reason).toContain('125.000');
+    expect(result.findings[0]?.path).toBe('claim.text');
+  });
+
+  it('remove a faixa "30-40%" sem suporte mesmo quando a frase não tem palavra-chave de métrica', () => {
     const result = enforceNumberProvenance(
       {
         claim: {
-          text: 'A base tem 12.000 contas [E1]. O LTV é de R$ 125.000.',
+          text: 'Cerca de 30-40% dos prospects que chegam à proposta fecham. A página inicial apresenta a oferta.',
           status: 'VERIFICADO',
-          evidenceIds: ['E1'],
-          howToValidate: 'Conferir.',
+          evidenceIds: [],
+          howToValidate: 'Validar no CRM.',
         },
       },
       { evidences: [E1] },
     );
-    expect(result.value.claim.text).toBe(BLOCKED_NARRATIVE_TEXT);
-    expect(result.findings).toHaveLength(1);
-    expect(result.findings[0]?.reason).toContain('125.000');
-    expect(result.findings[0]?.path).toBe('claim.text');
+    expect(result.value.claim.text).toBe('A página inicial apresenta a oferta.');
+    expect(result.value.claim.status).toBe('HIPOTESE');
   });
 
   it('não usa fonte competitor_site para sustentar métrica própria', () => {
@@ -150,6 +159,50 @@ describe('enforceNumberProvenance (checagem mecânica)', () => {
     expect(result.value.source).toBe('Base de 12.000 contas');
     expect(result.findings).toEqual([]);
   });
+
+  it('não checa recomendação: "20 contas" em { text, baseadoEm } passa intacto', () => {
+    const play = { text: 'Abrir 20 contas por semana com a lista do Dossiê.', baseadoEm: [] };
+    const result = enforceNumberProvenance({ play, plays: [play] }, { evidences: [] });
+    expect(result.value.play).toEqual(play);
+    expect(result.value.plays).toEqual([play]);
+    expect(result.findings).toEqual([]);
+  });
+
+  it('não checa campos de decisão e ação, que são proposta e não fato', () => {
+    const result = enforceNumberProvenance(
+      { decisao: 'Reduzir o CAC em 50% até o trimestre.', proximosPassos: [{ acao: 'Atingir 40% de aceite.' }] },
+      { evidences: [] },
+    );
+    expect(result.value.decisao).toBe('Reduzir o CAC em 50% até o trimestre.');
+    expect(result.findings).toEqual([]);
+  });
+
+  it('troca por BLOCKED_HOWTO_TEXT quando a única frase de howToValidate não tem suporte', () => {
+    const result = enforceNumberProvenance(
+      {
+        claim: {
+          text: 'A base tem 12.000 contas [E1].',
+          status: 'VERIFICADO',
+          evidenceIds: ['E1'],
+          howToValidate: 'Medir o LTV de R$ 125.000 no CRM.',
+        },
+      },
+      { evidences: [E1] },
+    );
+    expect(result.value.claim.text).toBe('A base tem 12.000 contas [E1].');
+    expect(result.value.claim.status).toBe('HIPOTESE');
+    expect(result.value.claim.howToValidate).toBe(BLOCKED_HOWTO_TEXT);
+    expect(result.findings.map((f) => f.path)).toEqual(['claim.howToValidate']);
+  });
+
+  it('preenche howToValidate com BLOCKED_HOWTO_TEXT quando a claim perde frase e não tinha o campo', () => {
+    const result = enforceNumberProvenance(
+      { claim: { text: 'O CAC é de R$ 1.200 [E1]. A base tem 12.000 contas [E1].', status: 'VERIFICADO', evidenceIds: ['E1'] } },
+      { evidences: [E1] },
+    );
+    expect(result.value.claim.text).toBe('A base tem 12.000 contas [E1].');
+    expect(result.value.claim).toMatchObject({ status: 'HIPOTESE', howToValidate: BLOCKED_HOWTO_TEXT });
+  });
 });
 
 describe('userInputEvidence (U1)', () => {
@@ -161,15 +214,6 @@ describe('userInputEvidence (U1)', () => {
   };
   const u1 = userInputEvidence(u1Input, []);
 
-  it('separa concorrentes coletados dos informados sem coleta', () => {
-    const ev = userInputEvidence(u1Input, [
-      { url: 'https://a.test', collected: true },
-      { url: 'https://b.test', collected: false },
-    ]);
-    expect(ev.content).toContain('Concorrentes informados e coletados: https://a.test');
-    expect(ev.content).toContain('Concorrentes informados sem coleta (não analisar): https://b.test');
-  });
-
   it('usa id U1 e kind user_input', () => {
     expect(u1.id).toBe('U1');
     expect(u1.kind).toBe('user_input');
@@ -179,6 +223,15 @@ describe('userInputEvidence (U1)', () => {
     expect(u1.content).toContain('0,035');
     expect(u1.content).toContain('3,5%');
     expect(u1.content).not.toContain('0.035');
+  });
+
+  it('separa concorrentes coletados dos informados sem coleta', () => {
+    const ev = userInputEvidence(u1Input, [
+      { url: 'https://a.test', collected: true },
+      { url: 'https://b.test', collected: false },
+    ]);
+    expect(ev.content).toContain('Concorrentes informados e coletados: https://a.test');
+    expect(ev.content).toContain('Concorrentes informados sem coleta (não analisar): https://b.test');
   });
 
   it('sustenta claims que citam U1 em R$, percentual e fração', () => {

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { PromptSpec } from '../types';
 import { SHARED_SYSTEM_PREAMBLE } from '../shared';
-import { ClaimSchema } from '../evidence';
+import { ClaimSchema, RecomendacaoSchema } from '../evidence';
 
 export const PropostaPosicionamentoInputSchema = z.object({
   dossierSummary: z.record(z.any()),
@@ -11,7 +11,7 @@ export const PropostaPosicionamentoInputSchema = z.object({
 export type PropostaPosicionamentoInput = z.infer<typeof PropostaPosicionamentoInputSchema>;
 
 export const PropostaPosicionamentoOutputSchema = z.object({
-  declaracaoPosicionamento: ClaimSchema.describe('Declaração clara de posicionamento no formato: Para [ICP], [Empresa] é o [categoria] que [benefício único], ao contrário de [Concorrente], porque [diferencial defensável].'),
+  declaracaoPosicionamento: RecomendacaoSchema.describe('Declaração clara de posicionamento no formato: Para [ICP], [Empresa] é o [categoria] que [benefício único], ao contrário de [Concorrente], porque [diferencial defensável].'),
   pilaresDiferenciacao: z.array(z.object({
     pilar: z.string(),
     descricao: ClaimSchema,
@@ -42,13 +42,13 @@ Ajustar e blindar o posicionamento de mercado da empresa para desbancar os conco
 5. Definir decisão executiva e próximos passos de comunicação.
 
 ## 3. Guia Detalhado Campo a Campo
-- \`declaracaoPosicionamento\`: Declaração formatada contendo ICP, categoria, benefício, concorrente contrastado e diferencial.
+- \`declaracaoPosicionamento\`: Recomendação (\`{ text, baseadoEm }\`) com ICP, categoria, benefício, concorrente contrastado e diferencial. Não afirma resultado.
 - \`pilaresDiferenciacao\`: Pilares estratégicos com descrição e defensibilidade baseada em Claims.
 - \`provasNecessariasAusentes\`: O que falta publicar no site para validar a promessa.
 
 ## 4. Padrão de Qualidade & Exemplo (B2B SaaS Brasil)
-- BOM: \`{"declaracaoPosicionamento": {"text": "Para diretores comerciais de médias empresas, a RevHackers é a plataforma de RevOps que automatiza cadências multicanal, ao contrário de CRMs tradicionais, porque integra prospecção Unipile nativa sem fricção.", "status": "VERIFICADO", "evidenceIds": ["E1"]}}\`
-- MAL: \`{"declaracaoPosicionamento": {"text": "Somos a melhor empresa do mercado.", "status": "VERIFICADO", "evidenceIds": []}}\`
+- BOM: \`{"declaracaoPosicionamento": {"text": "Para diretores comerciais de médias empresas, a RevHackers é a plataforma de RevOps que automatiza cadências multicanal, ao contrário de CRMs tradicionais, porque publica o método e o prazo de implantação [E1].", "baseadoEm": ["E1"]}}\`
+- MAL: \`{"declaracaoPosicionamento": {"text": "Somos a melhor empresa do mercado.", "baseadoEm": []}}\`
 
 ## 5. Antipadrões a Evitar
 - Nunca omitir o contraste com concorrentes reais nomeados nas evidências.
@@ -57,7 +57,7 @@ Ajustar e blindar o posicionamento de mercado da empresa para desbancar os conco
 
 export const propostaPosicionamentoPromptSpec: PromptSpec<PropostaPosicionamentoInput, PropostaPosicionamentoOutput> = {
   id: 'module.proposta_posicionamento',
-  version: '1.0.0',
+  version: '2.0.0',
   task: 'module',
   system: SHARED_SYSTEM_PREAMBLE + SYSTEM_ADDENDUM,
   buildUser(input: PropostaPosicionamentoInput): string {

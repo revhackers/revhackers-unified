@@ -25,7 +25,7 @@ export const DossierOutputSchema = z.object({
   estagioRealVsDeclarado: z.object({
     declarado: z.string(),
     realidadeAuditada: z.string(),
-    contradiçõesEncontradas: z.array(ClaimSchema),
+    contradicoesEncontradas: z.array(ClaimSchema),
   }),
   modeloNegocio: z.object({
     tipo: z.enum(['PLG', 'Enterprise Sales', 'Self-Service + Inside Sales', 'Marketplace', 'Serviço com Produto (Agency/Service-led)']),
@@ -38,9 +38,14 @@ export const DossierOutputSchema = z.object({
     faturamentoAnualOuFaixa: ClaimSchema,
     tecnologiasOuSinaisChave: ClaimSchema,
   }),
+  icpDeclaradoVsClientes: z.object({
+    clientesObservados: z.array(z.object({ nome: z.string(), setorAparente: z.string(), evidenceId: z.string() })),
+    alinhamento: z.enum(['ALINHADO', 'PARCIAL', 'DIVERGENTE', 'SEM_PROVA_SOCIAL']),
+    leitura: ClaimSchema,
+  }),
   comiteCompraB2B: z.array(z.object({
     papel: z.enum(['Decisor (C-Level/Diretor)', 'Influenciador Técnico', 'Usuário Final', 'Bloqueador/Financeiro']),
-    nomeFantasiaPersona: z.string().describe('Ex: Carlos Alberto (CRO)'),
+    cargoArquetipo: z.string().describe('Cargo e contexto, sem nome de pessoa. Ex: CRO de SaaS B2B mid-market'),
     dorPrincipal: ClaimSchema,
     gatilhoDeCompra: ClaimSchema,
     objecaoPrincipal: ClaimSchema,
@@ -70,29 +75,33 @@ Atuar como o estrategista sênior de GTM construindo o Dossiê Estratégico, o a
 3. Contrastar rigorosamente a fase declarada pela empresa com a realidade auditada nas evidências e dados de CNPJ (idade, porte, UF), destacando contradições estruturais (ex: CNPJ antigo com site raso).
 4. Identificar o modelo de negócio predominante (PLG, Enterprise Sales, Self-Service + Inside Sales, Marketplace, Agency/Service-led) amparado por evidências.
 5. Mapear o ICP firmográfico atual com base estrita no texto do site e concorrentes.
-6. Desenvolver de 3 a 5 personas executivas reais do comitê de compra B2B (Decisor C-Level, Influenciador Técnico, Usuário Final, Bloqueador Financeiro), nomeando-as profissionalmente.
-7. Analisar concorrentes reais mapeados e seus diferenciais observados.
+6. Desenvolver de 3 a 5 personas do comitê de compra B2B (Decisor C-Level, Influenciador Técnico, Usuário Final, Bloqueador Financeiro), descrevendo cada uma pelo cargo arquetípico e contexto, sem inventar nome de pessoa.
+7. Analisar concorrentes reais mapeados e seus diferenciais observados. Só analise concorrente listado como coletado.
 8. Identificar sinais claros de maturidade de GTM e os top riscos críticos que ameaçam o crescimento.
 9. Listar lacunas de dados críticas que impeçam conclusão definitiva.
+10. Liste cada cliente, logo ou depoimento nomeado nas evidências com o setor aparente e compare com o ICP declarado.
 
 ## 3. Guia Detalhado Campo a Campo
 - \`teseCentral\`: Frase síntese de posicionamento e valor diferenciado no mercado B2B brasileiro.
-- \`estagioRealVsDeclarado\`: Análise crítica confrontando o discurso do fundador com dados reais de CNPJ e site.
+- \`estagioRealVsDeclarado\`: Análise crítica confrontando o discurso do fundador com dados reais de CNPJ e site. \`contradicoesEncontradas\` lista cada divergência como Claim.
 - \`modeloNegocio\`: Classificação exata do modelo e monetização com Claims fundamentados.
 - \`icpAtualFirmografico\`: Segmento, porte de funcionários, faixa de faturamento e sinais/tecnologias.
-- \`comiteCompraB2B\`: Personas nomeadas com dores, gatilhos de compra e objeções principais.
+- \`icpDeclaradoVsClientes\`: Clientes, logos e depoimentos nomeados nas evidências, com setor aparente, comparados ao ICP declarado. \`alinhamento\` é ALINHADO, PARCIAL, DIVERGENTE ou SEM_PROVA_SOCIAL. Cada \`evidenceId\` deve existir na lista recebida. Sem cliente nomeado, use SEM_PROVA_SOCIAL e lista vazia.
+- \`comiteCompraB2B\`: Personas por cargo arquetípico, com dores, gatilhos de compra e objeções como hipótese a validar.
 - \`concorrentesReais\`: Concorrentes reais comparados.
 - \`sinaisMaturidadeGtm\`: Evidências de processos comerciais modernos.
 - \`topRiscos\`: Riscos operacionais e estratégicos.
 - \`lacunasDeDadosCriticas\`: O que falta coletar.
 
 ## 4. Padrão de Qualidade & Exemplo (B2B SaaS Brasil)
-- BOM: \`{"text": "A empresa opera no modelo Self-Service + Inside Sales com ticket estimado em R$ 1.500/mês, voltado para gestores de operações de logísticas médias conforme planos em [E2].", "status": "VERIFICADO", "evidenceIds": ["E2"]}\`
+- BOM: \`{"text": "A empresa opera no modelo Self-Service + Inside Sales: a página de planos [E2] publica preços e o botão principal leva a um teste gratuito.", "status": "VERIFICADO", "evidenceIds": ["E2"]}\`
 - MAL: \`{"text": "A empresa tem um modelo de negócios excelente e escalável para todos os setores.", "status": "VERIFICADO", "evidenceIds": []}\`
 
 ## 5. Antipadrões a Evitar
 - Nunca omitir divergências entre o CNPJ antigo e a ausência de tração digital.
 - Nunca inventar faturamento ou número de clientes ausentes das evidências.
+- Nunca tratar a copy de venda do site como prova do que o cliente sente.
+- Nunca listar como cliente uma empresa que não aparece nomeada nas evidências.
 `;
 
 export const dossierPromptSpec: PromptSpec<DossierInput, DossierOutput> = {

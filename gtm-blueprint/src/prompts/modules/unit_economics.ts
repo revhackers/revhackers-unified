@@ -2,28 +2,17 @@ import { z } from 'zod';
 import type { PromptSpec } from '../types';
 import { SHARED_SYSTEM_PREAMBLE } from '../shared';
 import { ClaimSchema } from '../evidence';
+import type { UnitEconomicsComputed } from '../../compute/unitEconomics';
 
 export const UnitEconomicsInputSchema = z.object({
   dossierSummary: z.record(z.any()),
-  crmOrFinancialInputs: z.object({
-    arpuMonthly: z.number().nullable().optional(),
-    cacEstimated: z.number().nullable().optional(),
-    churnMonthlyRate: z.number().nullable().optional(),
-    salesCycleDays: z.number().nullable().optional(),
-  }),
+  calculado: z.custom<UnitEconomicsComputed>().describe('Valores de unit economics calculados por código (nulos = ausentes)'),
 });
 
 export type UnitEconomicsInput = z.infer<typeof UnitEconomicsInputSchema>;
 
 export const UnitEconomicsOutputSchema = z.object({
-  statusDados: z.enum(['DADOS REAIS FORNECIDOS', 'BASEADO EM BENCHMARK DE MERCADO', 'DADOS AUSENTES - NECESSITA COLETA']),
-  metricasCalculadasOuBenchmark: z.object({
-    arpu: ClaimSchema,
-    cac: ClaimSchema,
-    ltv: ClaimSchema,
-    paybackMeses: ClaimSchema,
-    ltvCacRatio: ClaimSchema,
-  }),
+  leituraFinanceira: ClaimSchema.describe('Leitura dos valores calculados. Com status AUSENTES, descreve o que não dá para concluir e por quê.'),
   travaFinanceiraRisco: ClaimSchema.describe('Análise de sustentabilidade financeira e queima de caixa'),
   dadosParaColetarSeAusentes: z.array(z.string()),
   decisao: z.string(),
@@ -37,46 +26,45 @@ export const UnitEconomicsOutputSchema = z.object({
 export type UnitEconomicsOutput = z.infer<typeof UnitEconomicsOutputSchema>;
 
 const SYSTEM_ADDENDUM = `
-# Módulo 7: Unit Economics B2B (CAC, LTV, Payback)
+# Módulo 7: Unit Economics B2B (ARPU, CAC, LTV, Payback)
 
 ## 1. Objetivo Executivo e Estratégico
-Avaliar a saúde financeira da aquisição de clientes com base estrita nos dados informados ou em benchmarks setoriais devidamente assinalados como hipótese. É estritamente proibido inventar dados financeiros de CAC, LTV ou ARPU caso não tenham sido fornecidos no input. Se faltarem dados, classifique como 'DADOS AUSENTES - NECESSITA COLETA' e liste o que auditar no ERP/CRM.
+Interpretar a saúde financeira da aquisição de clientes a partir dos valores já calculados por código no campo \`calculado\`. Não calcule, não estime e não cite benchmark. Quando \`calculado.status\` for AUSENTES, o módulo descreve o que não dá para concluir e por quê.
 
 ## 2. Metodologia Passo a Passo de Análise
-1. Verificar os dados financeiros de entrada (arpuMonthly, cacEstimated, churnMonthlyRate, salesCycleDays).
-2. Se fornecidos, calcular métricas (LTV = ARPU / Churn; Payback = CAC / ARPU; LTV/CAC ratio) e marcar como VERIFICADO citando fontes ou inputs.
-3. Se ausentes, utilizar faixas de benchmark de mercado brasileiro B2B SaaS devidamente explicitadas e marcadas como HIPÓTESE.
-4. Analisar a sustentabilidade financeira, eficiência de capital e risco de queima de caixa (burn rate).
-5. Listar os dados exatos que precisam ser extraídos do financeiro/CRM.
+1. Ler \`calculado\`: ARPU mensal, CAC, churn mensal (fração mensal), ciclo de vendas, LTV (ARPU ÷ churn), payback (CAC ÷ ARPU) e LTV/CAC.
+2. Interpretar apenas os valores não nulos. Valor nulo é dado ausente: não o substitua por faixa de mercado.
+3. Analisar sustentabilidade financeira, eficiência de capital e risco de queima de caixa com base nesses valores.
+4. Listar os dados exatos que precisam ser extraídos do financeiro/CRM (\`faltantes\` e campos nulos).
 
 ## 3. Guia Detalhado Campo a Campo
-- \`statusDados\`: Classificação da origem dos dados.
-- \`metricasCalculadasOuBenchmark\`: ARPU, CAC, LTV, Payback e LTV/CAC estruturados com Claims.
+- \`leituraFinanceira\`: Leitura dos valores calculados, ou da lacuna quando o status for AUSENTES.
 - \`travaFinanceiraRisco\`: Análise crítica de risco financeiro.
-- \`dadosParaColetarSeAusentes\`: O que auditar no sistema.
+- \`dadosParaColetarSeAusentes\`: O que auditar no ERP/CRM.
+- \`decisao\` & \`proximosPassos\`: Governança financeira.
 
 ## 4. Padrão de Qualidade & Exemplo (B2B SaaS Brasil)
-- BOM: \`{"statusDados": "DADOS REAIS FORNECIDOS", "arpu": {"text": "ARPU mensal informado de R$ 2.500 conforme inputs financeiros.", "status": "VERIFICADO", "evidenceIds": []}}\`
-- MAL: \`{"statusDados": "DADOS REAIS FORNECIDOS", "arpu": {"text": "ARPU de R$ 50.000", "status": "VERIFICADO", "evidenceIds": []}}\`
+- BOM: \`{"leituraFinanceira": {"text": "Ticket médio, CAC, churn e ciclo de vendas não foram informados: não é possível concluir o retorno por cliente nem a viabilidade da aquisição.", "status": "HIPOTESE", "evidenceIds": [], "howToValidate": "Extrair do ERP a receita mensal por cliente ativo e do financeiro o gasto com mídia e comercial dos últimos 6 meses."}}\`
+- MAL: \`{"leituraFinanceira": {"text": "O LTV é de R$ 50.000 e o payback de 3 meses.", "status": "VERIFICADO", "evidenceIds": []}}\`
 
 ## 5. Antipadrões a Evitar
-- Nunca inventar CAC e LTV quando os dados de entrada estiverem vazios ou nulos.
-- Nunca ignorar a regra de payback ideal para SaaS B2B (< 12 meses).
+- Nunca inventar CAC, LTV, ARPU ou benchmark quando o valor estiver nulo em \`calculado\`.
+- Nunca recalcular LTV, payback ou LTV/CAC com fórmula própria.
 `;
 
 export const unitEconomicsPromptSpec: PromptSpec<UnitEconomicsInput, UnitEconomicsOutput> = {
   id: 'module.unit_economics',
-  version: '1.0.0',
+  version: '2.0.0',
   task: 'module',
   system: SHARED_SYSTEM_PREAMBLE + SYSTEM_ADDENDUM,
   buildUser(input: UnitEconomicsInput): string {
-    return `Com base no Dossiê e nos dados financeiros/CRM fornecidos, gere o Módulo 7 (Unit Economics) em JSON estrito.
+    return `Com base no Dossiê e nos valores calculados por código, gere o Módulo 7 (Unit Economics) em JSON estrito.
 
 DOSSIÊ ESTRATÉGICO:
 ${JSON.stringify(input.dossierSummary, null, 2)}
 
-DADOS FINANCEIROS / CRM FORNECIDOS:
-${JSON.stringify(input.crmOrFinancialInputs, null, 2)}`;
+VALORES CALCULADOS POR CÓDIGO (calculado):
+${JSON.stringify(input.calculado, null, 2)}`;
   },
   schema: UnitEconomicsOutputSchema,
 };
