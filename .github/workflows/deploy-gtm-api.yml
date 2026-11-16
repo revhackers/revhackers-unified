@@ -1,0 +1,69 @@
+name: Deploy GTM API (Cloudflare Workers)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Confirmação manual: digite PUBLICAR (fail-closed)"
+        required: true
+        type: string
+      motivo:
+        description: "Motivo/registro da publicação manual"
+        required: true
+        type: string
+
+concurrency:
+  group: cloudflare-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-gtm-api:
+    name: Migrations D1 & Deploy do Worker revhackers-gtm-api
+    runs-on: ubuntu-latest
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: "true"
+    defaults:
+      run:
+        working-directory: gtm-blueprint
+    steps:
+      - name: Validar confirmação manual (fail-closed)
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          MOTIVO: ${{ inputs.motivo }}
+        run: |
+          if [ "$CONFIRM" != "PUBLICAR" ]; then
+            echo "Deploy manual BLOQUEADO: confirmação inválida."
+            exit 1
+          fi
+          echo "✅ Publicação manual confirmada. Motivo: $MOTIVO"
+
+      - name: Checkout Código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: gtm-blueprint/package-lock.json
+
+      - name: Instalar Dependências
+        run: npm ci
+
+      - name: Aplicar migrations D1 (remoto)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          : "${CLOUDFLARE_API_TOKEN:?Configure o Secret CLOUDFLARE_API_TOKEN}"
+          : "${CLOUDFLARE_ACCOUNT_ID:?Configure a Variable CLOUDFLARE_ACCOUNT_ID}"
+          npx wrangler d1 migrations apply revhackers-gtm --remote
+
+      - name: Deploy para Cloudflare Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          : "${CLOUDFLARE_API_TOKEN:?Configure o Secret CLOUDFLARE_API_TOKEN}"
+          : "${CLOUDFLARE_ACCOUNT_ID:?Configure a Variable CLOUDFLARE_ACCOUNT_ID}"
+          npx wrangler deploy

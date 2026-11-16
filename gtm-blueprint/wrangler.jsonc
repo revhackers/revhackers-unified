@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "revhackers-gtm-api",
+  "account_id": "2867b5a8c8fb96bdb5aa8ca0d2faf7e4",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-16",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": { "enabled": true, "traces": { "enabled": true } },
+  "routes": [
+    { "pattern": "revhackers.com.br/api/gtm/*", "zone_name": "revhackers.com.br" },
+    { "pattern": "www.revhackers.com.br/api/gtm/*", "zone_name": "revhackers.com.br" }
+  ],
+  "browser": { "binding": "BROWSER" },
+  "d1_databases": [{ "binding": "DB", "database_name": "revhackers-gtm", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }],
+  "workflows": [{ "name": "gtm-diagnostic", "binding": "GTM_WORKFLOW", "class_name": "GtmDiagnosticWorkflow" }],
+  "vars": { "AWS_REGION": "us-east-1", "ALLOWED_ORIGINS": "https://revhackers.com.br,https://www.revhackers.com.br", "DAILY_LIMIT": "40", "PER_IP_DAILY_LIMIT": "3" }
+}

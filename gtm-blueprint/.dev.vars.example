@@ -1,0 +1,8 @@
+# Cópia local: `cp .dev.vars.example .dev.vars` e preencha. `.dev.vars` está no .gitignore.
+# Credenciais AWS temporárias (ex.: `aws configure export-credentials`) com bedrock:InvokeModel nos 3 modelos.
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+# Chave de teste oficial do Turnstile: aceita qualquer token.
+TURNSTILE_SECRET=1x0000000000000000000000000000000AA
+IP_HASH_SALT=
+ALLOWED_ORIGINS=http://localhost:8080

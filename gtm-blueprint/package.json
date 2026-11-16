@@ -15,9 +15,11 @@
     "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
+    "@cloudflare/puppeteer": "^2.0.1",
     "@types/node": "^22.19.15",
     "tsx": "^4.19.0",
     "typescript": "^5.5.3",
-    "vitest": "^4.1.2"
+    "vitest": "^4.1.2",
+    "wrangler": "^4.163.0"
   }
 }
