@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { analyzeFounderProfileAI, FounderAnalysisResult } from "@/api/founderAnalysis";
 import { Brain, ArrowRight, Users, Loader2, AlertTriangle, Command } from 'lucide-react';
@@ -66,6 +67,7 @@ const QUESTIONS = [
 type Step = 'questions' | 'lead-capture' | 'results';
 
 const FounderScore = () => {
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState<Step>('questions');
   const [currentQ, setCurrentQ] = useState(0);
   const [score, setScore] = useState(0);
@@ -145,6 +147,18 @@ const FounderScore = () => {
 
   const finalScore = getFinalScore();
   const resultDetails = getResultMap(finalScore);
+  // Handoff Materiais-Ricos → Decisor Visible (contrato forms-authority):
+  // source/material/ghl_contact_id vêm da query do CTA; UTMs já entram
+  // automáticos via getPersistedUtmParams no GhlFormEmbed. Sem PII na URL.
+  const attributionParams = (() => {
+    const pick = (key: string) => searchParams.get(key) || undefined;
+    return {
+      rh_diagnostic_type: 'authority',
+      source: pick('source') || 'founder-score',
+      ...(pick('material') ? { material: pick('material') as string } : {}),
+      ...(pick('ghl_contact_id') ? { ghl_contact_id: pick('ghl_contact_id') as string } : {}),
+    };
+  })();
   const insights = getDiagnosticInsights('founder', finalScore);
 
   return (
@@ -283,7 +297,7 @@ const FounderScore = () => {
                 formId={GHL_FORMS.score}
                 title="Liberar Diagnóstico"
                 params={{
-                  rh_diagnostic_type: 'founder',
+                  ...attributionParams,
                   rh_diagnostic_score: String(score),
                   rh_diagnostic_category: getResultMap(score).title,
                 }}
