@@ -106,7 +106,7 @@ export default function MaterialLanding() {
             {/* Content & Form Section — Fundo 100% Branco Puro com Contexto Rico */}
             <section className="py-16 md:py-24 bg-white text-zinc-900 border-b border-zinc-200/80">
                 <div className="max-w-6xl mx-auto px-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
                         
                         {/* Coluna Esquerda: Headline H1 proeminente, Subheadline H2 e Bullet points SEO/GEO */}
                         <div className="lg:col-span-6 space-y-8 text-left py-2">
@@ -158,7 +158,7 @@ export default function MaterialLanding() {
                                     formId={GHL_FORMS.materiais}
                                     title="Receber material"
                                     params={{ rh_material_slug: material.slug, rh_material_title: material.title }}
-                                    minHeight={540}
+                                    minHeight={490}
                                     onSubmitted={(email) => {
                                         const utm = captureUtmParams();
                                         const q = new URLSearchParams({ m: material.slug, ...utm });
