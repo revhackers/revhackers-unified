@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import PageLayout from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { FileText, Book, BookOpen, BarChart3, PlaySquare, FileSpreadsheet, Search, ArrowRight } from 'lucide-react';
@@ -20,6 +20,19 @@ const IconMap: Record<string, React.ElementType> = {
   PlaySquare,
   FileSpreadsheet
 };
+
+// Texto da vitrine: remove HTML do cadastro, corta por palavra e evita
+// exibir markup quebrado no card. Nada aqui toca na captura (GHL).
+function plainText(html: string): string {
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function truncateWords(text: string, max = 140): string {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trimEnd() + '…';
+}
 
 const Materiais = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -94,47 +107,47 @@ const Materiais = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredMaterials.map((material, index) => {
+              {filteredMaterials.map((material) => {
                 const type = material.type || "Geral";
                 const IconComponent = IconMap[type] || FileText;
                 const title = material.title || "Sem título";
 
                 return (
-                  <div
-                    key={index}
-                    className="group"
-                    onClick={() => {
-                      navigate(`/materiais/${material.slug}`);
-                    }}
+                  <Link
+                    key={material.slug}
+                    to={`/materiais/${material.slug}`}
+                    className="group rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2"
+                    aria-label={`${title} — acessar material`}
                   >
-                    <div className="h-full flex flex-col p-8 rounded-xl border border-zinc-200 bg-white shadow-sm hover:-translate-y-1 transition-all duration-500 relative cursor-pointer group">
-                      <div className="flex justify-between items-start mb-6">
+                    <article className="h-full flex flex-col p-8 rounded-xl border border-zinc-200 bg-white shadow-sm hover:-translate-y-1 transition-all duration-500 relative cursor-pointer">
+                      <div className="flex justify-between items-start mb-4">
                         <span className="text-2xs font-bold uppercase tracking-tight text-black bg-white px-2 py-1 rounded-sm border border-zinc-200">
                           {type}
                         </span>
-                        <IconComponent className="h-5 w-5 text-zinc-200 group-hover:text-black transition-all duration-500" />
+                        <IconComponent aria-hidden="true" className="h-5 w-5 text-zinc-200 group-hover:text-black transition-all duration-500" />
                       </div>
 
+                      <p className="text-2xs font-bold uppercase tracking-tight text-zinc-500 mb-2">
+                        {material.category || 'Material'} · Gratuito
+                      </p>
+
                       <h3
-                        className="text-base md:text-lg font-bold text-zinc-900"
+                        className="text-base md:text-lg font-bold text-zinc-900 mb-3"
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(removeEmojis(title)) }}
                       ></h3>
 
-                      <div
-                        className="text-xxs text-zinc-400 font-bold uppercase tracking-[0.2em] leading-relaxed mb-8 flex-1 line-clamp-4"
-                        dangerouslySetInnerHTML={{
-                          __html: material.description ? (material.description.substring(0, 150) + (material.description.length > 150 ? '...' : '')) : ''
-                        }}
-                      />
+                      <p className="text-sm text-zinc-600 font-normal leading-relaxed mb-8 flex-1 line-clamp-3">
+                        {truncateWords(plainText(material.description || ''))}
+                      </p>
 
                       <div className="mt-auto pt-6 border-t border-zinc-50 flex items-center justify-between">
                         <span className="text-xxs font-bold text-black uppercase tracking-tight transition-all flex items-center group-hover:gap-2">
-                          Baixar Material
+                          Acessar material
                           <ArrowRight className="ml-2 h-3 w-3 transition-all" />
                         </span>
                       </div>
-                    </div>
-                  </div>
+                    </article>
+                  </Link>
                 );
               })}
             </div>
