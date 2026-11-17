@@ -23,50 +23,58 @@ const ThankYou = () => {
         description="Confirmação do seu pedido na RevHackers."
         noindex
       />
-      <main className="bg-white text-black">
-        <section className="mx-auto max-w-3xl px-6 pt-16 pb-24 md:pt-28 md:pb-36">
-          <p className="flex items-center gap-3 text-sm font-semibold uppercase tracking-widest text-black">
-            <span
-              aria-hidden="true"
-              className="flex h-10 w-10 items-center justify-center border-2 border-revgreen text-revgreen"
-            >
-              <MessageCircle className="h-5 w-5" strokeWidth={2} />
-            </span>
+      {/* Hero Section */}
+      <section className="relative min-h-[40vh] flex flex-col justify-center items-center overflow-hidden pt-28 pb-16 bg-black border-b border-zinc-900 text-center">
+        <div className="relative z-10 w-full max-w-4xl mx-auto px-6 flex flex-col items-center">
+          <div
+            aria-hidden="true"
+            className="w-16 h-16 rounded-full bg-revgreen/10 border border-revgreen/20 flex items-center justify-center mb-6"
+          >
+            <MessageCircle className="w-8 h-8 text-revgreen" />
+          </div>
+          <span className="text-revgreen text-xs font-semibold uppercase tracking-wider mb-4">
             Solicitação recebida
-          </p>
-
-          <h1 className="mt-8 border-l-4 border-revgreen pl-5 text-3xl font-bold leading-tight tracking-tight text-black sm:text-4xl md:pl-6 md:text-5xl">
+          </span>
+          <h1 className="font-sans text-[2.25rem] sm:text-[2.75rem] md:text-[3.25rem] font-extrabold text-white mb-5 leading-[1.15] tracking-tight">
             Olhe seu WhatsApp. Nosso especialista está te chamando agora
           </h1>
-
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-zinc-700 md:text-xl">
+          <p className="text-zinc-400 text-base md:text-lg font-normal leading-relaxed max-w-2xl mx-auto">
             Recebemos sua solicitação. Confira o WhatsApp agora: a conversa
             continua por lá, com resposta imediata.
           </p>
+        </div>
+      </section>
 
-          <div className="mt-10 border-t border-zinc-200 pt-8">
+      {/* CTA Section */}
+      <section className="py-20 bg-white text-zinc-900 border-b border-zinc-200/80">
+        <div className="max-w-4xl mx-auto px-6 text-center space-y-8">
+          <div className="space-y-4 max-w-2xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-950 tracking-tight">
+              Prefere agendar um horário?
+            </h2>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
             <Button
               type="button"
-              variant="outline"
               size="lg"
-              className="h-12 w-full rounded-none border-2 border-revgreen bg-transparent px-8 text-base font-semibold text-black hover:bg-revgreen hover:text-black sm:w-auto"
               onClick={() => setIsBookingOpen(true)}
+              className="bg-zinc-950 text-white hover:bg-zinc-800 font-bold text-sm h-12 px-8 rounded-xl shadow-xs transition-all cursor-pointer"
             >
-              Prefere agendar um horário?
+              Agendar diagnóstico
             </Button>
-
-            <p className="mt-8">
-              <Link
-                to="/"
-                onClick={() => window.scrollTo(0, 0)}
-                className="text-sm text-zinc-500 underline underline-offset-4 hover:text-black"
-              >
+            <Button
+              variant="ghost"
+              asChild
+              className="text-zinc-500 hover:text-zinc-900 font-medium text-sm h-12 px-4"
+            >
+              <Link to="/" onClick={() => window.scrollTo(0, 0)}>
                 Voltar para a Home
               </Link>
-            </p>
+            </Button>
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
 
       <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
         {isBookingOpen && (
