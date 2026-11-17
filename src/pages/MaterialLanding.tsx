@@ -158,7 +158,7 @@ export default function MaterialLanding() {
                                     formId={GHL_FORMS.materiais}
                                     title="Receber material"
                                     params={{ rh_material_slug: material.slug, rh_material_title: material.title }}
-                                    minHeight={600}
+                                    minHeight={540}
                                     onSubmitted={(email) => {
                                         const utm = captureUtmParams();
                                         const q = new URLSearchParams({ m: material.slug, ...utm });
