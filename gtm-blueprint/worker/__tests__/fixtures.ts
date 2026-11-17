@@ -78,6 +78,7 @@ export function createTestEnv(db: D1Database, workflow: Env['GTM_WORKFLOW'], ove
     PER_IP_DAILY_LIMIT: '3',
     TURNSTILE_SECRET: 'segredo-turnstile',
     IP_HASH_SALT: 'sal-teste',
+    GHL_WEBHOOK_SECRET: 'segredo-webhook',
     ALLOWED_ORIGINS: 'https://revhackers.com.br,https://www.revhackers.com.br',
     ...overrides,
   };

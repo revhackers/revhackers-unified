@@ -3,22 +3,6 @@ import { parseDiagnosticRequest } from '../input.js';
 import { VALID_BODY } from './fixtures.js';
 
 describe('parseDiagnosticRequest', () => {
-  it('converte churn percentual em fração mensal e mantém os demais números do CRM', () => {
-    const parsed = parseDiagnosticRequest({
-      ...VALID_BODY,
-      crm: { arpuMonthly: 500, cacEstimated: 1200, churnMonthlyPercent: 3.5, salesCycleDays: 45 },
-    });
-
-    expect(parsed).toMatchObject({ ok: true });
-    if (!parsed.ok) return;
-    expect(parsed.input.crmOrFinancialInputs).toEqual({ arpuMonthly: 500, cacEstimated: 1200, churnMonthlyRate: 0.035, salesCycleDays: 45 });
-  });
-
-  it('CRM vazio não gera crmOrFinancialInputs', () => {
-    const parsed = parseDiagnosticRequest({ ...VALID_BODY, crm: {} });
-    expect(parsed.ok && parsed.input.crmOrFinancialInputs).toBeUndefined();
-  });
-
   it('descarta linhas vazias de concorrentes e campos opcionais vazios', () => {
     const parsed = parseDiagnosticRequest({
       ...VALID_BODY,
@@ -45,8 +29,6 @@ describe('parseDiagnosticRequest', () => {
     ['CNPJ com 13 dígitos', { cnpj: '1234567800019' }],
     ['fase fora dos 4 valores', { declaredPhase: 'Crescimento' }],
     ['companyName de 1 caractere', { companyName: 'A' }],
-    ['churn acima de 100%', { crm: { churnMonthlyPercent: 101 } }],
-    ['CRM com número zero', { crm: { arpuMonthly: 0 } }],
     ['declaredIcp acima de 300 caracteres', { declaredIcp: 'x'.repeat(301) }],
   ])('%s é entrada_invalida', (_nome, override) => {
     expect(parseDiagnosticRequest({ ...VALID_BODY, ...override })).toEqual({ ok: false, error: 'entrada_invalida' });

@@ -2,8 +2,8 @@ import type { DossierOutput } from '../src/prompts/dossier.js';
 import type { LeadReport } from '../src/report/types.js';
 import { buildLeadReport } from '../src/report/viewModel.js';
 import { MODULE_DEPS, type CollectStage, type DiagnosticInput, type ModuleKey, type ModuleOutputs } from '../src/stages.js';
-import { hashIp, parseLimit, UNKNOWN_IP, verifyTurnstile, withinDailyLimits } from './guards.js';
-import { parseDiagnosticRequest } from './input.js';
+import { hashIp, parseLimit, secretMatches, UNKNOWN_IP, verifyTurnstile, withinDailyLimits } from './guards.js';
+import { parseDiagnosticRequest, parseGhlFormWebhook, UUID } from './input.js';
 import {
   countRecentDiagnostics,
   getDiagnostic,
@@ -11,6 +11,7 @@ import {
   isFailedStage,
   listStages,
   markFailed,
+  mergeLeadInput,
   unlockDiagnostic,
   type DiagnosticRow,
   type DiagnosticStatus,
@@ -27,10 +28,10 @@ type WorkflowBinding = Env['GTM_WORKFLOW'];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_BODY_BYTES = 16 * 1024;
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const UNLOCK_PATH = /^\/api\/gtm\/diagnostics\/([^/]+)\/unlock$/;
 const GET_PATH = /^\/api\/gtm\/diagnostics\/([^/]+)$/;
 const CREATE_PATH = '/api/gtm/diagnostics';
+const GHL_FORM_WEBHOOK_PATH = '/api/gtm/webhooks/ghl-form';
 /** Status em que a análise ainda faz sentido. Pronto e falhou não recebem nova instância. */
 const ANALYSIS_STATUSES: Record<DiagnosticStatus, boolean> = {
   coletando: true,
@@ -163,6 +164,33 @@ async function createDiagnostic(request: Request, env: Env, deps: ApiDeps, cors:
   return json(201, { id }, cors);
 }
 
+async function ghlFormWebhook(request: Request, env: Env, deps: ApiDeps, cors: Headers): Promise<Response> {
+  if (!(await secretMatches(request.headers.get('X-RH-Webhook-Secret'), env.GHL_WEBHOOK_SECRET))) {
+    return json(401, { error: 'nao_autorizado' }, cors);
+  }
+  const parsed = parseGhlFormWebhook(await readJsonBody(request));
+  if (!parsed.ok) return json(400, { error: 'entrada_invalida' }, cors);
+
+  const row = await getDiagnostic(env.DB, parsed.diagnosticId);
+  if (!row) return json(404, { error: 'nao_encontrado' }, cors);
+
+  let applied = false;
+  if (Object.keys(parsed.numbers).length > 0) {
+    const input = JSON.parse(row.input_json) as DiagnosticInput;
+    applied = await mergeLeadInput(
+      env.DB,
+      parsed.diagnosticId,
+      JSON.stringify({ ...input, crmOrFinancialInputs: { ...input.crmOrFinancialInputs, ...parsed.numbers } }),
+      (deps.now ? deps.now() : new Date()).toISOString(),
+    );
+  }
+
+  const now = (deps.now ? deps.now() : new Date()).toISOString();
+  await unlockDiagnostic(env.DB, parsed.diagnosticId, now);
+  if (ANALYSIS_STATUSES[row.status]) await startAnalysis(parsed.diagnosticId, env);
+  return json(200, { ok: true, applied }, cors);
+}
+
 async function unlockRoute(id: string, env: Env, deps: ApiDeps, cors: Headers): Promise<Response> {
   const row = await getDiagnostic(env.DB, id);
   if (!row) return json(404, { error: 'nao_encontrado' }, cors);
@@ -184,6 +212,7 @@ async function getRoute(id: string, env: Env, cors: Headers): Promise<Response> 
 async function route(request: Request, env: Env, deps: ApiDeps, cors: Headers): Promise<Response> {
   const { pathname } = new URL(request.url);
   if (pathname === CREATE_PATH && request.method === 'POST') return createDiagnostic(request, env, deps, cors);
+  if (pathname === GHL_FORM_WEBHOOK_PATH && request.method === 'POST') return ghlFormWebhook(request, env, deps, cors);
 
   const unlock = UNLOCK_PATH.exec(pathname);
   if (unlock && request.method === 'POST' && UUID.test(unlock[1])) return unlockRoute(unlock[1], env, deps, cors);

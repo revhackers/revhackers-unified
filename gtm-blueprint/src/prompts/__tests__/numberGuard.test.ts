@@ -539,4 +539,25 @@ describe('userInputEvidence (U1)', () => {
     expect(result.value.claim.text).toBe(BLOCKED_NARRATIVE_TEXT);
     expect(result.value.claim.status).toBe('HIPOTESE');
   });
+  it('expõe leads, taxa de fechamento e time de vendas como U1 citável', () => {
+    const ev = userInputEvidence(
+      {
+        companyName: 'TestCo',
+        websiteUrl: 'https://testco.com.br',
+        declaredPhase: 'Escala',
+        crmOrFinancialInputs: { leadsPerMonth: 40, winRate: 0.25, salesTeamSize: 3 },
+      },
+      [],
+    );
+    expect(ev.content).toContain('Leads novos por mês: 40 leads');
+    expect(ev.content).toContain('Taxa de fechamento: 25%');
+    expect(ev.content).toContain('Time de vendas: 3 pessoas');
+    const text = 'A operação gera 40 leads por mês com taxa de fechamento de 25% [U1].';
+    const result = enforceNumberProvenance(
+      { claim: { text, status: 'VERIFICADO', evidenceIds: ['U1'], howToValidate: 'Conferir.' } },
+      { evidences: [ev] },
+    );
+    expect(result.value.claim.text).toBe(text);
+    expect(result.findings).toEqual([]);
+  });
 });

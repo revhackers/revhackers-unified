@@ -234,6 +234,25 @@ async function guardedRun<I, O>(spec: PromptSpec<I, O>, promptInput: I, collect:
     },
   };
 }
+/**
+ * Recalcula a parte da coleta que depende da entrada do lead (unit economics, SOM anual e evidências
+ * citáveis com U1). A coleta termina com a entrada inicial; o webhook do form nativo grava os números
+ * depois, e a análise reaplica esta função sobre a coleta gravada antes do dossiê.
+ */
+export function applyLeadInputs(
+  base: Pick<CollectStage, 'evidences' | 'gaps' | 'competitors' | 'signals' | 'cnpj'>,
+  input: DiagnosticInput,
+): CollectStage {
+  const unitEconomics = computeUnitEconomics(input.crmOrFinancialInputs);
+  const somAnual = computeSomAnual(input.tamBottomUpData);
+  const calc = computedEvidence(unitEconomics, somAnual);
+  return {
+    ...base,
+    unitEconomics,
+    somAnual,
+    citable: [...base.evidences, userInputEvidence(input, base.competitors), ...(calc ? [calc] : [])],
+  };
+}
 
 /**
  * Coleta o site, o CNPJ e os cálculos por código. Lança `site_inacessivel` antes de qualquer chamada de modelo
@@ -260,20 +279,16 @@ export async function stageCollect(input: DiagnosticInput, opts: CollectionOptio
   const evidences: Evidence[] = [...(cnpj.evidence ? [cnpj.evidence] : []), ...collection.evidences];
 
   // Unit economics e SOM anual são calculados por código: os módulos interpretam, não calculam.
-  const unitEconomics = computeUnitEconomics(input.crmOrFinancialInputs);
-  const somAnual = computeSomAnual(input.tamBottomUpData);
-  const calc = computedEvidence(unitEconomics, somAnual);
-
-  return {
-    evidences,
-    citable: [...evidences, userInputEvidence(input, collection.competitors), ...(calc ? [calc] : [])],
-    gaps: [...collection.gaps, ...(cnpj.gap ? [cnpj.gap] : [])],
-    competitors: collection.competitors,
-    signals: collection.signals,
-    unitEconomics,
-    somAnual,
-    cnpj: { ageYears: cnpj.cnpjAgeYears, porte: cnpj.companySizeEstimated, uf: cnpj.estimatedAddressState },
-  };
+  return applyLeadInputs(
+    {
+      evidences,
+      gaps: [...collection.gaps, ...(cnpj.gap ? [cnpj.gap] : [])],
+      competitors: collection.competitors,
+      signals: collection.signals,
+      cnpj: { ageYears: cnpj.cnpjAgeYears, porte: cnpj.companySizeEstimated, uf: cnpj.estimatedAddressState },
+    },
+    input,
+  );
 }
 
 /** Extrai cada página do site e dos concorrentes, com a checagem de citação. Três páginas por vez. */

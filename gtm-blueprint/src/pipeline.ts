@@ -32,6 +32,12 @@ export interface PipelineInput {
     // Fração mensal: 0,035 = 3,5% ao mês (LTV = ARPU ÷ churn mensal).
     churnMonthlyRate?: number | null;
     salesCycleDays?: number | null;
+    // Leads ou oportunidades novas por mês (informado pela empresa).
+    leadsPerMonth?: number | null;
+    // Fração: 0,25 = 25% das propostas viram cliente.
+    winRate?: number | null;
+    // Pessoas em vendas.
+    salesTeamSize?: number | null;
   };
   tamBottomUpData?: {
     totalTargetAccounts: number;

@@ -2,6 +2,8 @@ import { z } from 'zod';
 import type { DeclaredPhase, DiagnosticInput } from '../src/stages.js';
 import { assertPublicHttpUrl, UrlInvalidaError } from './guards.js';
 
+export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // Tabela exaustiva: se DeclaredPhase ganhar um valor, o tipo deste Record deixa de compilar.
 const PHASE_CHECK: Record<DeclaredPhase, true> = {
   'Estruturação Inicial': true,
@@ -84,4 +86,68 @@ export function parseDiagnosticRequest(raw: unknown): ParsedDiagnosticRequest {
       : {}),
   };
   return { ok: true, input, turnstileToken: body.turnstileToken };
+}
+
+/** Números do lead vindos do form nativo, nas chaves de `crmOrFinancialInputs`. */
+export type LeadNumbers = Partial<
+  Record<'arpuMonthly' | 'cacEstimated' | 'churnMonthlyRate' | 'salesCycleDays' | 'leadsPerMonth' | 'winRate' | 'salesTeamSize', number>
+>;
+
+/**
+ * Número informado no form nativo. Aceita número ou texto pt-BR ("1.500,50", "R$ 4.000", "3,5%"
+ * ou tag de template não preenchida, que vira `null`). Só passa finito maior que zero; o resto vira `null`.
+ */
+export function leadNumber(raw: unknown): number | null {
+  if (typeof raw === 'number') return Number.isFinite(raw) && raw > 0 ? raw : null;
+  if (typeof raw !== 'string') return null;
+  let text = raw.trim().replace(/R\$/g, '').replace(/%/g, '').replace(/\s+/g, '');
+  if (text === '') return null;
+  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(text)) {
+    text = text.replace(/\./g, '').replace(',', '.');
+  } else if (/^\d+,\d+$/.test(text)) {
+    text = text.replace(',', '.');
+  } else if (!/^\d+(\.\d+)?$/.test(text)) {
+    return null;
+  }
+  const value = Number(text);
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+const GHL_FIELD_MAP = {
+  ticket_medio_mensal: 'arpuMonthly',
+  cac: 'cacEstimated',
+  churn_mensal_percent: 'churnMonthlyRate',
+  ciclo_vendas_dias: 'salesCycleDays',
+  leads_mes: 'leadsPerMonth',
+  taxa_fechamento_percent: 'winRate',
+  time_vendas: 'salesTeamSize',
+} as const satisfies Record<string, keyof LeadNumbers>;
+
+const PERCENT_FIELDS: ReadonlySet<keyof LeadNumbers> = new Set(['churnMonthlyRate', 'winRate']);
+
+export type ParsedGhlFormWebhook =
+  | { ok: true; diagnosticId: string; numbers: LeadNumbers }
+  | { ok: false };
+
+/**
+ * Corpo do Custom Webhook do workflow do form nativo. `diagnostic_id` tem de ser UUID válido;
+ * campos sem número válido ficam de fora de `numbers` sem invalidar o webhook. Percentuais valem
+ * até 100 e são gravados como fração.
+ */
+export function parseGhlFormWebhook(raw: unknown): ParsedGhlFormWebhook {
+  if (typeof raw !== 'object' || raw === null) return { ok: false };
+  const body = raw as Record<string, unknown>;
+  if (typeof body.diagnostic_id !== 'string' || !UUID.test(body.diagnostic_id)) return { ok: false };
+  const numbers: LeadNumbers = {};
+  for (const [field, key] of Object.entries(GHL_FIELD_MAP)) {
+    const value = leadNumber(body[field]);
+    if (value === null) continue;
+    if (PERCENT_FIELDS.has(key)) {
+      if (value > 100) continue;
+      numbers[key] = value / 100;
+    } else {
+      numbers[key] = value;
+    }
+  }
+  return { ok: true, diagnosticId: body.diagnostic_id, numbers };
 }

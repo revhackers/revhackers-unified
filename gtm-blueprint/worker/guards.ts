@@ -40,6 +40,22 @@ export async function hashIp(ip: string, salt: string): Promise<string> {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+/**
+ * Compara o segredo do webhook com o esperado em tempo constante sobre os hexes SHA-256.
+ * `false` se qualquer um estiver ausente ou vazio: fail-closed.
+ */
+export async function secretMatches(given: string | null, expected: string | undefined): Promise<boolean> {
+  if (!given || !expected) return false;
+  const [a, b] = await Promise.all([
+    hashIp(given, 'ghl-webhook'),
+    hashIp(expected, 'ghl-webhook'),
+  ]);
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
 export interface DailyCounts {
   total: number;
   porIp: number;

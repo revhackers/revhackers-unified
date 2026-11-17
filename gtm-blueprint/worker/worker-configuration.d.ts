@@ -11,6 +11,7 @@ interface __BaseEnv_Env {
 	AWS_SECRET_ACCESS_KEY: string;
 	TURNSTILE_SECRET: string;
 	IP_HASH_SALT: string;
+	GHL_WEBHOOK_SECRET: string;
 	ALLOWED_ORIGINS: string;
 	GTM_WORKFLOW: Workflow<Parameters<import("./index").GtmDiagnosticWorkflow['run']>[0]['payload']>;
 }
@@ -25,7 +26,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "AWS_REGION" | "DAILY_LIMIT" | "PER_IP_DAILY_LIMIT" | "AWS_ACCESS_KEY_ID" | "AWS_SECRET_ACCESS_KEY" | "TURNSTILE_SECRET" | "IP_HASH_SALT" | "ALLOWED_ORIGINS">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "AWS_REGION" | "DAILY_LIMIT" | "PER_IP_DAILY_LIMIT" | "AWS_ACCESS_KEY_ID" | "AWS_SECRET_ACCESS_KEY" | "TURNSTILE_SECRET" | "IP_HASH_SALT" | "GHL_WEBHOOK_SECRET" | "ALLOWED_ORIGINS">> {}
 }
 declare module "*.txt" {
 	const value: string;

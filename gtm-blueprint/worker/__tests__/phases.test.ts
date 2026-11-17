@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { CriticOutput } from '../../src/prompts/critic.js';
 import type { DossierOutput } from '../../src/prompts/dossier.js';
-import { MODULE_DEPS, type ModuleKey, type StageResult } from '../../src/stages.js';
+import { MODULE_DEPS, type CollectStage, type ModuleKey, type StageResult } from '../../src/stages.js';
 import { runGtmDiagnostic, type PhaseEnv, type PhaseStages, type StepRunner } from '../phases.js';
 import { insertDiagnostic, loadStage, saveStage } from '../store.js';
 import { collectFixture, createFakeD1, diagnosticInput, type FakeD1 } from './fixtures.js';
@@ -325,5 +325,26 @@ describe('fase analyze', () => {
 
     expect(diag().status).toBe('pronto');
     expect(await loadStage(fake.db, ID, 'critic')).toEqual({ failed: true, error: 'modelo do crítico caiu' });
+  });
+
+  it('reaplica as entradas do lead sobre a coleta antes do dossiê', async () => {
+    await insertDiagnostic(
+      fake.db,
+      { id: ID, now: NOW, inputJson: JSON.stringify(diagnosticInput({ crmOrFinancialInputs: { arpuMonthly: 500 } })), ipHash: 'hash' },
+    );
+    fake.sql.prepare('UPDATE diagnostics SET status = ? WHERE id = ?').run('gerando', ID);
+    await seedCollect();
+    await saveStage(fake.db, ID, 'extract', [], NOW);
+    const h = harness();
+
+    await runGtmDiagnostic({ id: ID, phase: 'analyze' }, h.env, h.step);
+
+    expect(h.steps.indexOf('entradas do lead')).toBeGreaterThanOrEqual(0);
+    expect(h.steps.indexOf('entradas do lead')).toBeLessThan(h.steps.indexOf('dossier'));
+    const collect = await loadStage<CollectStage>(fake.db, ID, 'collect');
+    expect(collect?.unitEconomics.arpuMensal).toBe(500);
+    const u1 = collect?.citable.find((e) => e.id === 'U1');
+    expect(u1?.content).toContain('ARPU mensal: R$ 500');
+    expect(diag().status).toBe('pronto');
   });
 });

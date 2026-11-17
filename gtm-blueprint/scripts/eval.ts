@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { z } from 'zod';
 import { CASES } from './cases.js';
 import { runGtmPipeline, type PipelineOutput } from '../src/pipeline.js';
 import { createBedrockProvider } from '../src/ai/providers/bedrock.js';
@@ -25,6 +26,33 @@ async function main() {
 
   console.log(`[EVAL] Iniciando pipeline para o caso: '${caseName}' (${caseDef.companyName} - ${caseDef.websiteUrl})`);
 
+  const crmSchema = z
+    .object({
+      arpuMonthly: z.number().finite().positive(),
+      cacEstimated: z.number().finite().positive(),
+      churnMonthlyRate: z.number().finite().positive().max(1),
+      salesCycleDays: z.number().finite().positive(),
+      leadsPerMonth: z.number().finite().positive(),
+      winRate: z.number().finite().positive().max(1),
+      salesTeamSize: z.number().finite().positive(),
+    })
+    .partial()
+    .strict();
+  let crmOverride: z.infer<typeof crmSchema> | undefined;
+  const crmJson = process.env.GTM_EVAL_CRM_JSON;
+  if (crmJson !== undefined) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(crmJson);
+    } catch {
+      throw new Error('GTM_EVAL_CRM_JSON inválido');
+    }
+    const result = crmSchema.safeParse(parsed);
+    if (!result.success) throw new Error('GTM_EVAL_CRM_JSON inválido');
+    crmOverride = result.data;
+  }
+  const pipelineInput = crmOverride ? { ...caseDef, crmOrFinancialInputs: crmOverride } : caseDef;
+
   const bedrockProvider = createBedrockProvider({
     region: 'us-east-1',
     credentials: () => resolveCredentials('default'),
@@ -36,7 +64,7 @@ async function main() {
 
   const startTime = Date.now();
   const output = await runGtmPipeline(
-    { ...caseDef, providers },
+    { ...pipelineInput, providers },
     {
       collect: { render: renderWithBrowser },
       onStage: (stage) => console.log(`[EVAL] estágio: ${stage}`),
@@ -45,7 +73,7 @@ async function main() {
   const totalDuration = Date.now() - startTime;
 
   const leadReport = buildLeadReport({
-    input: caseDef,
+    input: pipelineInput,
     collect: output.collect,
     dossier: output.dossier,
     modules: output.modules,

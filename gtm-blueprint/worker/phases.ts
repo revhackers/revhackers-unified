@@ -4,6 +4,7 @@
 import type { CriticOutput } from '../src/prompts/critic.js';
 import type { DossierOutput } from '../src/prompts/dossier.js';
 import {
+  applyLeadInputs,
   MODULE_DEPS,
   runModulesDag,
   SITE_INACESSIVEL,
@@ -144,6 +145,13 @@ async function runAnalyze(id: string, env: PhaseEnv, step: StepRunner): Promise<
   if (state === 'encerrada') return;
   if (state !== 'pronta') throw new Error('coleta_nao_concluida');
 
+  // A coleta termina antes do envio do form: reaplica a entrada atual (com os números do webhook,
+  // se chegaram) sobre a coleta gravada, antes do dossiê.
+  await step.do('entradas do lead', async () => {
+    const input = await loadInput(env.db, id);
+    const collect = await requireStage<CollectStage>(env.db, id, 'collect');
+    await saveStage(env.db, id, 'collect', applyLeadInputs(collect, input), env.now());
+  });
   await step.do('dossier', async () => {
     const input = await loadInput(env.db, id);
     const collect = await requireStage<CollectStage>(env.db, id, 'collect');

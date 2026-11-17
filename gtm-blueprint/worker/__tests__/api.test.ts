@@ -255,6 +255,123 @@ describe('POST /api/gtm/diagnostics/:id/unlock', () => {
   });
 });
 
+describe('POST /api/gtm/webhooks/ghl-form', () => {
+  const WEBHOOK = 'https://revhackers.com.br/api/gtm/webhooks/ghl-form';
+  const hook = (_id: string, body: unknown, secret: string | null = 'segredo-webhook') =>
+    handleGtmApi(
+      new Request(WEBHOOK, {
+        method: 'POST',
+        headers: secret === null ? {} : { 'X-RH-Webhook-Secret': secret },
+        body: JSON.stringify(body),
+      }),
+      env,
+      deps(),
+    );
+  const storedInput = (id: string) =>
+    (fake.sql.prepare('SELECT input_json, status FROM diagnostics WHERE id = ?').get(id) as Record<string, string>);
+
+  it('sem segredo ou com segredo errado: 401 sem tocar na entrada nem no status', async () => {
+    const id = await createdId();
+    setStatus(id, 'aguardando_contato');
+    const before = storedInput(id);
+    const body = { diagnostic_id: id, ticket_medio_mensal: '1.500,50' };
+
+    expect((await hook(id, body, null)).status).toBe(401);
+    expect((await hook(id, body, 'errado')).status).toBe(401);
+    expect(storedInput(id)).toEqual(before);
+    expect(workflow.created.some((c) => c.id === `${id}-analyze`)).toBe(false);
+  });
+
+  it('env sem segredo configurado: 401 mesmo com header', async () => {
+    const id = await createdId();
+    setStatus(id, 'aguardando_contato');
+    const envSemSegredo = createTestEnv(fake.db, workflow.binding, { GHL_WEBHOOK_SECRET: '' });
+    const res = await handleGtmApi(
+      new Request(WEBHOOK, {
+        method: 'POST',
+        headers: { 'X-RH-Webhook-Secret': 'segredo-webhook' },
+        body: JSON.stringify({ diagnostic_id: id }),
+      }),
+      envSemSegredo,
+      deps(),
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it('aguardando_contato com números pt-BR: grava, libera e inicia a análise', async () => {
+    const id = await createdId();
+    setStatus(id, 'aguardando_contato');
+
+    const res = await hook(id, {
+      diagnostic_id: id,
+      ticket_medio_mensal: '1.500,50',
+      cac: '4000',
+      churn_mensal_percent: '3,5',
+      ciclo_vendas_dias: '',
+      leads_mes: '{{contact.rh_gtm_leads_mes}}',
+      taxa_fechamento_percent: '25',
+      time_vendas: '3',
+    });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, applied: true });
+    expect(JSON.parse(storedInput(id).input_json).crmOrFinancialInputs).toEqual({
+      arpuMonthly: 1500.5,
+      cacEstimated: 4000,
+      churnMonthlyRate: 0.035,
+      winRate: 0.25,
+      salesTeamSize: 3,
+    });
+    expect(storedInput(id).status).toBe('gerando');
+    expect(workflow.created.at(-1)).toEqual({ id: `${id}-analyze`, params: { id, phase: 'analyze' } });
+  });
+
+  it('sem números válidos: applied false, mas libera e inicia a análise', async () => {
+    const id = await createdId();
+    setStatus(id, 'aguardando_contato');
+
+    const res = await hook(id, { diagnostic_id: id, ticket_medio_mensal: '', cac: '' });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, applied: false });
+    expect(JSON.parse(storedInput(id).input_json)).toEqual(diagnosticInput({ websiteUrl: 'https://acme.com.br/' }));
+    expect(storedInput(id).status).toBe('gerando');
+    expect(workflow.created.some((c) => c.id === `${id}-analyze`)).toBe(true);
+  });
+
+  it('percentual acima de 100 é descartado', async () => {
+    const id = await createdId();
+    setStatus(id, 'aguardando_contato');
+
+    const res = await hook(id, { diagnostic_id: id, churn_mensal_percent: '150', cac: '4000' });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, applied: true });
+    expect(JSON.parse(storedInput(id).input_json).crmOrFinancialInputs).toEqual({ cacEstimated: 4000 });
+  });
+
+  it('análise já iniciada: não regrava a entrada nem cria segunda instância', async () => {
+    const id = await createdId();
+    setStatus(id, 'gerando');
+    await handleGtmApi(new Request(`${BASE}/${id}/unlock`, { method: 'POST' }), env, deps());
+    const before = storedInput(id);
+
+    const res = await hook(id, { diagnostic_id: id, cac: '4000' });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, applied: false });
+    expect(storedInput(id)).toEqual(before);
+    expect(workflow.created.filter((c) => c.id === `${id}-analyze`)).toHaveLength(1);
+  });
+
+  it('diagnostic_id fora do formato é 400; inexistente é 404', async () => {
+    expect((await hook('x', { diagnostic_id: 'nao-uuid' })).status).toBe(400);
+    const res = await hook('y', { diagnostic_id: '00000000-0000-4000-8000-000000000099' });
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: 'nao_encontrado' });
+  });
+});
+
 describe('entrada persistida', () => {
   it('guarda só a entrada normalizada, sem token nem IP', async () => {
     const id = await createdId();

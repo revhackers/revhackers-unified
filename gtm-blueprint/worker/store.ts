@@ -57,6 +57,18 @@ export async function unlockDiagnostic(db: D1Database, id: string, nowIso: strin
     .run();
 }
 
+/**
+ * Grava a entrada atualizada (com os números do form nativo) enquanto o diagnóstico ainda pode
+ * recebê-los: coleta em curso ou aguardando contato. Devolve se alguma linha mudou.
+ */
+export async function mergeLeadInput(db: D1Database, id: string, inputJson: string, nowIso: string): Promise<boolean> {
+  const res = await db
+    .prepare("UPDATE diagnostics SET input_json = ?, updated_at = ? WHERE id = ? AND status IN ('coletando', 'aguardando_contato')")
+    .bind(inputJson, nowIso, id)
+    .run();
+  return (res.meta.changes ?? 0) > 0;
+}
+
 export async function saveStage(db: D1Database, diagnosticId: string, stage: string, output: unknown, nowIso: string): Promise<void> {
   await db
     .prepare('INSERT OR REPLACE INTO diagnostic_stages (diagnostic_id, stage, output_json, created_at) VALUES (?, ?, ?, ?)')

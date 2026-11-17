@@ -456,6 +456,9 @@ export function userInputEvidence(
     lines.push(`Churn mensal: ${formatPtBr(crm.churnMonthlyRate)} (${formatPtBr(crm.churnMonthlyRate * 100)}%)`);
   }
   if (crm?.salesCycleDays != null) lines.push(`Ciclo de vendas: ${formatPtBr(crm.salesCycleDays)} dias`);
+  if (crm?.leadsPerMonth != null) lines.push(`Leads novos por mês: ${formatPtBr(crm.leadsPerMonth)} leads`);
+  if (crm?.winRate != null) lines.push(`Taxa de fechamento: ${formatPtBr(crm.winRate * 100)}%`);
+  if (crm?.salesTeamSize != null) lines.push(`Time de vendas: ${formatPtBr(crm.salesTeamSize)} pessoas`);
   const tam = input.tamBottomUpData;
   if (tam) {
     lines.push(
