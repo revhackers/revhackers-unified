@@ -140,6 +140,12 @@ const CasesDetalhe = () => {
                   Projeto de inteligência comercial desenvolvido para <strong>{caseData.title}</strong>, focado em <strong>{caseData.category}</strong>.
                 </p>
               </div>
+                {(caseData.period || caseData.source) && (
+                  <p className="text-xs text-zinc-500 leading-relaxed pt-3 border-t border-zinc-100">
+                    {caseData.period && <span className="block"><strong className="text-zinc-700">Período:</strong> {caseData.period}</span>}
+                    {caseData.source && <span className="block"><strong className="text-zinc-700">Fonte:</strong> {caseData.source}</span>}
+                  </p>
+                )}
 
               {caseData.techStack && caseData.techStack.length > 0 && (
                 <div className="bg-white border border-zinc-200/80 p-6 rounded-2xl space-y-3">
