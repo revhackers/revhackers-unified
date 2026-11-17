@@ -36,7 +36,7 @@ const ThankYou = () => {
           {/* Title */}
           <h1 className="text-3xl md:text-3xl font-bold text-revgreen mb-6">
             {isEspecialista
-              ? 'Olhe seu WhatsApp — nosso especialista está te chamando agora'
+              ? 'Olhe seu WhatsApp. Nosso especialista está te chamando agora'
               : 'Obrigado pelo agendamento!'}
           </h1>
           
@@ -56,11 +56,24 @@ const ThankYou = () => {
             </p>
           </div>
           
+          {isEspecialista && (
+            <div className="mb-6">
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-revgreen text-revgreen hover:bg-revgreen hover:text-black font-semibold px-8 py-3 transition-all duration-300 min-w-48"
+                onClick={() => setIsBookingOpen(true)}
+              >
+                Prefere agendar um horário?
+              </Button>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button 
-              asChild 
-              className="bg-[#03fc3b] hover:bg-[#03fc3b]/90 text-black font-semibold px-8 py-3 transition-all duration-300 group min-w-48"
+            <Button
+              asChild
+              className="bg-revgreen hover:bg-revgreen-hover text-black font-semibold px-8 py-3 transition-all duration-300 group min-w-48"
               size="lg"
             >
               <Link to="/" onClick={() => window.scrollTo(0, 0)}>
@@ -68,9 +81,9 @@ const ThankYou = () => {
                 <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
-            
-            <Button 
-              asChild 
+
+            <Button
+              asChild
               variant="outline"
               className="border-zinc-300 text-black hover:bg-zinc-50 px-8 py-3 transition-all duration-300 min-w-48"
               size="lg"
@@ -80,18 +93,6 @@ const ThankYou = () => {
               </Link>
             </Button>
           </div>
-
-          {isEspecialista && (
-            <div className="mt-6">
-              <Button
-                variant="ghost"
-                className="text-black hover:bg-zinc-50 underline-offset-4 hover:underline"
-                onClick={() => setIsBookingOpen(true)}
-              >
-                Prefere agendar um horário?
-              </Button>
-            </div>
-          )}
         </Card>
       </div>
       <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
