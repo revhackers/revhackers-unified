@@ -53,6 +53,25 @@ export function GhlFormEmbed({
 }: GhlFormEmbedProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const listenerRef = useRef<((ev: MessageEvent) => void) | null>(null);
+
+  // Build the iframe src with UTM and form-specific params
+  const buildIframeSrc = useCallback(() => {
+    if (!formId) return '';
+    
+    // Merge persisted UTMs with provided params
+    const utmParams = getPersistedUtmParams();
+    const allParams = new URLSearchParams({
+      ...utmParams,
+      ...params,
+    });
+    
+    return `${GHL_EMBED_BASE}/widget/form/${formId}?${allParams.toString()}`;
+  }, [formId, params]);
+
+  // O widget do GHL preenche campos ocultos (rh_material_slug, rh_diagnostic_*, utm_* ...) a partir da
+  // query string da PAGINA-MAE; os parametros da URL do iframe sao ignorados. Por isso espelhamos
+  // `params` (e os UTMs persistidos, sem sobrescrever os da URL) na URL atual antes do iframe carregar.
+  const paramsKey = JSON.stringify(params);
   // Cortina anti-form-pelado: o estilo visual vem do CDN da GHL (cross-origin,
   // sem inspeção possível). Só revelamos o iframe após onLoad; se estourar o
   // timeout, caímos no fallback com retry em vez de exibir formulário quebrado.
@@ -79,25 +98,6 @@ export function GhlFormEmbed({
   const handleRetry = useCallback(() => {
     setAttempt((a) => a + 1);
   }, []);
-
-  // Build the iframe src with UTM and form-specific params
-  const buildIframeSrc = useCallback(() => {
-    if (!formId) return '';
-    
-    // Merge persisted UTMs with provided params
-    const utmParams = getPersistedUtmParams();
-    const allParams = new URLSearchParams({
-      ...utmParams,
-      ...params,
-    });
-    
-    return `${GHL_EMBED_BASE}/widget/form/${formId}?${allParams.toString()}`;
-  }, [formId, params]);
-
-  // O widget do GHL preenche campos ocultos (rh_material_slug, rh_diagnostic_*, utm_* ...) a partir da
-  // query string da PAGINA-MAE; os parametros da URL do iframe sao ignorados. Por isso espelhamos
-  // `params` (e os UTMs persistidos, sem sobrescrever os da URL) na URL atual antes do iframe carregar.
-  const paramsKey = JSON.stringify(params);
   useLayoutEffect(() => {
     if (typeof window === 'undefined' || !formId) return;
     const explicit = JSON.parse(paramsKey) as Record<string, string>;
