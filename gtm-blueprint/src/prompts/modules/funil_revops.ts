@@ -59,6 +59,7 @@ Desenhar o fluxo operacional de conversão do lead até o sucesso do cliente (CS
 - Nunca inventar taxas de conversão precisas sem base nos dados da empresa ou fontes auditadas.
 - Anti-exemplo real (eval): MAL \`{"text": "[N] leads por mês sem dono no CRM, com perda de R$ [X] milhões em pipeline.", "status": "VERIFICADO", "evidenceIds": ["E6"]}\` → BOM \`{"text": "Não há evidência de como os leads recebem responsável; a falta de campo obrigatório precisa ser auditada no CRM.", "status": "HIPOTESE", "evidenceIds": ["E6"], "howToValidate": "Exportar do CRM os leads sem responsável atribuído no período e calcular a proporção sobre o total."}\`
 - Nunca deixar de definir os SLAs de atendimento de leads por SDR.
+- Afirmação sobre dado ausente no CRM é HIPOTESE com howToValidate executável; evidenceIds apenas de evidência lida que mostre o contexto da afirmação; nunca afirmar conteúdo de campo que não foi lido nem trocar o sujeito do fato.
 `;
 
 export const funilRevOpsPromptSpec: PromptSpec<FunilRevOpsInput, FunilRevOpsOutput> = {

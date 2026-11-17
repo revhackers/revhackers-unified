@@ -43,6 +43,7 @@ Definir a matriz de canais de aquisição B2B mais eficiente para o estágio atu
 
 ## 3. Guia Detalhado Campo a Campo
 - \`mixCanaisPrioritarios\`: Array de canais com alocação de esforço (recursos/equipe), justificativa alinhada ao estágio (Claim) e play tático de execução (recomendação). A justificativa cita a origem observada dos clientes; quando ela não está no CRM, a frase vira hipótese com validação.
+- \`playConcretoExecucao\`: Quantidades de desenho (toques, cadência, headcount) só do dossiê ou de evidência citada em \`baseadoEm\`; percentuais de diagnóstico só com a mesma métrica na fonte citada.
 - \`ritualOperacionalGtm\`: Rotina de cadência semanal de alinhamento comercial (recomendação).
 - \`decisao\`: Decisão imediata sobre canais.
 - \`proximosPassos\`: Ações operacionais com prazos.

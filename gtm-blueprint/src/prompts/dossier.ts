@@ -107,6 +107,7 @@ Atuar como o estrategista sênior de GTM construindo o Dossiê Estratégico, o a
 - Nunca tratar a copy de venda do site como prova do que o cliente sente.
 - Nunca listar como cliente uma empresa que não aparece nomeada nas evidências.
 - Nunca colocar número na \`teseCentral\`: quantificação vai nos achados.
+- Depoimentos com o autor exatamente como consta na evidência citada; nunca trocar o sujeito da frase. Contagens na leitura apenas via clientesObservados.
 `;
 
 /** Uma linha por fato extraído, com a citação literal que o sustenta. Sem fato conferido, uma linha de ausência. */

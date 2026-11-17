@@ -58,6 +58,7 @@ Definir com extrema precisão o ICP prioritário B2B e o Anti-ICP, interpretando
 - \`antiIcp\`: Perfil a ser evitado e motivo do descarte (recomendações).
 - \`tamSamSomInterpretacao\`: Análise estratégica do mercado endereçável, usando \`somAnualCalculado\` quando existir.
 - \`criteriosPriorizacaoContas\`: Critérios objetivos para ranking de contas. Faixa de faturamento aparece só como dado a confirmar em discovery, nunca como faixa inferida do porte.
+- \`decisao\`: Decisão sobre o ICP. Critérios com números (faixas de headcount, ticket, contas) exigem fonte para cada premissa da conta; conta derivada sem premissa evidenciada vira critério qualitativo. Em \`decisao\`, sem R$, % ou SLA exemplificativos sem fonte.
 
 ## 4. Padrão de Qualidade & Exemplo (B2B SaaS Brasil)
 - BOM: \`{"descricaoFirmografica": {"text": "Empresas de software B2B com equipes comerciais de médio porte, sediadas no Sudeste, conforme sinais do Dossiê [E1].", "baseadoEm": ["E1"]}}\`

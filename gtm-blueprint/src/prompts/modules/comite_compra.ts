@@ -39,16 +39,16 @@ Mapear com precisão cirúrgica a dinâmica política, as dores e o processo de 
 
 ## 2. Metodologia Passo a Passo de Análise
 1. Resgatar as personas do comitê de compra estabelecidas no Dossiê Estratégico, pelo cargo.
-2. Detalhar para cada membro (Decisor, Influenciador, Usuário, Bloqueador/Financeiro) a dor primária, o gatilho de conversão e a objeção principal. Esses itens são hipótese até haver entrevista ou dado do cliente.
+2. Detalhar para cada membro (Decisor, Influenciador, Usuário, Bloqueador/Financeiro) a dor primária, o gatilho de conversão e a objeção principal. Esses itens são hipótese até haver entrevista ou dado do cliente. Depoimentos em dores e gatilhos transcritos com o autor exatamente como consta na evidência citada; nunca trocar o sujeito da frase.
 3. Especificar os critérios objetivos de avaliação de ROI/valor que cada membro utiliza na tomada de decisão.
 4. Desenhar a dinâmica de aprovação corporativa, explicitando quem detém o poder de veto final (geralmente CFO ou CEO).
 5. Definir a mensagem-chave da proposta comercial direcionada a cada stakeholder.
 
 ## 3. Guia Detalhado Campo a Campo
-- \`membrosComite\`: Array com papel, cargo (sem nome de pessoa), dor primária, gatilho, objeção, critério de avaliação (Claims) e mensagem-chave (recomendação). O critério descreve o que o membro mede, sem valor-alvo: payback, ROI e redução de CAC aparecem como critério a apurar, nunca como resultado.
+- \`membrosComite\`: Array com papel, cargo (sem nome de pessoa), dor primária, gatilho, objeção, critério de avaliação (Claims) e mensagem-chave (recomendação). O critério descreve o que o membro mede, sem valor-alvo: payback, ROI e redução de CAC aparecem como critério a apurar, nunca como resultado. Em \`mensagemChaveProposta\`, payback, prazos e percentuais de resultado só com [ID] de evidência que declare esse resultado para essa métrica; sem fonte, a mensagem descreve o mecanismo sem número.
 - \`dinamicaAprovacao\`: Explicação de como o comitê delibera e quem tem veto.
 - \`decisao\`: Ação tática imediata para engajamento do comitê.
-- \`proximosPassos\`: Passos operacionais com prazos.
+- \`proximosPassos\`: Passos operacionais com prazos. Em \`acao\`, ações sem metas numéricas de resultado (sem %, sem payback em meses); números apenas de execução já contratada.
 
 ## 4. Padrão de Qualidade & Exemplo (B2B SaaS Brasil)
 - BOM: \`{"papel": "Decisor (C-Level/Diretor)", "cargo": "CRO de SaaS B2B mid-market", "dorPrimaria": {"text": "Previsibilidade de forecast e ciclo de vendas longo em contas Enterprise; hipótese a partir da tese do Dossiê.", "status": "HIPOTESE", "evidenceIds": [], "howToValidate": "Entrevistar três CROs de clientes e prospects sobre o forecast mensal."}}\`
@@ -58,6 +58,7 @@ Mapear com precisão cirúrgica a dinâmica política, as dores e o processo de 
 - Nunca inventar personas desconectadas do Dossiê Estratégico.
 - Nunca ignorar a figura do Bloqueador Financeiro/CFO no processo de aprovação B2B no Brasil.
 - Nunca tratar a dor de uma persona como fato observado na empresa.
+- Depoimentos em dores e gatilhos transcritos com o autor exatamente como consta na evidência citada; nunca trocar o sujeito da frase.
 - Anti-exemplo real (eval): MAL \`"mensagemChaveProposta": {"text": "Investimento de R$ [X] em [N] dias gera retorno de R$ [Y] via redução de CAC de [N]%.", "baseadoEm": []}\` → BOM \`"mensagemChaveProposta": {"text": "Piloto com escopo e custo fechados em proposta; o retorno é medido no CRM com o CAC apurado antes da assinatura [E1].", "baseadoEm": ["E1"]}\`
 `;
 

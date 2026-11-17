@@ -45,6 +45,7 @@ Ajustar e blindar o posicionamento de mercado da empresa para desbancar os conco
 - \`declaracaoPosicionamento\`: Recomendação (\`{ text, baseadoEm }\`) com ICP, categoria, benefício, concorrente contrastado e diferencial. Não afirma resultado.
 - \`pilaresDiferenciacao\`: Pilares estratégicos com descrição e defensibilidade baseada em Claims. Comparação percentual de preço com concorrente só entra como hipótese a validar com tabela pública em moeda local.
 - \`provasNecessariasAusentes\`: O que falta publicar no site para validar a promessa.
+- \`decisao\`: Decisão executiva. Em \`decisao\`, sem faixa de preço ou SLA de resultado sem fonte citada.
 
 ## 4. Padrão de Qualidade & Exemplo (B2B SaaS Brasil)
 - BOM: \`{"declaracaoPosicionamento": {"text": "Para diretores comerciais de médias empresas, a RevHackers é a plataforma de RevOps que automatiza cadências multicanal, ao contrário de CRMs tradicionais, porque publica o método e o prazo de implantação [E1].", "baseadoEm": ["E1"]}}\`

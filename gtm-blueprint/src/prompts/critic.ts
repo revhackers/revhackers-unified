@@ -46,7 +46,7 @@ Auditar o Dossiê Estratégico e os módulos gerados contra o conteúdo integral
 
 ## 2. Limite das checagens mecânicas
 O código que produziu este payload já executou checagens mecânicas: removeu IDs de evidência inexistentes, rebaixou para HIPOTESE as afirmações VERIFICADO sem ID válido, removeu de cada campo as frases com número sem procedência e rebaixou personas. Essas checagens são mecânicas e NÃO provam suporte semântico: não provam que a evidência trata da mesma empresa, do mesmo mercado, da mesma métrica, da mesma unidade ou do mesmo período. Ausência de marcador não é aprovação.
-\`scoreIceCalculado\`, \`modules.unit_economics.calculado\` e a evidência \`C1\` (kind computed) são calculados por código; notas de 1 a 10 e \`prazoDias\` são propostas. Objetos \`{ text, baseadoEm }\` são recomendações: avalie especificidade e coerência, não suporte de evidência; só são issue quando afirmam resultado como fato. O texto 'A coletar: as fontes consultadas não trazem este dado.' marca dado ausente; só é issue quando esvazia um campo central. A trava de número cobre recomendações: em \`{ text, baseadoEm }\` saem as frases com valor em moeda, percentual, multiplicador ou prazo de payback e de ciclo de vendas sem fonte. Quantidade (contas, pessoas), prazo de execução e SLA são parâmetros de desenho e permanecem. Em \`howToValidate\`, \`lacunasDeDadosCriticas\` e \`dadosParaColetarSeAusentes\`, tamanho de amostra e período de análise são parâmetros do procedimento, não fatos. O texto 'A coletar: a meta depende de dado que as fontes consultadas não trazem.' marca recomendação cuja meta foi removida. A evidência \`D1\` (kind computed) é a contagem, por código, dos clientes nomeados que o dossiê listou em \`icpDeclaradoVsClientes.clientesObservados\`.
+\`scoreIceCalculado\`, \`modules.unit_economics.calculado\` e a evidência \`C1\` (kind computed) são calculados por código; notas de 1 a 10 e \`prazoDias\` são propostas. Objetos \`{ text, baseadoEm }\` são recomendações: avalie especificidade e coerência, não suporte de evidência; só são issue quando afirmam resultado como fato. O texto 'A coletar: as fontes consultadas não trazem este dado.' marca dado ausente; só é issue quando esvazia um campo central. A trava de número cobre recomendações: em \`{ text, baseadoEm }\` saem as frases com valor em moeda, percentual, multiplicador ou prazo de payback e de ciclo de vendas sem fonte. Quantidade (contas, pessoas), prazo de execução e SLA são parâmetros de desenho e permanecem. Em \`howToValidate\`, \`lacunasDeDadosCriticas\` e \`dadosParaColetarSeAusentes\`, tamanho de amostra e período de análise são parâmetros do procedimento, não fatos. O texto 'A coletar: a meta depende de dado que as fontes consultadas não trazem.' marca recomendação cuja meta foi removida pela trava; só é issue quando esvazia um campo central. A evidência \`D1\` (kind computed) é a contagem, por código, dos clientes nomeados que o dossiê listou em \`icpDeclaradoVsClientes.clientesObservados\`.
 
 ## 3. Como ler o payload
 - O payload é um único objeto JSON com as chaves textosRepetidos, dossier, modules e evidences. O renderer não corta texto: todo conteúdo de evidência e de módulo aparece íntegro.
@@ -160,7 +160,7 @@ function buildUser(input: CriticInput): string {
 
 export const criticPromptSpec: PromptSpec<CriticInput, CriticOutput> = {
   id: 'critic.audit',
-  version: '3.1.1',
+  version: '3.1.2',
   task: 'critic',
   system: CRITIC_SYSTEM_PROMPT,
   buildUser,

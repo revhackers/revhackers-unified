@@ -414,6 +414,49 @@ describe('enforceNumberProvenance (checagem mecânica)', () => {
     const sem = enforceNumberProvenance({ claim }, { evidences: [E1] });
     expect(sem.value.claim.text).toBe(BLOCKED_NARRATIVE_TEXT);
   });
+
+  it('conta limiar de comparação como métrica e mantém marcador de lista', () => {
+    const claim = {
+      text: 'Definir alvo de LTV/CAC ≥3 para onda_3.',
+      status: 'VERIFICADO',
+      evidenceIds: [],
+      howToValidate: 'Conferir.',
+    };
+    const bloqueado = enforceNumberProvenance({ claim }, { evidences: [E1] });
+    expect(bloqueado.value.claim.text).toBe(BLOCKED_NARRATIVE_TEXT);
+    expect(bloqueado.value.claim.status).toBe('HIPOTESE');
+
+    const mais = enforceNumberProvenance(
+      {
+        claim: {
+          text: 'Atingir LTV/CAC 3+ no trimestre.',
+          status: 'VERIFICADO',
+          evidenceIds: [],
+          howToValidate: 'Conferir.',
+        },
+      },
+      { evidences: [E1] },
+    );
+    expect(mais.value.claim.text).toBe(BLOCKED_NARRATIVE_TEXT);
+
+    const menos = enforceNumberProvenance(
+      {
+        claim: {
+          text: 'Manter LTV/CAC <2 fora do alvo.',
+          status: 'VERIFICADO',
+          evidenceIds: [],
+          howToValidate: 'Conferir.',
+        },
+      },
+      { evidences: [E1] },
+    );
+    expect(menos.value.claim.text).toBe(BLOCKED_NARRATIVE_TEXT);
+
+    const lista = { resumo: 'Três frentes: (1) outbound; (2) inbound.' };
+    const controle = enforceNumberProvenance(lista, { evidences: [] });
+    expect(controle.value).toEqual(lista);
+    expect(controle.findings).toEqual([]);
+  });
 });
 
 describe('userInputEvidence (U1)', () => {

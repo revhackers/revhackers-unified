@@ -61,6 +61,7 @@ const RESULT_DURATION_RE = /payback|retorno sobre|ROI|ciclo (?:m[ée]dio )?de ve
 const FREQUENCY_RE = /^\s*(?:por|ao|à|a cada)\s|^\s*\//i;
 const BENCHMARK_RE = /benchmark|m[ée]dia d[eo] (?:mercado|setor)|padr[ãa]o d[eo] (?:mercado|setor)|t[íi]pic[oa] d[eo] (?:mercado|setor)/i;
 const PROCEDURE_KEYS: Record<string, true> = { lacunasDeDadosCriticas: true, dadosParaColetarSeAusentes: true };
+const COMPARISON_BEFORE_RE = /[≥>≤<]=?\s*$/;
 const RECOMMENDATION_FIELDS: Record<string, true> = { text: true, baseadoEm: true };
 
 // Tokens numéricos isolados: não colam em letras, dígitos, separadores de código (B2B, E1, gpt-5.6, v1:0).
@@ -201,7 +202,7 @@ function metricsIn(text: string, isSource: boolean, mode: GuardMode = 'fato'): M
         spec = { unit: isSource ? 'num' : '*', factor: scale.factor, prefix: '', suffix: rest.slice(0, scale.consumed) };
       }
       if (!spec) continue;
-      if (!isSource && spec.unit === '*' && /^\d$/.test(token)) continue;
+      if (!isSource && spec.unit === '*' && /^\d$/.test(token) && !COMPARISON_BEFORE_RE.test(before) && !/^\s*\+/.test(rest)) continue;
       if (!isSource && mode === 'procedimento' && PROCEDURE_UNITS[spec.unit] !== true) continue;
       if (!isSource && mode === 'recomendacao' && RECOMMENDATION_UNITS[spec.unit] !== true) continue;
       metrics.push({ token, spec });
