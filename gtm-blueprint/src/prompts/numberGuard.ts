@@ -242,6 +242,7 @@ function unsupportedLabels(text: string, cited: string[], index: SupportIndex, m
 /**
  * Remove as frases com métrica sem suporte (com o delimitador que as segue) e junta o restante.
  * `baseIds` vale para o texto inteiro: ids do campo mais `alwaysCited` (citações [ID] somam quando `useInlineCites`).
+ * Ids em `excludeIds` saem da lista citada antes da checagem (concorrente fora de `concorrentesReais[i]`).
  */
 function redactUnsupported(
   text: string,
@@ -249,11 +250,12 @@ function redactUnsupported(
   index: SupportIndex,
   mode: GuardMode,
   useInlineCites = true,
+  excludeIds?: ReadonlySet<string>,
 ): { text: string; labels: string[]; cited: string[] } {
   const inline = useInlineCites
     ? [...text.replace(URL_RE, ' ').matchAll(CITE_RE)].flatMap((hit) => (hit[1] ?? '').split(',').map((id) => id.trim()))
     : [];
-  const cited = [...new Set([...baseIds, ...inline])];
+  const cited = [...new Set([...baseIds, ...inline])].filter((id) => !excludeIds?.has(id));
   const parts = text.split(CLAUSE_SPLIT_RE);
   const labels: string[] = [];
   const kept: string[] = [];
@@ -287,11 +289,9 @@ function reasonFor(labels: string[], cited: string[], bare = false): string {
   return `${noun} ${quoted} ${plural ? 'não constam' : 'não consta'} nas evidências citadas (${cited.join(', ')}).`;
 }
 
-// Id de concorrente só sustenta afirmação dentro de `concorrentesReais[i]`; fora dali, sai da lista antes da checagem.
-function idsForPath(path: string, ids: string[], state: GuardState): string[] {
-  if (/(^|\.)concorrentesReais\[/.test(path)) return ids;
-  return ids.filter((id) => !state.competitorIds.has(id));
-}
+// Id de concorrente só sustenta afirmação dentro de `concorrentesReais[i]`; fora dali, sai da lista citada
+// antes da checagem (inclusive quando aparece em citação [ID] inline).
+const CONCORRENTES_PATH_RE = /(^|\.)concorrentesReais\[/;
 
 function joinPath(parent: string, child: string): string {
   if (!parent || !child) return parent || child;
@@ -334,9 +334,10 @@ function guardClaim(claim: Record<string, unknown>, path: string, state: GuardSt
   const claimIds = Array.isArray(claim.evidenceIds)
     ? claim.evidenceIds.filter((id): id is string => typeof id === 'string')
     : [];
-  const ids = idsForPath(path, [...claimIds, ...state.alwaysCited], state);
-  const text = typeof claim.text === 'string' ? redactUnsupported(claim.text, ids, state.index, 'fato') : null;
-  const how = typeof claim.howToValidate === 'string' ? redactUnsupported(claim.howToValidate, ids, state.index, 'procedimento') : null;
+  const ids = [...claimIds, ...state.alwaysCited];
+  const exclude = CONCORRENTES_PATH_RE.test(path) ? undefined : state.competitorIds;
+  const text = typeof claim.text === 'string' ? redactUnsupported(claim.text, ids, state.index, 'fato', true, exclude) : null;
+  const how = typeof claim.howToValidate === 'string' ? redactUnsupported(claim.howToValidate, ids, state.index, 'procedimento', true, exclude) : null;
   const others = walkObject(claim, path, state, CLAIM_FIELDS);
   const textHit = text !== null && text.labels.length > 0;
   const howHit = how !== null && how.labels.length > 0;
@@ -366,8 +367,8 @@ function guardRecommendation(node: Record<string, unknown>, path: string, state:
   const refs = Array.isArray(node.baseadoEm)
     ? node.baseadoEm.filter((id): id is string => typeof id === 'string')
     : [];
-  const ids = idsForPath(path, [...refs, ...state.alwaysCited], state);
-  const redacted = redactUnsupported(node.text, ids, state.index, 'recomendacao');
+  const ids = [...refs, ...state.alwaysCited];
+  const redacted = redactUnsupported(node.text, ids, state.index, 'recomendacao', true, CONCORRENTES_PATH_RE.test(path) ? undefined : state.competitorIds);
   const others = walkObject(node, path, state, RECOMMENDATION_FIELDS);
   if (redacted.labels.length === 0) return others;
   state.findings.push({ path: joinPath(state.prefix, joinPath(path, 'text')), reason: reasonFor(redacted.labels, redacted.cited) });

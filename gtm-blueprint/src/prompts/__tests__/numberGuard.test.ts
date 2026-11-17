@@ -351,6 +351,47 @@ describe('enforceNumberProvenance (checagem mecânica)', () => {
     expect(fora.value.claim.status).toBe('HIPOTESE');
   });
 
+  it('ignora citação inline de concorrente fora de concorrentesReais', () => {
+    const c7: Evidence = {
+      id: 'C7',
+      kind: 'competitor_site',
+      source: 'https://concorrente.com',
+      fetchedAt: FETCHED_AT,
+      content: '+ 4.000 Empresas Atendidas',
+    };
+    const fora = enforceNumberProvenance(
+      {
+        claim: {
+          text: 'O concorrente atende 4.000 empresas [C7].',
+          status: 'VERIFICADO',
+          evidenceIds: [],
+          howToValidate: 'Conferir.',
+        },
+      },
+      { evidences: [c7] },
+    );
+    expect(fora.value.claim.status).toBe('HIPOTESE');
+
+    const dentro = enforceNumberProvenance(
+      {
+        concorrentesReais: [
+          {
+            nome: 'X',
+            diferencialObservado: {
+              text: 'Atende 4.000 empresas [C7].',
+              status: 'VERIFICADO',
+              evidenceIds: [],
+              howToValidate: 'Conferir.',
+            },
+          },
+        ],
+      },
+      { evidences: [c7] },
+    );
+    expect(dentro.value.concorrentesReais[0]?.diferencialObservado.status).toBe('VERIFICADO');
+    expect(dentro.findings).toEqual([]);
+  });
+
   it('sustenta contagem de clientes via evidência derivada D1', () => {
     const d1: Evidence = {
       id: 'D1',
