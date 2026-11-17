@@ -1,22 +1,19 @@
-import React, { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { CheckCircle, ArrowRight } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import PageLayout from '@/components/layout/PageLayout';
 import SEO from '@/components/shared/SEO';
 import { GhlBookingEmbed } from '@/components/shared/GhlBookingEmbed';
 import { GHL_CALENDARS } from '@/config/ghl';
 
 const ThankYou = () => {
-  const [searchParams] = useSearchParams();
-  const isEspecialista = searchParams.get('from') === 'especialista';
   const [isBookingOpen, setIsBookingOpen] = useState(false);
 
   return (
@@ -26,75 +23,51 @@ const ThankYou = () => {
         description="Confirmação do seu pedido na RevHackers."
         noindex
       />
-      <div className="min-h-screen bg-white flex items-center justify-center py-16 px-4">
-        <Card className="max-w-2xl mx-auto p-12 text-center bg-white border border-zinc-200 shadow-sm">
-          {/* Success Icon */}
-          <div className="flex justify-center mb-8">
-            <CheckCircle className="w-20 h-20 text-revgreen animate-bounceGentle" />
-          </div>
-          
-          {/* Title */}
-          <h1 className="text-3xl md:text-3xl font-bold text-revgreen mb-6">
-            {isEspecialista
-              ? 'Olhe seu WhatsApp. Nosso especialista está te chamando agora'
-              : 'Obrigado pelo agendamento!'}
-          </h1>
-          
-          {/* Subtitle */}
-          <p className="text-xl md:text-2xl text-[#555555] leading-relaxed mb-6">
-            {isEspecialista
-              ? 'Recebemos sua solicitação e a conversa continua agora pelo WhatsApp, com resposta imediata.'
-              : 'Sua solicitação foi registrada com sucesso. Em breve você receberá um e-mail com os próximos passos.'}
+      <main className="bg-white text-black">
+        <section className="mx-auto max-w-3xl px-6 pt-16 pb-24 md:pt-28 md:pb-36">
+          <p className="flex items-center gap-3 text-sm font-semibold uppercase tracking-widest text-black">
+            <span
+              aria-hidden="true"
+              className="flex h-10 w-10 items-center justify-center border-2 border-revgreen text-revgreen"
+            >
+              <MessageCircle className="h-5 w-5" strokeWidth={2} />
+            </span>
+            Solicitação recebida
           </p>
-          
-          {/* Warning/Alert */}
-          <div className="mb-10">
-            <p className="text-lg text-[#d51f2a] font-medium">
-              {isEspecialista
-                ? '📱 Confira seu WhatsApp agora.'
-                : '📩 Fique de olho na sua caixa de entrada (e também no spam).'}
+
+          <h1 className="mt-8 border-l-4 border-revgreen pl-5 text-3xl font-bold leading-tight tracking-tight text-black sm:text-4xl md:pl-6 md:text-5xl">
+            Olhe seu WhatsApp. Nosso especialista está te chamando agora
+          </h1>
+
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-zinc-700 md:text-xl">
+            Recebemos sua solicitação. Confira o WhatsApp agora: a conversa
+            continua por lá, com resposta imediata.
+          </p>
+
+          <div className="mt-10 border-t border-zinc-200 pt-8">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="h-12 w-full rounded-none border-2 border-revgreen bg-transparent px-8 text-base font-semibold text-black hover:bg-revgreen hover:text-black sm:w-auto"
+              onClick={() => setIsBookingOpen(true)}
+            >
+              Prefere agendar um horário?
+            </Button>
+
+            <p className="mt-8">
+              <Link
+                to="/"
+                onClick={() => window.scrollTo(0, 0)}
+                className="text-sm text-zinc-500 underline underline-offset-4 hover:text-black"
+              >
+                Voltar para a Home
+              </Link>
             </p>
           </div>
-          
-          {isEspecialista && (
-            <div className="mb-6">
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-revgreen text-revgreen hover:bg-revgreen hover:text-black font-semibold px-8 py-3 transition-all duration-300 min-w-48"
-                onClick={() => setIsBookingOpen(true)}
-              >
-                Prefere agendar um horário?
-              </Button>
-            </div>
-          )}
+        </section>
+      </main>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button
-              asChild
-              className="bg-revgreen hover:bg-revgreen-hover text-black font-semibold px-8 py-3 transition-all duration-300 group min-w-48"
-              size="lg"
-            >
-              <Link to="/" onClick={() => window.scrollTo(0, 0)}>
-                Voltar para a Home
-                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </Button>
-
-            <Button
-              asChild
-              variant="outline"
-              className="border-zinc-300 text-black hover:bg-zinc-50 px-8 py-3 transition-all duration-300 min-w-48"
-              size="lg"
-            >
-              <Link to="/servicos">
-                Conheça nossos serviços
-              </Link>
-            </Button>
-          </div>
-        </Card>
-      </div>
       <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
         {isBookingOpen && (
           <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto bg-white p-0">
