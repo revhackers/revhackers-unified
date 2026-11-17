@@ -61,6 +61,7 @@ Desenhar o fluxo operacional de conversão do lead até o sucesso do cliente (CS
 - Nunca deixar de definir os SLAs de atendimento de leads por SDR.
 - Afirmação sobre dado ausente no CRM é HIPOTESE com howToValidate executável; evidenceIds apenas de evidência lida que mostre o contexto da afirmação; nunca afirmar conteúdo de campo que não foi lido nem trocar o sujeito do fato.
 - Nunca citar como suporte evidência que nega o fato (ex.: S1 que registra ferramenta não detectada não sustenta adoção da ferramenta). SLA de resultado em \`criterioAvancoSla\` e \`regraPassagem\` só com fonte que declare esse SLA para essa métrica.
+- Meta sem fonte na evidência escreve-se como premissa de trabalho explícita com validação (ex.: 'Assumir taxa de avanço como premissa; validar no CRM'), nunca como fato e nunca como campo vazio.
 `;
 
 export const funilRevOpsPromptSpec: PromptSpec<FunilRevOpsInput, FunilRevOpsOutput> = {

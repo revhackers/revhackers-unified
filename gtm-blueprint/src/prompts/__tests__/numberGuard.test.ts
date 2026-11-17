@@ -169,17 +169,44 @@ describe('enforceNumberProvenance (checagem mecânica)', () => {
     expect(result.findings).toEqual([]);
   });
 
-  it('checa campos de desenho (decisao, acao) em modo fato', () => {
+  it('não checa campos de decisão e ação, que são proposta e não fato', () => {
     const result = enforceNumberProvenance(
-      {
-        decisao: 'Reduzir o CAC em 50% até o trimestre. Revisar o funil toda segunda-feira.',
-        proximosPassos: [{ acao: 'Atingir 40% de aceite.', responsavelRole: 'Head de Growth', prazoDias: 7 }],
-      },
+      { decisao: 'Reduzir o CAC em 50% até o trimestre.', proximosPassos: [{ acao: 'Atingir 40% de aceite.' }] },
       { evidences: [] },
     );
-    expect(result.value.decisao).toBe('Revisar o funil toda segunda-feira.');
-    expect(result.value.proximosPassos[0]?.acao).toBe(BLOCKED_NARRATIVE_TEXT);
-    expect(result.findings.map((f) => f.path)).toEqual(['decisao', 'proximosPassos[0].acao']);
+    expect(result.value.decisao).toBe('Reduzir o CAC em 50% até o trimestre.');
+    expect(result.findings).toEqual([]);
+  });
+
+  it('mantém número em recomendação marcada como premissa de trabalho', () => {
+    const text = 'Assumir conversão de 15% como premissa de trabalho; validar no piloto com 20 contas.';
+    const result = enforceNumberProvenance(
+      { plano: { text, baseadoEm: [] } },
+      { evidences: [E1] },
+    );
+    expect(result.value.plano.text).toBe(text);
+    expect(result.findings).toEqual([]);
+  });
+
+  it('bloqueia meta sem marca de premissa e premissa em claim', () => {
+    const semMarca = enforceNumberProvenance(
+      { plano: { text: 'Meta de conversão de 15% em reunião.', baseadoEm: [] } },
+      { evidences: [E1] },
+    );
+    expect(semMarca.value.plano.text).toBe(BLOCKED_RECOMMENDATION_TEXT);
+    expect(semMarca.value.plano.baseadoEm).toEqual([]);
+    const emClaim = enforceNumberProvenance(
+      {
+        claim: {
+          text: 'A conversão é de 15% (premissa de trabalho).',
+          status: 'VERIFICADO',
+          evidenceIds: [],
+          howToValidate: 'Conferir.',
+        },
+      },
+      { evidences: [E1] },
+    );
+    expect(emClaim.value.claim.text).toBe(BLOCKED_NARRATIVE_TEXT);
   });
 
   it('troca por BLOCKED_HOWTO_TEXT sem rebaixar quando só o howToValidate perde frase', () => {

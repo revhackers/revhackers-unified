@@ -98,13 +98,11 @@ const RECOMMENDATION_UNITS: Record<string, true> = { moeda: true, pct: true, x: 
 
 // Tabelas estáticas de chaves: `Record<string, true>` com lookup `=== true` (ts-set-map). Evita herdar chaves do protótipo (ex.: `constructor`).
 // Chaves de texto livre que não são afirmação sobre a empresa, ou que são rótulos/identificadores.
-// Campos de desenho (decisao, acao, criteriosPriorizacaoContas, cargoArquetipo) SÃO checados em modo fato:
-// número de meta, preço, fee ou SLA sem fonte sai do campo.
 const IGNORED_KEYS: Record<string, true> = {
   id: true, url: true, source: true, onda: true, status: true, evidenceIds: true, ownerRole: true, responsavelRole: true,
   locationPath: true, fetchedAt: true, severidade: true, tipoProblema: true,
-  titulo: true, pilar: true, canal: true, estagio: true,
-  transicao: true, papel: true, cargo: true, nome: true, setorAparente: true, alinhamento: true,
+  decisao: true, acao: true, titulo: true, criteriosPriorizacaoContas: true, pilar: true, canal: true, estagio: true,
+  transicao: true, papel: true, cargo: true, cargoArquetipo: true, nome: true, setorAparente: true, alinhamento: true,
 };
 const CLAIM_FIELDS: Record<string, true> = { text: true, status: true, evidenceIds: true, howToValidate: true };
 const NO_KEYS: Record<string, true> = {};
@@ -246,7 +244,11 @@ function unsupportedLabels(text: string, cited: string[], index: SupportIndex, m
  * Remove as frases com métrica sem suporte (com o delimitador que as segue) e junta o restante.
  * `baseIds` vale para o texto inteiro: ids do campo mais `alwaysCited` (citações [ID] somam quando `useInlineCites`).
  * Ids em `excludeIds` saem da lista citada antes da checagem (concorrente fora de `concorrentesReais[i]`).
+ * Em modo `recomendacao`, frase marcada como premissa de trabalho passa sem checagem: premissa honesta com
+ * validação não é fato inventado (o crítico julga a premissa; em `fato` não há isenção).
  */
+const PREMISSA_RE = /premissa|hip[óo]tese de trabalho|a validar|por confirmar|assumir /i;
+
 function redactUnsupported(
   text: string,
   baseIds: string[],
@@ -265,7 +267,8 @@ function redactUnsupported(
   for (let i = 0; i < parts.length; i += 2) {
     const sentence = parts[i] ?? '';
     const delimiter = parts[i + 1] ?? '';
-    const missing = unsupportedLabels(sentence, cited, index, mode);
+    const premissa = mode === 'recomendacao' && PREMISSA_RE.test(sentence);
+    const missing = premissa ? [] : unsupportedLabels(sentence, cited, index, mode);
     if (missing.length > 0) {
       labels.push(...missing);
       continue;
