@@ -155,24 +155,31 @@ const Materiais = () => {
         </div>
       </section>
 
-      {/* 3. CTA Footer — Fundo 100% Branco Puro */}
+      {/* 3. CTA Footer — dois caminhos honestos: implementar sozinho ou auditar */}
       <div className="py-20 bg-white border-t border-zinc-200/80">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="max-w-2xl text-center md:text-left space-y-2">
               <h2 className="text-zinc-900 text-2xl sm:text-3xl font-extrabold tracking-tight">
-                Identificou a Dor?
+                Vai implementar sozinho ou quer a auditoria da operação?
               </h2>
               <p className="text-zinc-500 text-sm md:text-base leading-relaxed">
-                Pare de ler teoria. Aplique para que nossa Engenharia audite o seu funil e conecte seu CRM a ferramentas de IA.
+                Os materiais acima são para execução própria. Se preferir, nossa engenharia audita seu funil e mostra onde a operação perde receita antes de qualquer contratação.
               </p>
             </div>
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 flex flex-col sm:flex-row md:flex-col lg:flex-row gap-3">
               <Button
                 size="lg"
                 onClick={() => navigate('/booking')}
               >
                 Auditar Minha Operação →
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => navigate('/metodologia')}
+              >
+                Ver metodologia
               </Button>
             </div>
           </div>
