@@ -58,6 +58,7 @@ Mapear com precisão cirúrgica a dinâmica política, as dores e o processo de 
 - Nunca inventar personas desconectadas do Dossiê Estratégico.
 - Nunca ignorar a figura do Bloqueador Financeiro/CFO no processo de aprovação B2B no Brasil.
 - Nunca tratar a dor de uma persona como fato observado na empresa.
+- Sem modelo de precificação, fee variável, reembolso ou SLA sem fonte citada que declare esse termo.
 - Depoimentos em dores e gatilhos transcritos com o autor exatamente como consta na evidência citada; nunca trocar o sujeito da frase.
 - Anti-exemplo real (eval): MAL \`"mensagemChaveProposta": {"text": "Investimento de R$ [X] em [N] dias gera retorno de R$ [Y] via redução de CAC de [N]%.", "baseadoEm": []}\` → BOM \`"mensagemChaveProposta": {"text": "Piloto com escopo e custo fechados em proposta; o retorno é medido no CRM com o CAC apurado antes da assinatura [E1].", "baseadoEm": ["E1"]}\`
 `;

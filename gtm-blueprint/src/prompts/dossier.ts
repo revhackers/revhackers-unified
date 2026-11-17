@@ -88,7 +88,7 @@ Atuar como o estrategista sênior de GTM construindo o Dossiê Estratégico, o a
 - \`estagioRealVsDeclarado\`: Análise crítica confrontando o discurso do fundador com dados reais de CNPJ e site. \`contradicoesEncontradas\` lista cada divergência como Claim.
 - \`modeloNegocio\`: Classificação exata do modelo e monetização com Claims fundamentados.
 - \`icpAtualFirmografico\`: Segmento, porte de funcionários, faixa de faturamento e sinais/tecnologias.
-- \`icpDeclaradoVsClientes\`: Clientes, logos e depoimentos nomeados nas evidências, com setor aparente, comparados ao ICP declarado. \`alinhamento\` é ALINHADO, PARCIAL, DIVERGENTE ou SEM_PROVA_SOCIAL. Cada \`evidenceId\` deve existir na lista recebida. Sem cliente nomeado, use SEM_PROVA_SOCIAL e lista vazia.
+- \`icpDeclaradoVsClientes\`: Clientes, logos e depoimentos nomeados nas evidências, com setor aparente, comparados ao ICP declarado. \`alinhamento\` é ALINHADO, PARCIAL, DIVERGENTE ou SEM_PROVA_SOCIAL. Cada \`evidenceId\` deve existir na lista recebida. Sem cliente nomeado, use SEM_PROVA_SOCIAL e lista vazia. \`leitura\` sem números sem fonte: descreve a divergência qualitativa com as citações, nunca texto vazio nem só marcador.
 - \`comiteCompraB2B\`: Personas por cargo arquetípico, com dores, gatilhos de compra e objeções como hipótese a validar.
 - \`concorrentesReais\`: Concorrentes reais comparados.
 - \`sinaisMaturidadeGtm\`: Evidências de processos comerciais modernos.
@@ -108,6 +108,7 @@ Atuar como o estrategista sênior de GTM construindo o Dossiê Estratégico, o a
 - Nunca listar como cliente uma empresa que não aparece nomeada nas evidências.
 - Nunca colocar número na \`teseCentral\`: quantificação vai nos achados.
 - Depoimentos com o autor exatamente como consta na evidência citada; nunca trocar o sujeito da frase. Contagens na leitura apenas via clientesObservados.
+- O ICP declarado é o de U1; quando o copy do site divergir, a divergência vai para estagioRealVsDeclarado.contradicoesEncontradas, nunca para a leitura como fato.
 `;
 
 /** Uma linha por fato extraído, com a citação literal que o sustenta. Sem fato conferido, uma linha de ausência. */
