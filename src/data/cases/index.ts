@@ -41,6 +41,10 @@ export interface CaseStudy {
   featured?: boolean;
   isWideLogo?: boolean;
   logoScale?: number;
+  /** Período da intervenção (ex: "jan–jun/2024"). Exibir só quando preenchido. */
+  period?: string;
+  /** Fonte da medição (ex: "GA4", "relatório de mídia", "CRM do cliente"). */
+  source?: string;
   techStack?: string[];
 }
 
