@@ -169,13 +169,17 @@ describe('enforceNumberProvenance (checagem mecânica)', () => {
     expect(result.findings).toEqual([]);
   });
 
-  it('não checa campos de decisão e ação, que são proposta e não fato', () => {
+  it('checa campos de desenho (decisao, acao) em modo fato', () => {
     const result = enforceNumberProvenance(
-      { decisao: 'Reduzir o CAC em 50% até o trimestre.', proximosPassos: [{ acao: 'Atingir 40% de aceite.' }] },
+      {
+        decisao: 'Reduzir o CAC em 50% até o trimestre. Revisar o funil toda segunda-feira.',
+        proximosPassos: [{ acao: 'Atingir 40% de aceite.', responsavelRole: 'Head de Growth', prazoDias: 7 }],
+      },
       { evidences: [] },
     );
-    expect(result.value.decisao).toBe('Reduzir o CAC em 50% até o trimestre.');
-    expect(result.findings).toEqual([]);
+    expect(result.value.decisao).toBe('Revisar o funil toda segunda-feira.');
+    expect(result.value.proximosPassos[0]?.acao).toBe(BLOCKED_NARRATIVE_TEXT);
+    expect(result.findings.map((f) => f.path)).toEqual(['decisao', 'proximosPassos[0].acao']);
   });
 
   it('troca por BLOCKED_HOWTO_TEXT sem rebaixar quando só o howToValidate perde frase', () => {

@@ -49,6 +49,7 @@ Mapear com precisão cirúrgica a dinâmica política, as dores e o processo de 
 - \`dinamicaAprovacao\`: Explicação de como o comitê delibera e quem tem veto.
 - \`decisao\`: Ação tática imediata para engajamento do comitê.
 - \`proximosPassos\`: Passos operacionais com prazos. Em \`acao\`, ações sem metas numéricas de resultado (sem %, sem payback em meses); números apenas de execução já contratada.
+- \`mensagemChaveProposta\` e \`decisao\` sem número de outro segmento (ex.: métrica de EAD não prova valor para SaaS B2B); \`objecaoChave\` e \`gatilhoConversao\` sem SLA inventado.
 
 ## 4. Padrão de Qualidade & Exemplo (B2B SaaS Brasil)
 - BOM: \`{"papel": "Decisor (C-Level/Diretor)", "cargo": "CRO de SaaS B2B mid-market", "dorPrimaria": {"text": "Previsibilidade de forecast e ciclo de vendas longo em contas Enterprise; hipótese a partir da tese do Dossiê.", "status": "HIPOTESE", "evidenceIds": [], "howToValidate": "Entrevistar três CROs de clientes e prospects sobre o forecast mensal."}}\`

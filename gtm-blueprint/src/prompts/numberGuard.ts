@@ -98,11 +98,13 @@ const RECOMMENDATION_UNITS: Record<string, true> = { moeda: true, pct: true, x: 
 
 // Tabelas estáticas de chaves: `Record<string, true>` com lookup `=== true` (ts-set-map). Evita herdar chaves do protótipo (ex.: `constructor`).
 // Chaves de texto livre que não são afirmação sobre a empresa, ou que são rótulos/identificadores.
+// Campos de desenho (decisao, acao, criteriosPriorizacaoContas, cargoArquetipo) SÃO checados em modo fato:
+// número de meta, preço, fee ou SLA sem fonte sai do campo.
 const IGNORED_KEYS: Record<string, true> = {
   id: true, url: true, source: true, onda: true, status: true, evidenceIds: true, ownerRole: true, responsavelRole: true,
   locationPath: true, fetchedAt: true, severidade: true, tipoProblema: true,
-  decisao: true, acao: true, titulo: true, criteriosPriorizacaoContas: true, pilar: true, canal: true, estagio: true,
-  transicao: true, papel: true, cargo: true, cargoArquetipo: true, nome: true, setorAparente: true, alinhamento: true,
+  titulo: true, pilar: true, canal: true, estagio: true,
+  transicao: true, papel: true, cargo: true, nome: true, setorAparente: true, alinhamento: true,
 };
 const CLAIM_FIELDS: Record<string, true> = { text: true, status: true, evidenceIds: true, howToValidate: true };
 const NO_KEYS: Record<string, true> = {};

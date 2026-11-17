@@ -55,6 +55,7 @@ Ajustar e blindar o posicionamento de mercado da empresa para desbancar os conco
 - Nunca omitir o contraste com concorrentes reais nomeados nas evidências.
 - Nunca emitir promessas genéricas de "inovação e qualidade".
 - Número que o dossiê classifica como HIPOTESE nunca vira VERIFICADO em outro módulo; defensibilidade com status coerente com o que o próprio texto admite. Case de outro segmento nunca prova resultado para o ICP (ex.: métrica de EAD não prova valor para SaaS B2B).
+- Nunca citar evidência irrelevante ao sujeito (ex.: página de concorrente não sustenta afirmação sobre outra empresa). Status coerente com o que o próprio texto admite: defensibilidade que o texto diz não validada não é VERIFICADO.
 - Anti-exemplo real (eval): MAL \`{"pilar": "Preço", "descricao": {"text": "Preço [N]% menor que o concorrente [E7].", "status": "VERIFICADO", "evidenceIds": ["E7"]}}\` → BOM \`{"pilar": "Preço", "descricao": {"text": "O preço publicado do concorrente [E7] ainda não foi comparado em reais para o mesmo perfil de usuário.", "status": "HIPOTESE", "evidenceIds": ["E7"], "howToValidate": "Coletar a tabela em reais do concorrente para o plano equivalente e calcular a diferença por usuário."}}\`
 `;
 

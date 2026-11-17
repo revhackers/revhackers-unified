@@ -45,6 +45,7 @@ Definir a matriz de canais de aquisição B2B mais eficiente para o estágio atu
 - \`mixCanaisPrioritarios\`: Array de canais com alocação de esforço (recursos/equipe), justificativa alinhada ao estágio (Claim) e play tático de execução (recomendação). A justificativa cita a origem observada dos clientes; quando ela não está no CRM, a frase vira hipótese com validação.
 - \`playConcretoExecucao\`: Quantidades de desenho (toques, cadência, headcount) só do dossiê ou de evidência citada em \`baseadoEm\`; percentuais de diagnóstico só com a mesma métrica na fonte citada.
 - Se a meta numérica sair por falta de fonte, o play descreve a execução qualitativa — nunca vazio, nunca só marcador. Percentual de diagnóstico (ex.: follow-up manual) exige fonte que declare essa mesma métrica.
+- Metas de canal (aceite, resposta, clique, visitas, orçamento) exigem baseline na evidência citada em \`baseadoEm\`; sem baseline, o play descreve execução sem meta numérica.
 - \`ritualOperacionalGtm\`: Rotina de cadência semanal de alinhamento comercial (recomendação).
 - \`decisao\`: Decisão imediata sobre canais.
 - \`proximosPassos\`: Ações operacionais com prazos.

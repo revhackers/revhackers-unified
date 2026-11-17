@@ -60,6 +60,7 @@ Definir com extrema precisão o ICP prioritário B2B e o Anti-ICP, interpretando
 - \`criteriosPriorizacaoContas\`: Critérios objetivos para ranking de contas. Faixa de faturamento aparece só como dado a confirmar em discovery, nunca como faixa inferida do porte.
 - Se a meta numérica sair por falta de fonte, o campo descreve o perfil qualitativo com evidência citada — nunca vazio, nunca só marcador em campo central. Firmografia (headcount, cidade, faixa de receita) só com evidência que declare aquele recorte.
 - \`decisao\`: Decisão sobre o ICP. Critérios com números (faixas de headcount, ticket, contas) exigem fonte para cada premissa da conta; conta derivada sem premissa evidenciada vira critério qualitativo. Em \`decisao\`, sem R$, % ou SLA exemplificativos sem fonte.
+- Regra de recorte: \`criteriosPriorizacaoContas\` e \`decisao\`: faixa de faturamento/ARR e ticket só com evidência que declare o recorte; sem fonte, critério qualitativo.
 
 ## 4. Padrão de Qualidade & Exemplo (B2B SaaS Brasil)
 - BOM: \`{"descricaoFirmografica": {"text": "Empresas de software B2B com equipes comerciais de médio porte, sediadas no Sudeste, conforme sinais do Dossiê [E1].", "baseadoEm": ["E1"]}}\`

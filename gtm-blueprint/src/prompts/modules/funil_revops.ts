@@ -60,6 +60,7 @@ Desenhar o fluxo operacional de conversão do lead até o sucesso do cliente (CS
 - Anti-exemplo real (eval): MAL \`{"text": "[N] leads por mês sem dono no CRM, com perda de R$ [X] milhões em pipeline.", "status": "VERIFICADO", "evidenceIds": ["E6"]}\` → BOM \`{"text": "Não há evidência de como os leads recebem responsável; a falta de campo obrigatório precisa ser auditada no CRM.", "status": "HIPOTESE", "evidenceIds": ["E6"], "howToValidate": "Exportar do CRM os leads sem responsável atribuído no período e calcular a proporção sobre o total."}\`
 - Nunca deixar de definir os SLAs de atendimento de leads por SDR.
 - Afirmação sobre dado ausente no CRM é HIPOTESE com howToValidate executável; evidenceIds apenas de evidência lida que mostre o contexto da afirmação; nunca afirmar conteúdo de campo que não foi lido nem trocar o sujeito do fato.
+- Nunca citar como suporte evidência que nega o fato (ex.: S1 que registra ferramenta não detectada não sustenta adoção da ferramenta). SLA de resultado em \`criterioAvancoSla\` e \`regraPassagem\` só com fonte que declare esse SLA para essa métrica.
 `;
 
 export const funilRevOpsPromptSpec: PromptSpec<FunilRevOpsInput, FunilRevOpsOutput> = {
