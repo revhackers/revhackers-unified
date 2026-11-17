@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-RevHackers is a B2B revenue consulting platform (PT-BR). React + TypeScript SPA frontend with Supabase, backed by a separate GCP Cloud Run Node.js API. Deployed to Hostinger (production) and Cloud Run (staging).
+RevHackers is a B2B revenue consulting platform (PT-BR). React + TypeScript SPA frontend with Supabase, backed by a separate GCP Cloud Run Node.js API. Production deploys to Cloudflare Workers via manual fail-closed workflow only (`.github/workflows/deploy-cloudflare.yml`); merge to `main` does NOT auto-publish. Hostinger is decommissioned — no workflow references it.
 
 ## Architecture & Data Flow
 
@@ -151,7 +151,7 @@ npm run audit:supabase   # Check Supabase dependency baseline
 - **UI framework:** React 18 with SWC compiler (`@vitejs/plugin-react-swc`).
 - **Component library:** shadcn/ui (Radix UI primitives + Tailwind). Do NOT install shadcn components from CLI — they are vendored in `src/components/ui/`.
 - **No monorepo tooling** (no Turborepo/Nx/Lerna). Root and `api/` are independent npm projects.
-- **Deployment:** Cloud Build → Docker → Cloud Run (staging). GitHub Actions → rsync over SSH to Hostinger (production, `.github/workflows/deploy-hostinger.yml`).
+- **Deployment:** manual only via `Deploy Cloudflare Workers (Revhackers Site)` (`.github/workflows/deploy-cloudflare.yml`, `workflow_dispatch` exigindo `PUBLICAR` + motivo, fail-closed). No auto-deploy on merge; validate artifact first with `Validate production artifact` (`.github/workflows/deploy.yml`, manual). Hostinger desativado.
 
 ## Testing & QA
 
