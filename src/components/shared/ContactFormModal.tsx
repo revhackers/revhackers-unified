@@ -5,6 +5,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog';
+import { useNavigate } from 'react-router-dom';
 import ContactForm from './ContactForm';
 
 interface ContactFormModalProps {
@@ -13,6 +14,13 @@ interface ContactFormModalProps {
 }
 
 const ContactFormModal = ({ isOpen, onClose }: ContactFormModalProps) => {
+    const navigate = useNavigate();
+
+    const handleSuccess = () => {
+        onClose();
+        navigate('/obrigado?from=especialista');
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto bg-white border border-zinc-200/80 p-8 sm:p-10 shadow-2xl rounded-3xl text-left">
@@ -26,7 +34,7 @@ const ContactFormModal = ({ isOpen, onClose }: ContactFormModalProps) => {
                 </DialogHeader>
 
                 <div className="text-left">
-                    <ContactForm formType="diagnosis" variant="light" onSuccess={onClose} />
+                    <ContactForm formType="diagnosis" variant="light" onSuccess={handleSuccess} />
                 </div>
             </DialogContent>
         </Dialog>

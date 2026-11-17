@@ -1,13 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { CheckCircle, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import PageLayout from '@/components/layout/PageLayout';
+import SEO from '@/components/shared/SEO';
+import { GhlBookingEmbed } from '@/components/shared/GhlBookingEmbed';
+import { GHL_CALENDARS } from '@/config/ghl';
 
 const ThankYou = () => {
+  const [searchParams] = useSearchParams();
+  const isEspecialista = searchParams.get('from') === 'especialista';
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+
   return (
     <PageLayout>
+      <SEO
+        title="Obrigado"
+        description="Confirmação do seu pedido na RevHackers."
+        noindex
+      />
       <div className="min-h-screen bg-white flex items-center justify-center py-16 px-4">
         <Card className="max-w-2xl mx-auto p-12 text-center bg-white border border-zinc-200 shadow-sm">
           {/* Success Icon */}
@@ -17,18 +35,24 @@ const ThankYou = () => {
           
           {/* Title */}
           <h1 className="text-3xl md:text-3xl font-bold text-revgreen mb-6">
-            Obrigado pelo agendamento!
+            {isEspecialista
+              ? 'Olhe seu WhatsApp — nosso especialista está te chamando agora'
+              : 'Obrigado pelo agendamento!'}
           </h1>
           
           {/* Subtitle */}
           <p className="text-xl md:text-2xl text-[#555555] leading-relaxed mb-6">
-            Sua solicitação foi registrada com sucesso. Em breve você receberá um e-mail com os próximos passos.
+            {isEspecialista
+              ? 'Recebemos sua solicitação e a conversa continua agora pelo WhatsApp, com resposta imediata.'
+              : 'Sua solicitação foi registrada com sucesso. Em breve você receberá um e-mail com os próximos passos.'}
           </p>
           
           {/* Warning/Alert */}
           <div className="mb-10">
             <p className="text-lg text-[#d51f2a] font-medium">
-              📩 Fique de olho na sua caixa de entrada (e também no spam).
+              {isEspecialista
+                ? '📱 Confira seu WhatsApp agora.'
+                : '📩 Fique de olho na sua caixa de entrada (e também no spam).'}
             </p>
           </div>
           
@@ -56,8 +80,36 @@ const ThankYou = () => {
               </Link>
             </Button>
           </div>
+
+          {isEspecialista && (
+            <div className="mt-6">
+              <Button
+                variant="ghost"
+                className="text-black hover:bg-zinc-50 underline-offset-4 hover:underline"
+                onClick={() => setIsBookingOpen(true)}
+              >
+                Prefere agendar um horário?
+              </Button>
+            </div>
+          )}
         </Card>
       </div>
+      <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
+        {isBookingOpen && (
+          <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto bg-white p-0">
+            <DialogHeader className="p-6 pb-0">
+              <DialogTitle>Agendar diagnóstico</DialogTitle>
+            </DialogHeader>
+            <div className="p-6 pt-2">
+              <GhlBookingEmbed
+                calendarId={GHL_CALENDARS.diagnostico}
+                title="Agendar diagnóstico"
+                minHeight={780}
+              />
+            </div>
+          </DialogContent>
+        )}
+      </Dialog>
     </PageLayout>
   );
 };
