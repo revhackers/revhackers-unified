@@ -30,6 +30,8 @@ Status: CAPTURA E OBRIGADO TESTADOS LOCALMENTE — 2026-11-14. Alinhamento com o
 - `GhlFormEmbed`, `GHL_FORMS`, `MaterialThankYou`, `GhlBookingEmbed` existem **nesta worktree (Materiais-Ricos)**, não na Site-e-Blog. A ponte entre as worktrees será construída na Fase 5.
 - `POST /v1/opportunities` descarta campos desconhecidos no topo do body (Zod sem `.strict`) — `diagnostic_type`, `source`, `website_url`, `linkedin`, `utm_*` precisam ir dentro de `responses` ou entrar no schema (Fase 1).
 - `analyze-diagnostic` só aceita `growth|revenue|founder` — `authority` ainda é rejeitado (Fase 1).
+- `analyzeFounderProfileAI` retorna **mock em caso de erro** — nunca apresentar como laudo real (Fase 3).
+- `impactBrl` e `Founder Index (n=184)` são números sem fonte — proibido usar como prova.
 
 ## 1. Nomes oficiais (decisão 2026-11-13)
 
