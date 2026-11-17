@@ -14,7 +14,7 @@
  *   - onSubmitted: callback fired when form emits set-sticky-contacts / _ud event
  */
 
-import { useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import { GHL_EMBED_BASE, GHL_FORM_EMBED_SCRIPT } from '@/config/ghl';
 import { getPersistedUtmParams } from '@/utils/utm';
 
@@ -53,6 +53,32 @@ export function GhlFormEmbed({
 }: GhlFormEmbedProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const listenerRef = useRef<((ev: MessageEvent) => void) | null>(null);
+  // Cortina anti-form-pelado: o estilo visual vem do CDN da GHL (cross-origin,
+  // sem inspeção possível). Só revelamos o iframe após onLoad; se estourar o
+  // timeout, caímos no fallback com retry em vez de exibir formulário quebrado.
+  const [attempt, setAttempt] = useState(0);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const timeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setStatus('loading');
+    if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+    timeoutRef.current = window.setTimeout(() => {
+      setStatus((s) => (s === 'loading' ? 'failed' : s));
+    }, 12000);
+    return () => {
+      if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+    };
+  }, [formId, paramsKey, attempt]);
+
+  const handleIframeLoad = useCallback(() => {
+    if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+    setStatus('ready');
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    setAttempt((a) => a + 1);
+  }, []);
 
   // Build the iframe src with UTM and form-specific params
   const buildIframeSrc = useCallback(() => {
@@ -160,23 +186,61 @@ export function GhlFormEmbed({
   }
 
   return (
-    <iframe
-      ref={iframeRef}
-      id={`inline-${formId}`}
-      data-form-id={formId}
-      data-layout-iframe-id={`inline-${formId}`}
-      data-layout="{'id':'INLINE'}"
-      data-trigger-type="alwaysShow"
-      data-activation-type="alwaysActivated"
-      data-deactivation-type="neverDeactivate"
-      src={iframeSrc}
-      title={title}
-      style={{
-        width: '100%',
-        border: 'none',
-        minHeight: `${minHeight}px`,
-      }}
-      scrolling="no"
-    />
+    <div
+      className="relative w-full"
+      style={{ minHeight: `${minHeight}px` }}
+      aria-busy={status === 'loading'}
+      aria-live="polite"
+    >
+      {status === 'loading' && (
+        <div className="w-full space-y-3" aria-hidden="true">
+          <div className="h-10 w-full bg-zinc-100 animate-pulse" />
+          <div className="h-10 w-full bg-zinc-100 animate-pulse" />
+          <div className="h-10 w-full bg-zinc-100 animate-pulse" />
+          <div className="h-24 w-full bg-zinc-100 animate-pulse" />
+          <div className="h-11 w-40 bg-zinc-200 animate-pulse" />
+        </div>
+      )}
+      {status === 'failed' ? (
+        <div className="w-full border border-zinc-200 bg-white p-6 text-center">
+          <p className="text-sm font-bold text-zinc-900 mb-1">
+            O formulário demorou a carregar.
+          </p>
+          <p className="text-sm text-zinc-500 mb-4">
+            Verifique sua conexão ou desative o bloqueador de anúncios para este site.
+          </p>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="inline-flex items-center justify-center bg-[#00CC6A] text-black font-extrabold uppercase tracking-wider text-sm px-6 h-11 border-2 border-zinc-900 shadow-[4px_4px_0_#18181B]"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      ) : (
+        <iframe
+          key={`${formId}-${attempt}`}
+          ref={iframeRef}
+          id={`inline-${formId}`}
+          data-form-id={formId}
+          data-layout-iframe-id={`inline-${formId}`}
+          data-layout="{'id':'INLINE'}"
+          data-trigger-type="alwaysShow"
+          data-activation-type="alwaysActivated"
+          data-deactivation-type="neverDeactivate"
+          src={iframeSrc}
+          title={title}
+          onLoad={handleIframeLoad}
+          style={{
+            width: '100%',
+            border: 'none',
+            minHeight: `${minHeight}px`,
+            visibility: status === 'ready' ? 'visible' : 'hidden',
+            position: status === 'ready' ? 'static' : 'absolute',
+          }}
+          scrolling="no"
+        />
+      )}
+    </div>
   );
 }
