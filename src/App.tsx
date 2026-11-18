@@ -11,8 +11,8 @@ import "./styles/article.css";
 
 // ─── Eager Imports (Critical Public Pages) ───────────────────────────
 import Index from "./pages/Index";
-import Blog from "./pages/Blog";
-import BlogPost from "./pages/BlogPost";
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -111,7 +111,7 @@ const REICockpit = lazy(() => import("./pages/admin/REICockpit"));
 
 const ProjectDetails = lazy(() => import("./pages/admin/ProjectDetails"));
 const AdminProjects = lazy(() => import("./pages/admin/AdminProjects"));
-import { AdminBlog } from "@/pages/admin/AdminBlog";
+const AdminBlog = lazy(() => import("@/pages/admin/AdminBlog").then(m => ({ default: m.AdminBlog })));
 const PostEditor = lazy(() => import("./components/admin/PostEditor"));
 const StrategicPlanGenerator = lazy(() => import("./pages/admin/StrategicPlanGenerator"));
 const KnowledgeDocument = lazy(() => import("./pages/admin/KnowledgeDocument"));

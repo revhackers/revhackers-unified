@@ -347,6 +347,9 @@ const FounderVideoWidget = () => {
                 <img
                   src="/uploads/giulliano-linkedin-profile.png"
                   alt="Giulliano Alves"
+                  width={44}
+                  height={44}
+                  decoding="async"
                   className="w-full h-full object-cover object-[center_15%]"
                 />
               </div>
@@ -378,6 +381,9 @@ const FounderVideoWidget = () => {
                   <img
                     src="/uploads/giulliano-linkedin-profile.png"
                     alt="Giulliano Alves"
+                    width={44}
+                    height={44}
+                    decoding="async"
                     className="w-full h-full object-cover object-[center_15%]"
                   />
                 </div>
