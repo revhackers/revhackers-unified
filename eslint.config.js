@@ -4,7 +4,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default tsPlugin.config(
-  { ignores: ['dist', 'node_modules', 'supabase/functions', 'experiments/**', 'docs/**'] },
+  { ignores: ['dist', 'node_modules', 'experiments/**', 'docs/**'] },
   {
     extends: [js.configs.recommended, ...tsPlugin.configs.recommended],
     files: ['**/*.{ts,tsx}'],

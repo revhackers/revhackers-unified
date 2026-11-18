@@ -155,7 +155,7 @@ const Materiais = () => {
         </div>
       </section>
 
-      {/* 3. CTA Footer — dois caminhos honestos: implementar sozinho ou auditar */}
+      {/* 3. CTA Footer, dois caminhos honestos: implementar sozinho ou auditar */}
       <div className="py-20 bg-white border-t border-zinc-200/80">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">

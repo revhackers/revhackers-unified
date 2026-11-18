@@ -242,7 +242,7 @@ const ServicosDetalhe = () => {
         </div>
       </section>
 
-      {/* 2. O QUE FAZEMOS (What We Do) — Fundo 100% Branco Puro */}
+      {/* 2. O QUE FAZEMOS (What We Do), Fundo 100% Branco Puro */}
       <section className="py-20 bg-white text-zinc-900 border-b border-zinc-200/80">
         <div className="max-w-6xl mx-auto px-6 space-y-12">
           <div className="max-w-2xl mx-auto text-center space-y-2">
@@ -279,7 +279,7 @@ const ServicosDetalhe = () => {
         </div>
       </section>
 
-      {/* 3. COMO FUNCIONA (How It Works) — Timeline Horizontal 1px no Fundo Branco */}
+      {/* 3. COMO FUNCIONA (How It Works), Timeline Horizontal 1px no Fundo Branco */}
       <section className="py-20 bg-white text-zinc-900 border-b border-zinc-200/80">
         <div className="max-w-6xl mx-auto px-6 space-y-12">
           <div className="max-w-2xl mx-auto text-center space-y-2">
@@ -309,7 +309,7 @@ const ServicosDetalhe = () => {
         </div>
       </section>
 
-      {/* 4. RESULTADOS (Results) — Fundo 100% Branco Puro com Números Pretos */}
+      {/* 4. RESULTADOS (Results), Fundo 100% Branco Puro com Números Pretos */}
       <section className="py-20 bg-white text-zinc-900 border-b border-zinc-200/80">
         <div className="max-w-5xl mx-auto px-6 space-y-10">
           <div className="max-w-2xl mx-auto text-center space-y-2">
@@ -336,7 +336,7 @@ const ServicosDetalhe = () => {
         </div>
       </section>
 
-      {/* 5. CTA FINAL — Fundo Branco Puro */}
+      {/* 5. CTA FINAL, Fundo Branco Puro */}
       <section className="py-20 bg-white text-zinc-900">
         <div className="max-w-3xl mx-auto px-6 text-center space-y-4">
           <h2 className="text-zinc-900 text-2xl sm:text-3xl font-extrabold tracking-tight">

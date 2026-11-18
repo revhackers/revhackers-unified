@@ -165,7 +165,6 @@ const FounderScore = () => {
         variant={step === 'results' ? 'dark' : 'light'}
         centered={step === 'results'}
         hideHeader={step === 'results'}
-        headerVariant="default"
       >
         {step === 'results' && <div className="fixed inset-0 bg-white -z-50 pointer-events-none" />}
         {step === 'questions' && (

@@ -15,7 +15,7 @@ const CasesSection = () => {
   return (
     <Section variant="light" className="bg-white relative py-20 border-t border-zinc-200/80">
       <div className="max-w-5xl mx-auto px-6">
-        {/* Header — Alinhado com o Padrão Ouro RevHackers (Sem verde no fundo claro) */}
+        {/* Header, Alinhado com o Padrão Ouro RevHackers (Sem verde no fundo claro) */}
         <div className="mb-12 max-w-3xl mx-auto text-center">
           <motion.h2
             initial={{ opacity: 0, y: 16 }}
@@ -36,7 +36,7 @@ const CasesSection = () => {
           </motion.p>
         </div>
 
-        {/* Grid de Cases — Cards SaaS limpos em Padrão Editorial */}
+        {/* Grid de Cases, Cards SaaS limpos em Padrão Editorial */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {cases.map((item, index) => {
               const anyItem = item as any;
@@ -93,7 +93,7 @@ const CasesSection = () => {
             })}
           </div>
 
-        {/* Global CTA — Botão Limpo SaaS */}
+        {/* Global CTA, Botão Limpo SaaS */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}

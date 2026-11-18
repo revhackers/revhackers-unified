@@ -1,6 +1,6 @@
 /**
  * cruxApi - Benchmark de CrUX (Chrome UX Report) via GCP AI handler
- * (Wave 1.3 - migrado de supabase.functions.invoke para invokeAi).
+ * (Wave 1.3 - usa invokeAi).
  */
 
 import { invokeAi } from '@/hooks/useAiInvoke';

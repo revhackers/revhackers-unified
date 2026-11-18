@@ -159,7 +159,7 @@ const Cases = () => {
         </div>
       </section>
 
-      {/* CTA Section — Fundo 100% Branco Puro */}
+      {/* CTA Section, Fundo 100% Branco Puro */}
       <section className="py-20 sm:py-24 bg-white border-t border-zinc-200/80">
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">

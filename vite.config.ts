@@ -38,10 +38,8 @@ export default defineConfig(({ mode }) => {
             if (/node_modules\/(clsx|tailwind-merge|class-variance-authority)\//.test(id)) return 'vendor-react';
             if (/node_modules\/(fast-equals|tslib)\//.test(id)) return 'vendor-react';
             if (/node_modules\/(react|react-dom|react-router-dom|react-router|scheduler)\//.test(id)) return 'vendor-react';
-            if (id.includes('@supabase/supabase-js')) return 'vendor-supabase';
             if (id.includes('@radix-ui/')) return 'vendor-ui';
             if (id.includes('recharts')) return 'vendor-charts';
-            if (id.includes('@tiptap/')) return 'vendor-editor';
             if (id.includes('framer-motion')) return 'vendor-motion';
             return undefined;
           },

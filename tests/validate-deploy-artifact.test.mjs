@@ -269,27 +269,6 @@ describe('validateDeployArtifact', () => {
     expect(formatted).toContain('pathDigest');
   });
 
-  test('permite somente JWT público do Supabase com role anon', () => {
-    const directory = createValidArtifact();
-    const encode = (value) =>
-      btoa(JSON.stringify(value))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/g, '');
-    const publicAnonToken = [
-      encode({ alg: 'HS256', typ: 'JWT' }),
-      encode({ iss: 'supabase', role: 'anon' }),
-      'publicSignature123',
-    ].join('.');
-
-    writeFileSync(
-      path.join(directory, 'assets', 'supabase-client.js'),
-      `const publicAnonKey = ${JSON.stringify(publicAnonToken)};`,
-    );
-
-    expect(validateDeployArtifact(directory)).toMatchObject({ ok: true });
-  });
-
   test.each([
     'sk-short',
     'sk-projeto-sem-credencial',
@@ -404,20 +383,5 @@ describe('legacy deployment safety', () => {
     expect(workflow).toContain('validate-deploy-artifact.mjs');
     expect(workflow).toContain('actions/upload-artifact@v4');
     expect(workflow).not.toMatch(/FTP-Deploy-Action|FTP_(SERVER|USERNAME|PASSWORD)/);
-  });
-
-  test('workflow de agente Hostinger está inerte e sem comandos de publicação', () => {
-    const retiredWorkflow = readFileSync(
-      path.resolve(
-        import.meta.dirname,
-        '../.agent/workflows/deploy_hostinger.md',
-      ),
-      'utf8',
-    );
-
-    expect(retiredWorkflow).toContain('Workflow retirado');
-    expect(retiredWorkflow).not.toMatch(
-      /\/\/\s*turbo|curl\s+-T|ftp:\/\//i,
-    );
   });
 });

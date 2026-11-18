@@ -149,7 +149,6 @@ const RevenueScore = () => {
  variant={step === 'results' ? 'dark' : 'light'}
  centered={step === 'results'}
  hideHeader={step === 'results'}
- headerVariant="default"
  >
  {/* BACKDROP DE SEGURANÇA */}
  {step === 'results' && <div className="fixed inset-0 bg-white -z-50 pointer-events-none" />}
@@ -511,7 +510,7 @@ const RevenueScore = () => {
 
  <div className="pt-8 text-center">
  <span className="text-xs font-sans font-bold text-zinc-400">
- RevHackers — GTM Engineering
+ RevHackers, GTM Engineering
  </span>
  </div>
  </div>

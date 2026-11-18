@@ -10,15 +10,6 @@ persistUtmParams();
 // Crash Protection: Catch unhandled auth/chunk errors that might cause White Screen
 window.addEventListener('unhandledrejection', (event) => {
     const message = event.reason?.message || event.reason?.toString() || '';
-    if (message.includes('Invalid Refresh Token') || message.includes('Refresh Token Not Found')) {
-        console.warn('⚠️ [CRASH PREVENTED] Suppressing fatal Supabase Auth error:', message);
-        event.preventDefault();
-        try {
-            localStorage.removeItem('sb-eqspbruarsdybpfeijnf-auth-token');
-            localStorage.removeItem('supabase.auth.token');
-        } catch (e) {}
-    }
-
     if (message.includes("Failed to fetch dynamically imported module") || message.includes("Unexpected token '<'")) {
         event.preventDefault();
         const lastReload = parseInt(sessionStorage.getItem('rev_chunk_reload') || '0', 10);

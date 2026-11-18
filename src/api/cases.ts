@@ -1,8 +1,20 @@
-
-import type { Database } from "@/integrations/supabase/types";
 import { casesData } from '@/data/cases';
 
-export type CaseStudy = Database['public']['Tables']['cases']['Row'];
+export interface CaseStudy {
+    id: string;
+    title: string;
+    client_name: string;
+    slug: string;
+    case_category: string;
+    preview_description: string;
+    client_logo: string;
+    published: boolean;
+    featured: boolean;
+    created_at: string;
+    metrics: { value: string; label: string }[];
+    logoScale?: number;
+    logo?: string;
+}
 
 const CASE_OVERRIDES: Record<string, { logo?: string; scale?: number }> = {
     'Heineken': {
@@ -87,7 +99,7 @@ const CASE_OVERRIDES: Record<string, { logo?: string; scale?: number }> = {
     }
 };
 
-const applyOverrides = (c: CaseStudy): CaseStudy & { logoScale?: number } => {
+const applyOverrides = (c: CaseStudy): CaseStudy => {
     const title = c.client_name || c.title || '';
     // Check exact title or partial match for flexibility
     const overrideKey = Object.keys(CASE_OVERRIDES).find(key => title.includes(key)) || title;
@@ -97,14 +109,13 @@ const applyOverrides = (c: CaseStudy): CaseStudy & { logoScale?: number } => {
         return {
             ...c,
             client_logo: override.logo || c.client_logo,
-            // @ts-ignore - Injecting runtime property for frontend use
             logoScale: override.scale || 1.0
         };
     }
     return c;
 };
 
-const ALL_LOCAL_CASES: any[] = Object.entries(casesData).map(([slugKey, c]) => ({
+const ALL_LOCAL_CASES: CaseStudy[] = Object.entries(casesData).map(([slugKey, c]) => ({
     id: `case-${slugKey}`,
     title: c.title,
     client_name: c.title,

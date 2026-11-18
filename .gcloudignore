@@ -11,12 +11,10 @@ node_modules
 .env
 .env.*
 !.env.example
-/supabase/.temp
 /backups
 /reports
 /experiments
 /public
 /src
-/supabase
 # Cloud Build da API precisa somente destes arquivos na raiz/api:
 # package*.json (toolchain TypeScript) e api/** (source/Dockerfile/locks).

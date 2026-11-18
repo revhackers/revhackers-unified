@@ -31,7 +31,7 @@ const ContactFormSection = () => {
               Desenhamos arquiteturas comerciais pesadas para empresas que buscam dominar o mercado com inteligência e precisão.
             </p>
 
-            {/* Steps — Lista limpa com marcadores suaves */}
+            {/* Steps, Lista limpa com marcadores suaves */}
             <div className="space-y-5 pt-4 border-t border-zinc-900">
               {[
                 { title: 'Diagnóstico Técnico', desc: 'Auditoria completa de tracking, CRM e atribuição.' },

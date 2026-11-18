@@ -192,25 +192,8 @@ function containsSecretShape(content) {
     return true;
   }
 
-  for (const match of text.matchAll(JWT_SHAPE)) {
-    const [, payloadSegment] = match[0].split('.');
-    try {
-      const normalizedPayload = payloadSegment
-        .replace(/-/g, '+')
-        .replace(/_/g, '/')
-        .padEnd(Math.ceil(payloadSegment.length / 4) * 4, '=');
-      const payload = JSON.parse(atob(normalizedPayload));
-      const isPublicSupabaseAnon =
-        payload &&
-        payload.iss === 'supabase' &&
-        payload.role === 'anon';
-
-      if (!isPublicSupabaseAnon) {
-        return true;
-      }
-    } catch {
-      return true;
-    }
+  if ([...text.matchAll(JWT_SHAPE)].length > 0) {
+    return true;
   }
 
   return false;

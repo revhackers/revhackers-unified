@@ -1,13 +1,13 @@
 # RevHackers
 
-Repositório principal da RevHackers. A aplicação atual reúne o site institucional,
-blog, materiais, cases, administração, REI e o hub de clientes.
+Repositório principal da RevHackers. A aplicação atual é o site público: institucional,
+blog, materiais, cases e diagnósticos. Não há login, painel nem banco de dados.
 
 ## Estado atual
 
 - Frontend: React, TypeScript e Vite.
-- Dados, autenticação e funções: Supabase (infraestrutura legada em migração futura).
-- Produção atual: Hostinger.
+- Dados: conteúdo estático no repositório (blog, cases, materiais). Sem backend próprio.
+- Produção atual: Cloudflare Workers (deploy manual).
 - Google Cloud: planejado, ainda não implantado para este projeto.
 
 ## Formulários e CRM
@@ -20,7 +20,6 @@ blog, materiais, cases, administração, REI e o hub de clientes.
 
 ```text
 src/                         aplicação web principal
-supabase/                    migrations e edge functions legadas
 public/                      assets públicos
 scripts/                     build, prerender, deploy e manutenção
 tests/                       testes automatizados

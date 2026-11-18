@@ -15,22 +15,22 @@ export const GHL_FORM_EMBED_SCRIPT = `${GHL_EMBED_BASE}/js/form_embed.js`;
  * Form IDs from S7HE location.
  */
 export const GHL_FORMS = {
-  /** RH · Materiais Ricos — form for downloading rich materials */
+  /** RH · Materiais Ricos, form for downloading rich materials */
   materiais: 'mJMtcwBd46xpqm9c2ABu',
   
-  /** RH · Diagnóstico — form for self-diagnostic */
+  /** RH · Diagnóstico, form for self-diagnostic */
   diagnostico: '6K64dkab3k4kuedDiFaC',
   
-  /** RH · Contato — form for general contact */
+  /** RH · Contato, form for general contact */
   contato: 'iNOZntXTFX9wJPeu53YM',
   
-  /** RH · Newsletter — form for newsletter subscription */
+  /** RH · Newsletter, form for newsletter subscription */
   newsletter: 'mgZCl7IRYbpcLeoAoTPG',
 
-  /** RH · Score — hidden form for capturing diagnostic results */
+  /** RH · Score, hidden form for capturing diagnostic results */
   score: 'CDRZEJMYk68u6g4qIfJW',
   
-  /** RH · Calculadora — hidden form for capturing calculator results */
+  /** RH · Calculadora, hidden form for capturing calculator results */
   calculadora: 'JJEKvTdL9Sm6JFdirbb0',
 } as const;
 

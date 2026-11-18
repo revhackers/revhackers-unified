@@ -13,33 +13,24 @@ const CasesDetalhe = () => {
   const { slug } = useParams<{ slug: string }>();
 
   const caseRow = slug ? getCaseBySlug(slug) : null;
-  const localCase = slug && Object.hasOwn(casesData, slug) ? casesData[slug as keyof typeof casesData] : undefined;
+  const localCase = slug && Object.prototype.hasOwnProperty.call(casesData, slug) ? casesData[slug as keyof typeof casesData] : undefined;
 
-  const rawTitle = caseRow?.client_name || caseRow?.title || localCase?.title || 'Case de Sucesso';
-  const challengeText = (caseRow?.challenge && !caseRow.challenge.includes('não informado'))
-    ? caseRow.challenge
-    : (localCase?.challenge || 'A empresa necessitava de estruturação técnica de processos comerciais, inteligência de dados e otimização da máquina de vendas para acelerar o crescimento B2B.');
-
-  const solutionText = (caseRow?.solution && !caseRow.solution.includes('não informada'))
-    ? caseRow.solution
-    : (localCase?.solution || 'Implementamos uma arquitetura completa de Revenue Operations, parametrização de CRM com automações operacionais e qualificação por IA.');
-
-  const caseData = (caseRow || localCase) ? {
-    title: rawTitle,
-    category: caseRow?.case_category || localCase?.category || 'Go-To-Market',
-    logo: caseRow?.client_logo || localCase?.logo || '',
-    challenge: challengeText,
-    solution: solutionText,
-    results: localCase?.results || (typeof caseRow?.results === 'string' ? caseRow.results.split('\n') : (Array.isArray(caseRow?.results) ? caseRow.results : [])),
-    metrics: (localCase?.metrics || caseRow?.metrics || []) as any[],
-    quote: localCase?.quote || caseRow?.testimonial_quote || '',
-    author: localCase?.author || caseRow?.testimonial_author || '',
-    role: localCase?.role || caseRow?.testimonial_role || '',
-    authorImage: localCase?.authorImage || caseRow?.testimonial_avatar || '',
-    techStack: localCase?.techStack || (Array.isArray((caseRow as any)?.tech_stack) ? (caseRow as any).tech_stack : []) || ['HubSpot CRM', 'RevOps 360º', 'Growth IA'],
-    preview_description: localCase?.preview_description || caseRow?.preview_description || '',
-    period: localCase?.period,
-    source: localCase?.source,
+  const caseData = localCase ? {
+    title: caseRow?.client_name || localCase.title,
+    category: localCase.category || 'Go-To-Market',
+    logo: caseRow?.client_logo || localCase.logo || '',
+    challenge: localCase.challenge,
+    solution: localCase.solution,
+    results: localCase.results,
+    metrics: localCase.metrics,
+    quote: localCase.quote,
+    author: localCase.author,
+    role: localCase.role,
+    authorImage: localCase.authorImage || '',
+    techStack: localCase.techStack || [],
+    preview_description: localCase.preview_description || '',
+    period: localCase.period,
+    source: localCase.source,
   } : null;
 
   useEffect(() => {
@@ -62,7 +53,7 @@ const CasesDetalhe = () => {
         canonical={`https://revhackers.com.br/cases/${slug}`}
       />
 
-      {/* Hero Section — Fundo Black Purificado (EXACT HOMEPAGE HERO BENCHMARK) */}
+      {/* Hero Section, Fundo Black Purificado (EXACT HOMEPAGE HERO BENCHMARK) */}
       <section className="relative min-h-[65vh] flex flex-col justify-center items-center overflow-hidden pt-28 pb-16 bg-black border-b border-zinc-900">
         <div className="relative z-10 w-full max-w-4xl mx-auto px-6 flex flex-col items-center text-center">
           
@@ -96,7 +87,7 @@ const CasesDetalhe = () => {
         </div>
       </section>
 
-      {/* Content Section — Fundo 100% Branco Puro */}
+      {/* Content Section, Fundo 100% Branco Puro */}
       <section className="py-20 bg-white border-b border-zinc-200/80 text-zinc-900">
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">

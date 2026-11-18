@@ -1,11 +1,8 @@
 /**
- * Adapter GCP para handlers AI (Wave 1 - migracao Supabase->GCP).
+ * Adapter GCP para handlers AI.
  *
- * Substitui `supabase.functions.invoke('X', { body })` por chamadas
- * autenticadas para a API GCP. Mantem o mesmo shape de retorno onde
- * possivel para minimizar mudancas nos consumers.
- *
- * Ref: docs/architecture/gcp-migration/ai-supabase-to-gcp-migration.md
+ * Chamadas autenticadas para a API GCP. Legado: o build de producao nao
+ * define VITE_GCP_*, entao este adapter fica inerte.
  */
 
 import { authenticatedRequest } from './_base';
@@ -55,7 +52,7 @@ async function invoke<T>(
 export const aiGcpAdapter = {
   invoke,
 
-  // ---- Helpers especificos por handler (mantem shape do Supabase) ----
+  // ---- Helpers especificos por handler ----
 
   analyzeDiagnostic: <T = unknown>(input: { type: 'growth' | 'revenue' | 'founder'; answers: number[]; totalScore?: number; linkedinUrl?: string }, options?: InvokeOptions) =>
     invoke<T>('analyze-diagnostic', input, options),

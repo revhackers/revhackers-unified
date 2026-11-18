@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const CHARS = '!<>-_\\\\/[]{}—=+*^?#________';
+const CHARS = '!<>-_\\\\/[]{}-=+*^?#________';
 
 interface ScrambleTextProps {
   /** O texto a ser revelado via decodificação */

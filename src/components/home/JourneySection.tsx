@@ -38,7 +38,7 @@ const JourneySection = () => {
           </p>
         </div>
 
-        {/* Pipeline Horizontal de 1px — Padrão RevHackers */}
+        {/* Pipeline Horizontal de 1px, Padrão RevHackers */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
           {journeySteps.map((item, index) => (
             <div

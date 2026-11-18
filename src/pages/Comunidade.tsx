@@ -34,7 +34,7 @@ const Comunidade = () => {
         subtitle="Rede fechada de diretores, founders e líderes de RevOps com troca direta de playbooks e benchmarks."
       />
 
-      {/* Benefits Grid — Fundo 100% Branco Puro (Sem Verde no Branco) */}
+      {/* Benefits Grid, Fundo 100% Branco Puro (Sem Verde no Branco) */}
       <section className="py-20 bg-white text-zinc-900 border-b border-zinc-200/80">
         <div className="max-w-6xl mx-auto px-6 space-y-12">
           
