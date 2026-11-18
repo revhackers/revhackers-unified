@@ -9,9 +9,9 @@ import { buildBookingUrl } from '@/utils/utm';
 const criteria = [
   {
     label: 'Tempo até primeiros resultados',
-    revhackers: '7–30 dias',
-    interno: '90–180 dias',
-    agencia: '60–120 dias',
+    revhackers: '7 a 30 dias',
+    interno: '90 a 180 dias',
+    agencia: '60 a 120 dias',
     revhackersGood: true,
     internoGood: false,
     agenciaGood: false,
@@ -19,8 +19,8 @@ const criteria = [
   {
     label: 'Custo mensal estimado',
     revhackers: 'Engineering-level ROI',
-    interno: 'R$25k–60k/mês em salários',
-    agencia: 'R$8k–20k + fee variável',
+    interno: 'R$25k a 60k/mês em salários',
+    agencia: 'R$8k a 20k + fee variável',
     revhackersGood: true,
     internoGood: false,
     agenciaGood: null, // neutro
@@ -198,7 +198,7 @@ const ComparisonSection = () => {
         {/* CTA abaixo da tabela */}
         <div className="mt-14 text-center">
           <p className="text-sm text-zinc-500 mb-6 font-medium max-w-lg mx-auto">
-            Veja quanto sua operação está perdendo agora — antes de contratar qualquer pessoa.
+            Veja quanto sua operação está perdendo agora, antes de contratar qualquer pessoa.
           </p>
           <Button asChild size="lg" className="bg-zinc-950 text-white hover:bg-zinc-800 font-bold text-sm h-12 px-8 rounded-xl transition-all shadow-xs">
             <Link to={buildBookingUrl('homepage', 'comparison_cta')}>

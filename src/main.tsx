@@ -54,15 +54,10 @@ function mountApp() {
     } catch (err: any) {
         console.error("Fatal Root Mount Error:", err);
         rootElement.innerHTML = `
-            <div style="min-height: 100vh; background: #09090b; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: system-ui, sans-serif; padding: 20px; text-align: center;">
-                <div style="width: 48px; height: 48px; background: rgba(0, 204, 106, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid #00CC6A;">
-                    <span style="color: #00CC6A; font-weight: bold; font-size: 20px;">✨</span>
-                </div>
-                <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">RevHackers Platform</h2>
-                <p style="font-size: 13px; color: #a1a1aa; margin-bottom: 24px; max-width: 400px;">Atualização de sistema concluída. Clique abaixo para carregar o painel.</p>
-                <button onclick="window.location.reload()" style="background: #00CC6A; color: black; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer;">
-                    Entrar no Painel
-                </button>
+            <div style="min-height: 100vh; background: #09090b; color: #fafafa; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: system-ui, sans-serif; padding: 20px; text-align: center;">
+                <h1 style="font-size: 20px; font-weight: 700; margin: 0 0 8px;">Não foi possível carregar a página.</h1>
+                <p style="font-size: 14px; color: #a1a1aa; margin: 0 0 24px; max-width: 400px;">Atualize para tentar novamente.</p>
+                <button type="button" onclick="window.location.reload()" style="background: #00CC6A; color: #000; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer;">Atualizar</button>
             </div>
         `;
     }
