@@ -1,129 +1,69 @@
-
 import { useEffect, useState } from 'react';
-import { List, ChevronDown, ChevronUp } from 'lucide-react';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import type { PostHeading } from '@/lib/blog/parse';
 import { cn } from '@/lib/utils';
 
 interface TableOfContentsProps {
-  containerRef: React.RefObject<HTMLElement>;
+  headings: PostHeading[];
+  /** `sidebar`: coluna fixa a partir de 1280 px. `inline`: bloco recolhido abaixo disso. */
+  variant: 'sidebar' | 'inline';
 }
 
-interface TocItem {
-  id: string;
-  text: string;
-  level: number;
-}
-
-const TableOfContents = ({ containerRef }: TableOfContentsProps) => {
-  const [headings, setHeadings] = useState<TocItem[]>([]);
-  const [activeId, setActiveId] = useState<string>('');
-
-  // Extrair os cabeçalhos do conteúdo do artigo
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const generateId = (text: string) => {
-      return text
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '');
-    };
-
-    const elements = containerRef.current.querySelectorAll('h2, h3');
-    const items: TocItem[] = Array.from(elements).map((el) => {
-      const text = el.textContent || '';
-      if (!el.id) {
-        el.id = generateId(text);
-      }
-      // Add scroll margin to prevent header overlap
-      (el as HTMLElement).style.scrollMarginTop = '120px';
-
-      return {
-        id: el.id,
-        text: text,
-        level: parseInt(el.tagName.substring(1), 10),
-      };
-    });
-
-    setHeadings(items);
-
-    if (items.length > 0) {
-      setActiveId(items[0].id);
-    }
-  }, [containerRef]);
+const TableOfContents = ({ headings, variant }: TableOfContentsProps) => {
+  const [activeId, setActiveId] = useState('');
 
   useEffect(() => {
-    if (headings.length === 0) return;
-
+    if (variant !== 'sidebar' || headings.length < 3) return;
+    const elements = headings.map((h) => document.getElementById(h.id)).filter((el): el is HTMLElement => !!el);
+    if (elements.length === 0) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id);
-          }
-        });
+        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActiveId(visible[0].target.id);
       },
-      { rootMargin: '0px 0px -80% 0px', threshold: 0.1 }
+      { rootMargin: '-96px 0px -70% 0px' },
     );
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [headings, variant]);
 
-    headings.forEach((heading) => {
-      const element = document.getElementById(heading.id);
-      if (element) observer.observe(element);
-    });
+  if (headings.length < 3) return null;
 
-    return () => {
-      headings.forEach((heading) => {
-        const element = document.getElementById(heading.id);
-        if (element) observer.unobserve(element);
-      });
-    };
-  }, [headings]);
-
-  if (headings.length === 0) return null;
+  if (variant === 'inline') {
+    return (
+      <details className="my-6 border-y border-zinc-200 py-3 xl:hidden">
+        <summary className="cursor-pointer font-mono text-xs uppercase text-zinc-500">Neste artigo</summary>
+        <ul className="mt-3 space-y-2">
+          {headings.map((h) => (
+            <li key={h.id}>
+              <a href={'#' + h.id} className="text-sm text-zinc-600 hover:text-zinc-950">
+                {h.text}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </details>
+    );
+  }
 
   return (
-    <div className="sticky top-32 mb-8 hidden lg:block pr-8">
-      <nav className="toc-nav relative">
-        {/* Continuous Line */}
-        <div className="absolute left-0 top-0 bottom-0 w-px bg-zinc-100 z-0"></div>
-
-        <ul className="space-y-0 relative z-10 w-full">
-          {headings.map((heading, index) => {
-            const isActive = activeId === heading.id;
-            return (
-              <li
-                key={`${heading.id}-${index}`}
-                className={cn(
-                  "relative transition-all duration-300",
-                  heading.level === 3 ? "pl-6" : ""
-                )}
-              >
-                <a
-                  href={`#${heading.id}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document.getElementById(heading.id)?.scrollIntoView({
-                      behavior: 'smooth',
-                      block: 'start'
-                    });
-                  }}
-                  className={cn(
-                    "block py-3 pl-6 border-l-2 text-xs leading-relaxed transition-all duration-300",
-                    isActive
-                      ? "border-revgreen font-bold text-black bg-revgreen/5"
-                      : "border-transparent text-zinc-400 hover:text-zinc-600 hover:border-zinc-200"
-                  )}
-                >
-                  {heading.text}
-                </a>
-              </li>
-            )
-          })}
-        </ul>
-      </nav>
-    </div>
+    <nav aria-label="Neste artigo" className="sticky top-32 hidden w-52 xl:block">
+      <p className="font-mono text-xs uppercase text-zinc-500">Neste artigo</p>
+      <ul className="mt-3 space-y-2">
+        {headings.map((h) => (
+          <li key={h.id}>
+            <a
+              href={'#' + h.id}
+              className={cn(
+                'block text-sm',
+                activeId === h.id ? 'border-l-2 border-[#00CC6A] pl-3 text-zinc-950' : 'text-zinc-500 hover:text-zinc-950',
+              )}
+            >
+              {h.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 };
 

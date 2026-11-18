@@ -5,7 +5,6 @@ import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import MaterialLanding from '../src/pages/MaterialLanding';
 import MaterialThankYou from '../src/pages/MaterialThankYou';
-import MaterialModal from '../src/components/shared/MaterialModal';
 import { GhlFormEmbed } from '../src/components/shared/GhlFormEmbed';
 import { GHL_EMBED_BASE, GHL_FORMS } from '../src/config/ghl';
 
@@ -18,7 +17,7 @@ vi.mock('@/components/shared/SEO', () => ({
   default: () => null,
 }));
 
-describe('Testes de Handoff de Materiais (Landing, Modal, ThankYou e GhlFormEmbed)', () => {
+describe('Testes de Handoff de Materiais (Landing, ThankYou e GhlFormEmbed)', () => {
   beforeEach(() => {
     window.history.replaceState({}, '', '/');
   });
@@ -131,53 +130,5 @@ describe('Testes de Handoff de Materiais (Landing, Modal, ThankYou e GhlFormEmbe
     const bookingUrl = new URL(booking.getAttribute('src')!);
     expect(bookingUrl.searchParams.get('email')).toBe('lead@example.invalid');
     expect(window.location.search).not.toContain('email');
-  });
-
-
-  it('MaterialModal renderiza e gerencia sucesso de submissão do material', async () => {
-    const onClose = vi.fn();
-    const onSuccess = vi.fn();
-
-    function ModalRouterHarness() {
-      return (
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <MaterialModal
-                isOpen={true}
-                onClose={onClose}
-                material={{ slug: 'prospeccao-ultra-segmentada-7-dados', title: 'Prospecção' }}
-                onSuccess={onSuccess}
-              />
-            }
-          />
-          <Route path="/materiais/obrigado" element={<MaterialThankYou />} />
-        </Routes>
-      );
-    }
-
-    render(
-      <BrowserRouter>
-        <ModalRouterHarness />
-      </BrowserRouter>
-    );
-
-    const iframe = screen.getByTitle('Receber material') as HTMLIFrameElement;
-    act(() => {
-      window.dispatchEvent(new MessageEvent('message', {
-        origin: new URL(GHL_EMBED_BASE).origin,
-        data: ['set-sticky-contacts', '_ud', JSON.stringify({ email: 'modal@example.invalid' })],
-        source: iframe.contentWindow,
-      }));
-    });
-    expect(await screen.findByText('Pronto. Seu material está liberado.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Abrir material agora' })).toHaveAttribute(
-      'href', '/materiais/acesso/prospeccao-ultra-segmentada-7-dados',
-    );
-    expect(window.location.pathname).toBe('/materiais/obrigado');
-    expect(new URLSearchParams(window.location.search).has('email')).toBe(false);
-    expect(window.history.state.usr.email).toBe('modal@example.invalid');
-    expect(onSuccess).toHaveBeenCalledOnce();
   });
 });

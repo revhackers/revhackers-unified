@@ -12,7 +12,7 @@ RevHackers Site-e-Blog é o site público da consultoria RevHackers (PT-BR): SPA
 2. **Components** (`src/components/`): organizados por domínio (home/, blog/, cases/, scores/, shared/, ui/).
 3. **State**: TanStack Query para estado de servidor; hooks em `src/hooks/`.
 4. **API layer** (`src/api/`): leitura de dados locais (`cases.ts`) e adapters GCP inertes.
-5. **Domain engines** (`src/lib/`): lógica pura sem React (CNPJ).
+5. **Domain engines** (`src/lib/`): lógica pura sem React (CNPJ, leitura do blog).
 6. **Types** (`src/types/`): interfaces de domínio.
 7. **Config** (`src/config/`): constantes, dicionário de rotas, IDs dos formulários do Funnels.
 
@@ -24,13 +24,30 @@ RevHackers Site-e-Blog é o site público da consultoria RevHackers (PT-BR): SPA
 | `src/components/ui/` | Primitivos shadcn/ui |
 | `src/components/shared/` | Transversais: SEO (Helmet + Schema.org), ErrorBoundary, ChatbotManager, GhlFormEmbed |
 | `src/api/adapters/` | Adapters GCP legados (`*-gcp.ts`) com wrapper `_base.ts` |
-| `src/lib/` | Engines de domínio (cnpjEnrichmentEngine) |
+| `src/lib/` | Engines de domínio (cnpjEnrichmentEngine) e `blog/` (parse e leitura dos posts) |
 | `src/hooks/` | Hooks (useAiInvoke, use-toast) |
-| `src/data/` | Dados estáticos: blogData.ts, materialsData, cases/ |
+| `src/data/` | Dados estáticos: authors.ts, materialsData, cases/ |
 | `api/` | API GCP legada (fora do runtime de produção) |
 | `scripts/` | Utilitários de build, OG, validação de artefato |
 | `tests/` | Testes Vitest (`api/`, `*.test.mjs`, `*.test.tsx`) + Playwright (`*.spec.ts`) |
 | `docs/` | Docs estratégicos em PT-BR, auditorias, arquitetura |
+
+## Blog
+
+Cada post é um arquivo Markdown em `src/content/blog/<slug>.md`; o nome do arquivo é o slug e a URL é `/blog/<slug>`. Arquivos que começam com `_` são ignorados (`_modelo.md` é o modelo). Não há banco, painel nem login.
+
+**Contrato do arquivo:**
+- Cabeçalho entre duas linhas `---`, uma chave por linha no formato `chave: "valor"` (string JSON, sempre entre aspas duplas).
+- Obrigatórias: `title`, `description`, `category`, `author`, `date` (`AAAA-MM-DD`). Opcionais: `updated` (`AAAA-MM-DD`), `cover` (começa com `/images/blog/`), `cover_alt`, `cover_credit` (as duas obrigatórias se houver `cover`).
+- `category` é uma de: Vendas, Customer Success, RevOps, Growth, Marketing, Dados, Automação e IA, CRM e ferramentas, Estratégia. `author` é um id de `src/data/authors.ts`.
+- Corpo em Markdown GFM, sem `#` de nível 1 e sem HTML. Tempo de leitura e sumário (títulos `##`) são calculados no build, nunca digitados.
+- O índice é gerado por `build/blogIndexPlugin.ts` dentro de `npx vite build` (módulo virtual `virtual:blog-index` e `blog-index.json`); erro de cabeçalho interrompe o build. `scripts/generate-page-og-html.mjs` gera um HTML por post (`dist/blog/<slug>.html`) e acrescenta os posts ao `sitemap.xml`.
+
+**Para publicar:** criar `src/content/blog/<slug>.md` a partir de `_modelo.md`, abrir PR, fundir e disparar o deploy.
+
+**Capa:** só com print ou foto real, em `public/images/blog/<slug>/`, `.webp` de até 200 KB, com `cover_alt` e `cover_credit`; nunca imagem gerada por IA.
+
+**Layout:** o blog usa raio zero, sem sombra, corpo de 18 px em zinc-800 e um único CTA no fim; não reintroduzir capas, selos, `Sparkles`, links automáticos nem blocos `[TAKEAWAYS]`.
 
 ## Development Commands
 
