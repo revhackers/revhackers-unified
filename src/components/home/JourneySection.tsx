@@ -5,19 +5,19 @@ import Section from '@/components/ui/Section';
 
 const journeySteps = [
   {
-    step: "Passo 01 — Dias 1 a 30",
+    step: "Passo 01: Dias 1 a 30",
     title: "Você Para de Adivinhar",
-    desc: "Mapeamos os vazamentos reais da sua operação com dados auditados no seu CRM — não com intuição.",
+    desc: "Mapeamos os vazamentos reais da sua operação com dados auditados no seu CRM, não com intuição.",
     items: ["Auditoria de CRM e Pipeline", "Análise de Unit Economics", "Mapa dos Maiores Gargalos"]
   },
   {
-    step: "Passo 02 — Dias 30 a 60",
+    step: "Passo 02: Dias 30 a 60",
     title: "Sua Máquina Funciona",
     desc: "CRM integrado, IA filtrando leads e automações ativas. Sua equipe para de fazer trabalho manual.",
     items: ["Integração via API & Webhook", "Qualificação Automatizada", "Score de Leads Ativo"]
   },
   {
-    step: "Passo 03 — Dias 60 a 90",
+    step: "Passo 03: Dias 60 a 90",
     title: "Você Escala Sem Contratar",
     desc: "Com a base consolidada, escalamos seus resultados semana a semana sem precisar expandir a equipe.",
     items: ["Testes A/B em Canais", "Refinamento de Playbooks", "Reporting Executivo"]

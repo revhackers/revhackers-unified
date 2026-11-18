@@ -8,25 +8,23 @@ import BlogPostFooter from '@/components/blog/post/BlogPostFooter';
 import RelatedPosts from '@/components/blog/post/RelatedPosts';
 import TableOfContents from '@/components/blog/post/TableOfContents';
 import { getArticleImageBySlug, getFrameworkImage } from '@/components/blog/post/articles/utils/frameworkImages';
-import { getAllPosts, BlogPostWithAuthor } from '@/api/posts'; // Updated import
-import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import SEO from '@/components/shared/SEO';
 
-import { blogPosts as staticBlogPosts, BlogPost as StaticBlogPost } from '@/data/blogData';
+import { blogPosts as staticBlogPosts } from '@/data/blogData';
 import ContextualCTA from '@/components/blog/post/ContextualCTA';
 import BookingModal from '@/components/shared/BookingModal';
 
-// Interface matches the Supabase structure
+// Post author
 interface Author {
   name: string;
   role: string;
   avatar: string;
 }
 
-// Unified interface for both Static and API posts
+// Post shape used by this page
 interface BlogPost {
-  id: string | number; // Support both static (number) and Supabase (UUID string)
+  id: string | number;
   title: string;
   slug: string;
   excerpt: string;
@@ -39,98 +37,42 @@ interface BlogPost {
   featured?: boolean;
 }
 
+const getFixedAuthorAvatar = (path?: string | null) => {
+  if (!path) return "/uploads/0cf4734e-5153-4c6e-8f33-4b382577e479.png";
+  if (path.startsWith('http') || path.startsWith('/')) return path;
+  return `/uploads/${path}`;
+};
+
+// Posts vem do bundle local (src/data/blogData): disponíveis já no primeiro render
+const allPosts: BlogPost[] = staticBlogPosts.map(p => ({
+  id: `static-${p.id}`,
+  title: p.title.replace(/<span>|<\/span>/g, ''),
+  slug: p.slug,
+  excerpt: p.excerpt,
+  content: p.content || '',
+  category: p.category,
+  image: p.image || '',
+  author: {
+    name: p.author.name,
+    role: p.author.role,
+    avatar: getFixedAuthorAvatar(p.author.avatar)
+  },
+  date: p.date,
+  readTime: p.readTime,
+  featured: p.featured || false
+}));
+
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const contentRef = useRef<HTMLDivElement>(null);
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-
-  // Load posts from Supabase API
-  useEffect(() => {
-    const fetchPosts = async () => {
-      setIsLoading(true);
-      try {
-        const getFixedAuthorAvatar = (path?: string | null) => {
-          if (!path) return "/uploads/0cf4734e-5153-4c6e-8f33-4b382577e479.png";
-          if (path.startsWith('http') || path.startsWith('/')) return path;
-          return `/uploads/${path}`;
-        };
-
-        const cleanContent = (content: string) => {
-          if (!content) return '';
-          return content
-            .replace(/COPIE E COLE NO ADMIN:[\s\S]*?\*\*CORPO DO ARTIGO:\*\*\s*/i, '')
-            .replace(/# ARTIGO COMPLETO[\s\S]*?\*\*CORPO DO ARTIGO:\*\*\s*/i, '')
-            .replace(/📋 COLE ESTE CONTEÚDO COMPLETO[\s\S]*?\*\*CORPO DO ARTIGO:\*\*\s*/i, '')
-            .replace(/```markdown/g, '')
-            .replace(/```/g, '')
-            .trim();
-        };
-
-        const apiPosts = await getAllPosts();
-
-        // Convert API posts to match the unified interface
-        const formattedApiPosts: BlogPost[] = apiPosts.map(p => ({
-          id: p.id,
-          title: p.title,
-          slug: p.slug,
-          excerpt: p.excerpt || '',
-          content: cleanContent(p.content || ''),
-          category: p.category || 'Geral',
-          image: p.image || '',
-          author: {
-            name: p.author.name,
-            role: p.author.role,
-            avatar: getFixedAuthorAvatar(p.author.avatar)
-          },
-          date: p.date || p.created_at,
-          readTime: p.read_time || '5 min',
-          featured: p.featured || false
-        }));
-
-        // Merge static posts not yet synced to Supabase
-        const apiSlugs = new Set(formattedApiPosts.map(p => p.slug));
-        const staticFallback: BlogPost[] = staticBlogPosts
-          .filter(p => !apiSlugs.has(p.slug))
-          .map(p => ({
-            id: `static-${p.id}`,
-            title: p.title.replace(/<span>|<\/span>/g, ''),
-            slug: p.slug,
-            excerpt: p.excerpt,
-            content: p.content || '',
-            category: p.category,
-            image: p.image || '',
-            author: {
-              name: p.author.name,
-              role: p.author.role,
-              avatar: getFixedAuthorAvatar(p.author.avatar)
-            },
-            date: p.date,
-            readTime: p.readTime,
-            featured: p.featured || false
-          }));
-
-        setPosts([...formattedApiPosts, ...staticFallback]);
-        setError(null);
-      } catch (err) {
-        console.error("Erro ao carregar posts da API:", err);
-        setError("Não foi possível carregar o artigo. Por favor, tente novamente mais tarde.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPosts();
-  }, []);
 
   // State for hero image (must be at top level)
   const [heroImgSrc, setHeroImgSrc] = useState<string>('');
 
-  // Find the current post (derived from state)
-  const post = posts.find(post => post.slug === slug);
+  // Post atual, encontrado na lista local
+  const post = allPosts.find(p => p.slug === slug);
 
   // Calculate resolved image safely
   // If from DB, explicitly respect NULL/EMPTY to allow deletion in Admin
@@ -162,7 +104,7 @@ const BlogPostPage = () => {
 
   // Get related posts
   const relatedPosts = post
-    ? posts
+    ? allPosts
       .filter(p => p.category === post.category && p.id !== post.id)
       .slice(0, 3)
     : [];
@@ -173,50 +115,17 @@ const BlogPostPage = () => {
     return new Date(dateString).toLocaleDateString('pt-BR', options);
   };
 
-  // If post not found and not loading, redirect to blog page
+  // If post not found, redirect to blog page
   useEffect(() => {
-    if (!isLoading && !post && posts.length > 0) {
-      navigate('/blog');
+    if (!post) {
+      navigate('/blog', { replace: true });
     }
-  }, [post, navigate, isLoading, posts]);
-
-  if (isLoading) {
-    return (
-      <PageLayout>
-        <div className="container-custom py-20">
-          <div className="text-center">
-            <div className="mx-auto w-8 h-8 border-2 border-zinc-200 border-t-zinc-900 animate-spin mb-4"></div>
-            <h3 className="text-2xl font-bold mb-4">Carregando artigo...</h3>
-          </div>
-        </div>
-      </PageLayout>
-    );
-  }
+  }, [post, navigate]);
 
   // Handle Primary CTA (Booking/Consultancy)
   const handlePrimaryCTAClick = () => {
     setIsBookingModalOpen(true);
   };
-
-  if (error) {
-    return (
-      <PageLayout>
-        <div className="container-custom py-20">
-          <div className="text-center">
-            <h3 className="text-2xl font-bold mb-4">Erro ao carregar artigo</h3>
-            <p className="text-zinc-600 max-w-md mx-auto">{error}</p>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/blog')}
-              className="mt-6 border border-zinc-300 text-zinc-700 hover:bg-zinc-100 hover:text-black"
-            >
-              Voltar para o blog
-            </Button>
-          </div>
-        </div>
-      </PageLayout>
-    );
-  }
 
   if (!post) {
     return null; // Will redirect in useEffect

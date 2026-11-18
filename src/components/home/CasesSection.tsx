@@ -1,29 +1,12 @@
-import { ArrowUpRight, Loader2, TrendingUp } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Section from '@/components/ui/Section';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { getFeaturedCases, CaseStudy } from '@/api/cases';
 import { motion } from 'framer-motion';
 
 const CasesSection = () => {
-  const [cases, setCases] = useState<CaseStudy[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadCases = async () => {
-      try {
-        const data = await getFeaturedCases();
-        if (data && data.length > 0) {
-          setCases(data);
-        }
-      } catch (error) {
-        console.error("Failed to load featured cases", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadCases();
-  }, []);
+  const [cases] = useState<CaseStudy[]>(() => getFeaturedCases());
 
   const scrollToTop = () => {
     window.scrollTo(0, 0);
@@ -54,11 +37,6 @@ const CasesSection = () => {
         </div>
 
         {/* Grid de Cases — Cards SaaS limpos em Padrão Editorial */}
-        {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <Loader2 className="w-8 h-8 text-zinc-400 animate-spin" />
-          </div>
-        ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {cases.map((item, index) => {
               const anyItem = item as any;
@@ -82,6 +60,8 @@ const CasesSection = () => {
                       <img
                         src={anyItem.client_logo || anyItem.logo}
                         alt={anyItem.title || anyItem.client_name}
+                        loading="lazy"
+                        decoding="async"
                         className="max-w-[80%] max-h-[60px] w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-105"
                       />
                     </div>
@@ -112,7 +92,6 @@ const CasesSection = () => {
               );
             })}
           </div>
-        )}
 
         {/* Global CTA — Botão Limpo SaaS */}
         <motion.div

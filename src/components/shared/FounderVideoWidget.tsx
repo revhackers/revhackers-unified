@@ -345,8 +345,11 @@ const FounderVideoWidget = () => {
             <div className="bg-zinc-950 text-white border border-zinc-800/90 p-2 pr-5 rounded-full shadow-2xl flex items-center gap-3 hover:border-zinc-700 hover:scale-105 transition-all">
               <div className="relative w-11 h-11 rounded-full overflow-hidden border-2 border-[#00CC6A]/80 shadow-[0_0_10px_rgba(0,204,106,0.3)] shrink-0 bg-zinc-900 flex items-center justify-center">
                 <img
-                  src="/uploads/giulliano-linkedin-profile.png"
+                  src="/uploads/giulliano-avatar-128.png"
                   alt="Giulliano Alves"
+                  width={44}
+                  height={44}
+                  decoding="async"
                   className="w-full h-full object-cover object-[center_15%]"
                 />
               </div>
@@ -376,8 +379,11 @@ const FounderVideoWidget = () => {
               <div className="flex items-center gap-3">
                 <div className="relative w-11 h-11 rounded-full overflow-hidden border-2 border-[#00CC6A] shrink-0 bg-zinc-900">
                   <img
-                    src="/uploads/giulliano-linkedin-profile.png"
+                    src="/uploads/giulliano-avatar-128.png"
                     alt="Giulliano Alves"
+                    width={44}
+                    height={44}
+                    decoding="async"
                     className="w-full h-full object-cover object-[center_15%]"
                   />
                 </div>

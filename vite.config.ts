@@ -31,13 +31,19 @@ export default defineConfig(({ mode }) => {
       ...(offlineMode ? { outDir: offlineOutDir, emptyOutDir: true } : {}),
       rollupOptions: {
         output: {
-          manualChunks: {
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            'vendor-supabase': ['@supabase/supabase-js'],
-            'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-popover', '@radix-ui/react-tabs', '@radix-ui/react-tooltip', '@radix-ui/react-select', '@radix-ui/react-dropdown-menu', '@radix-ui/react-accordion'],
-            'vendor-charts': ['recharts'],
-            'vendor-editor': ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-placeholder', '@tiptap/extension-task-item', '@tiptap/extension-task-list', '@tiptap/suggestion'],
-            'vendor-motion': ['framer-motion'],
+          manualChunks(id: string) {
+            // Auxiliares de interop CJS do Rollup ficam junto do React, senao caem no 1o vendor que os usa (charts) e viram dependencia de toda pagina.
+            if (id.includes('commonjsHelpers') || id.includes('\0commonjs')) return 'vendor-react';
+            if (!id.includes('node_modules')) return undefined;
+            if (/node_modules\/(clsx|tailwind-merge|class-variance-authority)\//.test(id)) return 'vendor-react';
+            if (/node_modules\/(fast-equals|tslib)\//.test(id)) return 'vendor-react';
+            if (/node_modules\/(react|react-dom|react-router-dom|react-router|scheduler)\//.test(id)) return 'vendor-react';
+            if (id.includes('@supabase/supabase-js')) return 'vendor-supabase';
+            if (id.includes('@radix-ui/')) return 'vendor-ui';
+            if (id.includes('recharts')) return 'vendor-charts';
+            if (id.includes('@tiptap/')) return 'vendor-editor';
+            if (id.includes('framer-motion')) return 'vendor-motion';
+            return undefined;
           },
         },
       },

@@ -30,6 +30,8 @@ const PartnersSection = () => {
           <img
             src={partner.logo}
             alt={partner.name}
+            loading="lazy"
+            decoding="async"
             style={{
               transform: partner.scale ? `scale(${partner.scale})` : 'scale(1)',
             }}

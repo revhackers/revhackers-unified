@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import PageLayout from '@/components/layout/PageLayout';
 import BlogHeader from '@/components/blog/BlogHeader';
 import BlogCard from '@/components/blog/BlogCard';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, BookOpen } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import SEO from '@/components/shared/SEO';
-import { contentGcpAdapter } from '@/api/adapters/content-gcp';
 import { getArticleImageBySlug } from '@/components/blog/post/articles/utils/frameworkImages';
 import { blogPosts as staticBlogPosts } from '@/data/blogData';
 
@@ -32,11 +31,9 @@ interface BlogPost {
 const Blog = () => {
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
-  const [displayedPosts, setDisplayedPosts] = useState<BlogPost[]>([]);
   const [postsPerPage] = useState(9);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [apiPosts, setApiPosts] = useState<any[]>([]);
+
 
   // Fix author avatar path helper
   const getFixedAuthorAvatar = (path?: string | null) => {
@@ -46,56 +43,9 @@ const Blog = () => {
   };
 
 
-  // Buscar posts do GCP (contentGcpAdapter)
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        // Timeout de 10 segundos (proteção contra requests travados)
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout de rede')), 10000)
-        );
-
-        const fetchPromise = contentGcpAdapter.getBlogArticles();
-        const data = await Promise.race([fetchPromise, timeoutPromise]);
-
-        if (data) {
-          setApiPosts(data);
-        }
-      } catch (err: any) {
-        console.warn('⚠️ [BLOG] Falha ao carregar do GCP (usando offline):', err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPosts();
-  }, []);
   const blogPosts = useMemo(() => {
-    const gcpPosts: BlogPost[] = apiPosts.map(post => ({
-      id: post.id,
-      title: post.title,
-      slug: post.slug,
-      excerpt: post.excerpt || '',
-      content: post.content || '',
-      category: post.category,
-      image: post.image || undefined,
-      author: {
-        name: post.author_name || 'Equipe RevHackers',
-        role: post.author_role || 'Expert Growth',
-        avatar: getFixedAuthorAvatar(post.author_avatar)
-      },
-      date: post.date || post.created_at,
-      readTime: post.read_time || '5 min',
-      featured: post.featured || false
-    }));
-
-    // Slugs already in GCP
-    const gcpSlugs = new Set(gcpPosts.map(p => p.slug));
-
-    // Static posts not yet synced to GCP
-    const staticOnly: BlogPost[] = staticBlogPosts
-      .filter(p => !gcpSlugs.has(p.slug))
-      .map(p => ({
+    return staticBlogPosts
+      .map((p): BlogPost => ({
         id: `static-${p.id}`,
         title: p.title.replace(/<span>|<\/span>/g, ''),
         slug: p.slug,
@@ -111,12 +61,9 @@ const Blog = () => {
         date: p.date,
         readTime: p.readTime,
         featured: p.featured || false
-      }));
-
-    return [...gcpPosts, ...staticOnly].sort((a, b) =>
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-  }, [apiPosts]);
+      }))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, []);
 
   // Filtrar posts com base na categoria e consulta de pesquisa (memoized)
   const filteredPosts = useMemo(() => {
@@ -138,16 +85,13 @@ const Blog = () => {
     return filtered;
   }, [blogPosts, activeCategory, searchQuery]);
 
-  // Atualizar posts exibidos com base na paginação
-  useEffect(() => {
-    const endIndex = currentPage * postsPerPage;
-    setDisplayedPosts(filteredPosts.slice(0, endIndex));
-  }, [filteredPosts, currentPage, postsPerPage]);
+  // Posts exibidos conforme a paginação (derivado, sem efeito extra)
+  const displayedPosts = useMemo(
+    () => filteredPosts.slice(0, currentPage * postsPerPage),
+    [filteredPosts, currentPage, postsPerPage]
+  );
 
-  // Carregar mais posts
-  const loadMore = () => {
-    setCurrentPage(prev => prev + 1);
-  };
+
 
   const hasMorePosts = currentPage * postsPerPage < filteredPosts.length;
 
@@ -156,7 +100,6 @@ const Blog = () => {
   // Observer for infinite scroll
   const observer = useRef<IntersectionObserver | null>(null);
   const lastPostElementRef = useCallback((node: HTMLDivElement) => {
-    if (isLoading) return;
     if (observer.current) observer.current.disconnect();
 
     observer.current = new IntersectionObserver(entries => {
@@ -171,10 +114,8 @@ const Blog = () => {
     });
 
     if (node) observer.current.observe(node);
-  }, [isLoading, hasMorePosts]);
+  }, [hasMorePosts]);
 
-  // Obter todas as categorias únicas
-  const categories = ['Todos', ...Array.from(new Set(blogPosts.map(post => post.category)))];
 
   return (
     <PageLayout>
@@ -200,12 +141,7 @@ const Blog = () => {
 
         <div className="container-custom relative z-10">
 
-          {isLoading ? (
-            <div className="text-center py-20">
-              <div className="mx-auto w-16 h-16 rounded-lg border-4 border-zinc-100 border-t-black animate-spin mb-4"></div>
-              <h3 className="text-base md:text-lg font-bold text-zinc-900">Carregando artigos...</h3>
-            </div>
-          ) : filteredPosts.length > 0 ? (
+          {filteredPosts.length > 0 ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {displayedPosts.map((post, index) => {

@@ -117,7 +117,7 @@ const Materiais = () => {
                     key={material.slug}
                     to={`/materiais/${material.slug}`}
                     className="group rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2"
-                    aria-label={`${title} — acessar material`}
+                    aria-label={`${title}: acessar material`}
                   >
                     <article className="h-full flex flex-col p-8 rounded-xl border border-zinc-200 bg-white shadow-sm hover:-translate-y-1 transition-all duration-500 relative cursor-pointer">
                       <div className="flex justify-between items-start mb-4">

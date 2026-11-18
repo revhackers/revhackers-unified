@@ -21,7 +21,7 @@ const Footer = () => {
 
           {/* Brand Column */}
           <div className="lg:col-span-4 space-y-10">
-            <Link to={APP_ROUTES.PUBLIC.HOME} className="inline-block group focus:outline-none">
+            <Link to={APP_ROUTES.PUBLIC.HOME} className="inline-block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00CC6A] rounded-md">
               <img
                 src="/brand/revhackers-wordmark-white.png"
                 alt="RevHackers Logo"

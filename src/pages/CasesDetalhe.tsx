@@ -1,80 +1,50 @@
 import { useParams, Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import PageLayout from '@/components/layout/PageLayout';
 import CaseNotFound from '@/components/cases/CaseNotFound';
 import { getCaseBySlug } from '@/api/cases';
 import { casesData } from '@/data/cases';
-import { Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import ContactForm from '@/components/shared/ContactForm';
 import SEO from '@/components/shared/SEO';
 import { Button } from '@/components/ui/button';
 
 const CasesDetalhe = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [caseData, setCaseData] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
+
+  const caseRow = slug ? getCaseBySlug(slug) : null;
+  const localCase = slug && Object.hasOwn(casesData, slug) ? casesData[slug as keyof typeof casesData] : undefined;
+
+  const rawTitle = caseRow?.client_name || caseRow?.title || localCase?.title || 'Case de Sucesso';
+  const challengeText = (caseRow?.challenge && !caseRow.challenge.includes('não informado'))
+    ? caseRow.challenge
+    : (localCase?.challenge || 'A empresa necessitava de estruturação técnica de processos comerciais, inteligência de dados e otimização da máquina de vendas para acelerar o crescimento B2B.');
+
+  const solutionText = (caseRow?.solution && !caseRow.solution.includes('não informada'))
+    ? caseRow.solution
+    : (localCase?.solution || 'Implementamos uma arquitetura completa de Revenue Operations, parametrização de CRM com automações operacionais e qualificação por IA.');
+
+  const caseData = (caseRow || localCase) ? {
+    title: rawTitle,
+    category: caseRow?.case_category || localCase?.category || 'Go-To-Market',
+    logo: caseRow?.client_logo || localCase?.logo || '',
+    challenge: challengeText,
+    solution: solutionText,
+    results: localCase?.results || (typeof caseRow?.results === 'string' ? caseRow.results.split('\n') : (Array.isArray(caseRow?.results) ? caseRow.results : [])),
+    metrics: (localCase?.metrics || caseRow?.metrics || []) as any[],
+    quote: localCase?.quote || caseRow?.testimonial_quote || '',
+    author: localCase?.author || caseRow?.testimonial_author || '',
+    role: localCase?.role || caseRow?.testimonial_role || '',
+    authorImage: localCase?.authorImage || caseRow?.testimonial_avatar || '',
+    techStack: localCase?.techStack || (Array.isArray((caseRow as any)?.tech_stack) ? (caseRow as any).tech_stack : []) || ['HubSpot CRM', 'RevOps 360º', 'Growth IA'],
+    preview_description: localCase?.preview_description || caseRow?.preview_description || '',
+    period: localCase?.period,
+    source: localCase?.source,
+  } : null;
 
   useEffect(() => {
-    const loadCase = async () => {
-      if (!slug) {
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      try {
-        const dbCase = await getCaseBySlug(slug);
-        const localCase = casesData[slug as keyof typeof casesData];
-
-        if (dbCase || localCase) {
-          const rawTitle = dbCase?.client_name || dbCase?.title || localCase?.title || 'Case de Sucesso';
-          const challengeText = (dbCase?.challenge && !dbCase.challenge.includes('não informado'))
-            ? dbCase.challenge
-            : (localCase?.challenge || 'A empresa necessitava de estruturação técnica de processos comerciais, inteligência de dados e otimização da máquina de vendas para acelerar o crescimento B2B.');
-          
-          const solutionText = (dbCase?.solution && !dbCase.solution.includes('não informada'))
-            ? dbCase.solution
-            : (localCase?.solution || 'Implementamos uma arquitetura completa de Revenue Operations, parametrização de CRM com automações operacionais e qualificação por IA.');
-
-          const mappedCase = {
-            title: rawTitle,
-            category: dbCase?.case_category || localCase?.category || 'Go-To-Market',
-            logo: dbCase?.client_logo || localCase?.logo || '',
-            challenge: challengeText,
-            solution: solutionText,
-            results: localCase?.results || (typeof dbCase?.results === 'string' ? dbCase.results.split('\n') : (Array.isArray(dbCase?.results) ? dbCase.results : [])),
-            metrics: (localCase?.metrics || dbCase?.metrics || []) as any[],
-            quote: localCase?.quote || dbCase?.testimonial_quote || '',
-            author: localCase?.author || dbCase?.testimonial_author || '',
-            role: localCase?.role || dbCase?.testimonial_role || '',
-            authorImage: localCase?.authorImage || dbCase?.testimonial_avatar || '',
-            techStack: localCase?.techStack || (Array.isArray((dbCase as any)?.tech_stack) ? (dbCase as any).tech_stack : []) || ['HubSpot CRM', 'RevOps 360º', 'Growth IA'],
-            preview_description: localCase?.preview_description || dbCase?.preview_description || ''
-          };
-          setCaseData(mappedCase);
-        } else {
-          setCaseData(null);
-        }
-      } catch (error) {
-        console.error("Error loading case detail:", error);
-        setCaseData(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCase();
     window.scrollTo(0, 0);
   }, [slug]);
-
-  if (loading) {
-    return (
-      <PageLayout>
-        <div className="min-h-[70vh] w-full flex items-center justify-center bg-black">
-          <Loader2 className="h-8 w-8 text-[#00CC6A] animate-spin" />
-        </div>
-      </PageLayout>
-    );
-  }
 
   if (!caseData) {
     return (
@@ -139,13 +109,13 @@ const CasesDetalhe = () => {
                 <p className="text-sm text-zinc-600 leading-relaxed">
                   Projeto de inteligência comercial desenvolvido para <strong>{caseData.title}</strong>, focado em <strong>{caseData.category}</strong>.
                 </p>
-              </div>
                 {(caseData.period || caseData.source) && (
                   <p className="text-xs text-zinc-500 leading-relaxed pt-3 border-t border-zinc-100">
                     {caseData.period && <span className="block"><strong className="text-zinc-700">Período:</strong> {caseData.period}</span>}
                     {caseData.source && <span className="block"><strong className="text-zinc-700">Fonte:</strong> {caseData.source}</span>}
                   </p>
                 )}
+              </div>
 
               {caseData.techStack && caseData.techStack.length > 0 && (
                 <div className="bg-white border border-zinc-200/80 p-6 rounded-2xl space-y-3">
