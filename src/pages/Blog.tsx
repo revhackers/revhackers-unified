@@ -1,121 +1,55 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import PageLayout from '@/components/layout/PageLayout';
-import BlogHeader from '@/components/blog/BlogHeader';
-import BlogCard from '@/components/blog/BlogCard';
-import { Button } from '@/components/ui/button';
-import { BookOpen } from 'lucide-react';
+import PostListItem from '@/components/blog/PostListItem';
 import SEO from '@/components/shared/SEO';
-import { getArticleImageBySlug } from '@/components/blog/post/articles/utils/frameworkImages';
-import { blogPosts as staticBlogPosts } from '@/data/blogData';
+import { posts } from '@/lib/blog';
+import { cn } from '@/lib/utils';
 
-
-// Interface para post do blog
-interface BlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt: string;
-  content: string;
-  category: string;
-  image?: string;
-  author: {
-    name: string;
-    role: string;
-    avatar: string;
-  };
-  date: string;
-  readTime: string;
-  featured?: boolean;
-}
+const PER_PAGE = 20;
 
 const Blog = () => {
-  const [activeCategory, setActiveCategory] = useState('Todos');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [postsPerPage] = useState(9);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [params, setParams] = useSearchParams();
+  const category = params.get('categoria') ?? '';
+  const query = params.get('q') ?? '';
+  const page = Math.max(1, Number(params.get('pagina')) || 1);
 
-
-  // Fix author avatar path helper
-  const getFixedAuthorAvatar = (path?: string | null) => {
-    if (!path) return "/uploads/0cf4734e-5153-4c6e-8f33-4b382577e479.png";
-    if (path.startsWith('http') || path.startsWith('/')) return path;
-    return `/uploads/${path}`;
-  };
-
-
-  const blogPosts = useMemo(() => {
-    return staticBlogPosts
-      .map((p): BlogPost => ({
-        id: `static-${p.id}`,
-        title: p.title.replace(/<span>|<\/span>/g, ''),
-        slug: p.slug,
-        excerpt: p.excerpt,
-        content: p.content || '',
-        category: p.category,
-        image: p.image || getArticleImageBySlug(p.slug) || undefined,
-        author: {
-          name: p.author.name,
-          role: p.author.role,
-          avatar: getFixedAuthorAvatar(p.author.avatar)
-        },
-        date: p.date,
-        readTime: p.readTime,
-        featured: p.featured || false
-      }))
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const categories = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const post of posts) counts.set(post.category, (counts.get(post.category) ?? 0) + 1);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name);
   }, []);
 
-  // Filtrar posts com base na categoria e consulta de pesquisa (memoized)
-  const filteredPosts = useMemo(() => {
-    let filtered = [...blogPosts];
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return posts.filter(
+      (post) =>
+        (!category || post.category === category) &&
+        (!q || `${post.title} ${post.description} ${post.category}`.toLowerCase().includes(q)),
+    );
+  }, [category, query]);
 
-    if (activeCategory !== 'Todos') {
-      filtered = filtered.filter(post => post.category === activeCategory);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const visible = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+  const pristine = !category && !query.trim();
+
+  const update = (changes: Record<string, string>) => {
+    const next = new URLSearchParams(params);
+    for (const [key, value] of Object.entries(changes)) {
+      if (value) next.set(key, value);
+      else next.delete(key);
     }
+    setParams(next, { replace: true });
+  };
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(post =>
-        post.title.toLowerCase().includes(query) ||
-        post.excerpt.toLowerCase().includes(query) ||
-        post.category.toLowerCase().includes(query)
-      );
-    }
-
-    return filtered;
-  }, [blogPosts, activeCategory, searchQuery]);
-
-  // Posts exibidos conforme a paginação (derivado, sem efeito extra)
-  const displayedPosts = useMemo(
-    () => filteredPosts.slice(0, currentPage * postsPerPage),
-    [filteredPosts, currentPage, postsPerPage]
-  );
-
-
-
-  const hasMorePosts = currentPage * postsPerPage < filteredPosts.length;
-
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-
-  // Observer for infinite scroll
-  const observer = useRef<IntersectionObserver | null>(null);
-  const lastPostElementRef = useCallback((node: HTMLDivElement) => {
-    if (observer.current) observer.current.disconnect();
-
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMorePosts) {
-        setIsLoadingMore(true);
-        // Simulate small delay for smoother UX
-        setTimeout(() => {
-          setCurrentPage(prev => prev + 1);
-          setIsLoadingMore(false);
-        }, 500);
-      }
-    });
-
-    if (node) observer.current.observe(node);
-  }, [hasMorePosts]);
-
+  const pageLink = (target: number) => {
+    const next = new URLSearchParams(params);
+    if (target > 1) next.set('pagina', String(target));
+    else next.delete('pagina');
+    const search = next.toString();
+    return '/blog' + (search ? '?' + search : '');
+  };
 
   return (
     <PageLayout>
@@ -124,74 +58,83 @@ const Blog = () => {
         description="Artigos sobre Growth, Revenue Operations, ABM, Automação e Tecnologia B2B. Estratégias avançadas para escalar sua operação de receita no Brasil."
         canonical="https://revhackers.com.br/blog"
         breadcrumbs={[
-          { name: "Home", url: "https://revhackers.com.br/" },
-          { name: "Blog", url: "https://revhackers.com.br/blog" }
+          { name: 'Home', url: 'https://revhackers.com.br/' },
+          { name: 'Blog', url: 'https://revhackers.com.br/blog' },
         ]}
       />
-      <BlogHeader
-        activeCategory={activeCategory}
-        setActiveCategory={setActiveCategory}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-      />
+      <div className="mx-auto max-w-[64rem] bg-white px-5 pb-20 pt-28 sm:px-8 sm:pt-32">
+        <header className="border-b-2 border-zinc-900 pb-6">
+          <h1 className="text-[2.5rem] font-black text-zinc-950 sm:text-5xl">Blog</h1>
+          <p className="mt-2 text-zinc-600">Artigos sobre operações de receita B2B.</p>
+        </header>
 
-      <section className="pt-0 pb-12 bg-zinc-50 min-h-screen relative">
-        <div className="absolute top-0 left-0 right-0 h-16 bg-black/70 pointer-events-none z-20" />
-        
-
-        <div className="container-custom relative z-10">
-
-          {filteredPosts.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {displayedPosts.map((post, index) => {
-                  if (index === displayedPosts.length - 1) {
-                    return (
-                      <div ref={lastPostElementRef} key={post.id} className="h-full">
-                        <BlogCard post={post as any} />
-                      </div>
-                    );
-                  } else {
-                    return <BlogCard key={post.id} post={post as any} />;
-                  }
-                })}
-              </div>
-
-              {isLoadingMore && (
-                <div className="py-8 text-center flex justify-center">
-                  <div className="w-8 h-8 rounded-lg border-4 border-zinc-700 border-t-revgreen animate-spin"></div>
-                </div>
-              )}
-
-              {!hasMorePosts && displayedPosts.length > 0 && (
-                <div className="py-12 text-center text-zinc-500 text-sm">
-                  Você chegou ao fim da lista.
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="text-center py-20 border border-dashed border-zinc-200 bg-zinc-50/30">
-              <div className="mx-auto w-16 h-16 bg-black/5 rounded-lg flex items-center justify-center mb-4 border border-black/5">
-                <BookOpen className="h-8 w-8 text-zinc-300" />
-              </div>
-              <h3 className="text-base md:text-lg font-bold text-zinc-900">Nenhum artigo encontrado</h3>
-              <p className="text-zinc-500 max-w-md mx-auto text-xs font-bold uppercase">
-                Tente ajustar seus filtros ou termos de busca.
-              </p>
-              <Button
-                variant="link"
-                onClick={() => {
-                  setActiveCategory('Todos');
-                  setSearchQuery('');
-                }}
-                className="mt-6 text-revgreen"
-              >
-                Limpar filtros
-              </Button>
-            </div>
-          )}
+        <div className="flex flex-col gap-4 border-b border-zinc-200 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            {['', ...categories].map((name) => {
+              const active = category === name;
+              return (
+                <button
+                  key={name || 'todos'}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => update({ categoria: name, pagina: '' })}
+                  className={cn(
+                    'border-b-2 pb-0.5 font-mono text-xs uppercase',
+                    active ? 'border-zinc-950 text-zinc-950' : 'border-transparent text-zinc-500 hover:text-zinc-950',
+                  )}
+                >
+                  {name || 'Todos'}
+                </button>
+              );
+            })}
+          </div>
+          <input
+            type="search"
+            aria-label="Buscar no blog"
+            placeholder="Buscar"
+            value={query}
+            onChange={(event) => update({ q: event.target.value, pagina: '' })}
+            className="w-full border-b border-zinc-300 bg-transparent py-1 text-sm text-zinc-950 outline-none placeholder:text-zinc-400 focus:border-zinc-950 sm:w-48"
+          />
         </div>
-      </section>
+
+        {visible.length > 0 ? (
+          <div>
+            {visible.map((post, index) => (
+              <PostListItem key={post.slug} post={post} featured={pristine && currentPage === 1 && index === 0} />
+            ))}
+          </div>
+        ) : (
+          <div className="py-16">
+            <p className="text-zinc-700">Nenhum artigo encontrado.</p>
+            <Link to="/blog" className="mt-2 inline-block text-zinc-950 underline">
+              Limpar filtros
+            </Link>
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <nav aria-label="Paginação" className="mt-8 flex items-center justify-between text-sm text-zinc-600">
+            {currentPage > 1 ? (
+              <Link to={pageLink(currentPage - 1)} className="text-zinc-950 underline">
+                Mais recentes
+              </Link>
+            ) : (
+              <span />
+            )}
+            <span>
+              Página {currentPage} de {totalPages}
+            </span>
+            {currentPage < totalPages ? (
+              <Link to={pageLink(currentPage + 1)} className="text-zinc-950 underline">
+                Mais antigos
+              </Link>
+            ) : (
+              <span />
+            )}
+          </nav>
+        )}
+      </div>
     </PageLayout>
   );
 };

@@ -1,7 +1,9 @@
 import { defineConfig } from 'vitest/config';
 import path from 'path';
+import blogIndexPlugin from './build/blogIndexPlugin.ts';
 
 export default defineConfig({
+  plugins: [blogIndexPlugin()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
