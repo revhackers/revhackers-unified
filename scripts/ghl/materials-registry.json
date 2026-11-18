@@ -152,5 +152,208 @@
     "link_material": "https://bustling-lemon-68c.notion.site/3b4bdc72e039819d9bc9cc14774f247f",
     "published": true,
     "is_active": true
+  },
+  {
+    "slug": "conferencia-fatos-prospeccao-ia-guia-pratico",
+    "title": "Conferência de fatos antes da prospecção com IA",
+    "link_material": "https://revtech.notion.site/43af7ed477a945cf85a1bf5e9fd65706",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "prospeccao-sinais-icp-guia-pratico",
+    "title": "Prospecção por Sinais e Validação de ICP: Guia Prático",
+    "link_material": "https://revtech.notion.site/36d78e4f0be34685b5a66d6b5bbd4b71",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "mensagem-4-pecas-guia-pratico",
+    "title": "Mensagem de Prospecção em 4 Peças: Guia Prático",
+    "link_material": "https://revtech.notion.site/763de8d9d4ff471f867fc67cb650c911",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "cadencia-linkedin-guia-pratico",
+    "title": "A Cadência, Dia a Dia: Guia Prático",
+    "link_material": "https://revtech.notion.site/3d27bb099d014f4998070f3be54b60e0",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "mala-direta-prospeccao-por-sinal-guia-pratico",
+    "title": "Mala Direta ou Prospecção por Sinal: Guia Prático",
+    "link_material": "https://revtech.notion.site/396b4981cb5c4b918fcd56bb77db6a6f",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "persistencia-follow-up-sem-perseguicao-guia-pratico",
+    "title": "Persistência ou Perseguição: Guia Prático para Follow-up",
+    "link_material": "https://revtech.notion.site/54a2f79c3ffd4d4496d37f863d637442",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "precisao-de-fatos-antes-do-envio-guia-pratico",
+    "title": "Onde Sua Mensagem Cai: Guia Prático para Validar Fatos",
+    "link_material": "https://revtech.notion.site/8571f1133e1548a1b84f59f87a03fd89",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "da-nota-a-call-convite-linkedin-guia-pratico",
+    "title": "Da Nota à Call: Guia Prático para Convites no LinkedIn",
+    "link_material": "https://revtech.notion.site/b1f31e08a33b42b5b152673d1ea22868",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "maquina-de-vendas-como-servico-guia-pratico",
+    "title": "Sales Machine as a Service: guia prático de captura à medição",
+    "link_material": "https://revtech.notion.site/de655909bf0b4273bf05fc4c8731bb1b",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "captura-demanda-post-crm-guia-pratico",
+    "title": "Captura de demanda: do post ao CRM, guia prático",
+    "link_material": "https://revtech.notion.site/67f89b3b20e742ee84930f88f673ec8a",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "crm-no-centro-aprovacao-ia-guia-pratico",
+    "title": "CRM no centro: aprovação humana e envio com IA, guia prático",
+    "link_material": "https://revtech.notion.site/1a85aad861a14c22a63d9b537454138e",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "venda-anuncio-google-ads-ciclo-fechado-guia-pratico",
+    "title": "Venda -> anúncio: ciclo fechado no Google Ads, guia prático",
+    "link_material": "https://revtech.notion.site/eb1c6712c18c4dbbbdc60d235f074211",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "do-sim-ao-crm-aprovacao-pronta-guia-pratico",
+    "title": "Do sim ao CRM: aprovação que não esfria o lead, guia prático",
+    "link_material": "https://revtech.notion.site/95ad4c2b42a947358990b34cafcbaedf",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "ferramentas-soltas-maquina-conectada-guia-pratico",
+    "title": "Ferramentas soltas × máquina: peças conectadas, guia prático",
+    "link_material": "https://revtech.notion.site/73819797fb0740ce8893cc0d665aa7ae",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "descarte-antes-do-toque-guia-pratico",
+    "title": "Descarte antes do toque: filtro de prospecção, guia prático",
+    "link_material": "https://revtech.notion.site/bffc6e1d067c4156b065294f04ad2a26",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "pesos-sinais-prospeccao-guia-pratico",
+    "title": "Peso dos sinais na prospecção B2B: como ordenar a fila",
+    "link_material": "https://revtech.notion.site/7bda3e8bea094772bb06ae8185db4edb",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "icp-exclusoes-triagem-guia-pratico",
+    "title": "ICP que diz não: filtros de empresa e de cargo na triagem",
+    "link_material": "https://revtech.notion.site/38d68dccafe041b8a7f00bb452857091",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "pareto-alcance-linkedin-guia-pratico",
+    "title": "Pareto do alcance nos posts do LinkedIn: como achar os poucos que carregam o resultado",
+    "link_material": "https://revtech.notion.site/023fdd0d0de44f08a9a83111f8e74367",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "feed-linkedin-o-que-le-guia-pratico",
+    "title": "O que o feed do LinkedIn lê no seu post: identidade, isca e frequência",
+    "link_material": "https://revtech.notion.site/ec78ad44cebb4ac08251f5a9c3410b24",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "comentario-que-vira-conversa-guia-pratico",
+    "title": "Comentário que vira conversa: a rotina diária de comentários que leem o post",
+    "link_material": "https://revtech.notion.site/d61910feaedc4c46b06726a84314b976",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "filtro-comentarios-descarte-guia-pratico",
+    "title": "Robô que não comentou: o que uma passada sem resultado ensina sobre a régua",
+    "link_material": "https://revtech.notion.site/74ce914378e84bc6bf75c7b7a5e40395",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "oferta-por-lead-cadencia-guia-pratico",
+    "title": "Oferta por lead: uma oferta por lead, não um PDF para todos",
+    "link_material": "https://revtech.notion.site/649332418b8b480b8e4a011ffa18f43c",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "limites-ritmo-seguro-cadencia-linkedin-guia-pratico",
+    "title": "Limites e ritmo seguro para cadências de LinkedIn",
+    "link_material": "https://revtech.notion.site/aa8f437f2b894e78a24390476a885859",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "dupla-revisao-fatos-mensagens-guia-pratico",
+    "title": "Quem revisa o revisor: dupla checagem antes de cada convite com IA",
+    "link_material": "https://revtech.notion.site/0e99861aeee54918bab61c70bb934997",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "vaga-sinal-compra-fonte-guia-pratico",
+    "title": "Vaga é sinal: quando uma contratação vira motivo de abordagem",
+    "link_material": "https://revtech.notion.site/445e7c80c10549d8827fb03a8310cb4e",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "origem-perdida-redirecionamento-rastreio-guia-pratico",
+    "title": "Origem perdida no redirecionamento: como manter o rastreio do clique até o CRM",
+    "link_material": "https://revtech.notion.site/2e0054f3327d4b2d84866156bac71df3",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "consentimento-medicao-google-ads-guia-pratico",
+    "title": "Consentimento e medição: como o aceite muda o que o anúncio aprende",
+    "link_material": "https://revtech.notion.site/b738b3206af740e79e401d3932c6a1ac",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "revisao-diaria-google-ads-guia-pratico",
+    "title": "Revisão diária de Google Ads: ler tudo, propor com identificador e executar só o aprovado",
+    "link_material": "https://revtech.notion.site/043fc36543c04bebb29888dcb1af4cc8",
+    "published": true,
+    "is_active": true
+  },
+  {
+    "slug": "painel-do-post-a-venda-guia-pratico",
+    "title": "Do post ao contrato: o painel que falta para medir cada etapa",
+    "link_material": "https://revtech.notion.site/634860a58a5d4fe9b226e289909ef753",
+    "published": true,
+    "is_active": true
   }
 ]
