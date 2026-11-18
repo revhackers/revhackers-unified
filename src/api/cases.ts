@@ -104,6 +104,26 @@ const applyOverrides = (c: CaseStudy): CaseStudy & { logoScale?: number } => {
     }
     return c;
 };
+/**
+ * O Supabase é a fonte primária em produção e não tem as colunas
+ * period/source. Preenche essas lacunas com o cadastro local (mesmo slug),
+ * sem sobrescrever nenhum dado vindo do banco.
+ */
+interface LocalEnrichment { period?: string; source?: string }
+
+const ALL_LOCAL_CASES_REFS: Record<string, LocalEnrichment> = Object.fromEntries(
+  Object.entries(casesData).map(([slugKey, c]) => [
+    slugKey,
+    { period: c.period ?? '', source: c.source ?? '' },
+  ])
+);
+
+function enrichWithLocal<T extends { slug?: string; period?: string; source?: string }>(c: T): T {
+  if (!c || c.period) return c;
+  const localMatch = c.slug ? ALL_LOCAL_CASES_REFS[c.slug] : undefined;
+  if (!localMatch) return c;
+  return { ...c, period: localMatch.period ?? '', source: c.source ?? localMatch.source ?? '' };
+}
 
 const FALLBACK_CASES: any[] = [
     {
@@ -202,7 +222,7 @@ export const getAllCases = async (): Promise<CaseStudy[]> => {
             // Combine DB cases with local cases, avoiding duplicate slugs
             const dbSlugs = new Set(data.map(d => d.slug));
             const missingLocal = ALL_LOCAL_CASES.filter(l => !dbSlugs.has(l.slug));
-            return [...data, ...missingLocal].map(applyOverrides);
+            return [...data, ...missingLocal].map((c) => enrichWithLocal(applyOverrides(c)));
         }
     } catch (err) {
         console.warn('Usando 18 cases estáticos de alta performance:', err);
@@ -221,14 +241,14 @@ export const getCaseBySlug = async (slug: string): Promise<CaseStudy | null> => 
             .single();
 
         if (!error && data) {
-            return applyOverrides(data);
+            return enrichWithLocal(applyOverrides(data));
         }
     } catch (err) {
         // Fallback to local
     }
 
     const localMatch = ALL_LOCAL_CASES.find(c => c.slug === slug);
-    return localMatch ? applyOverrides(localMatch) : null;
+    return localMatch ? enrichWithLocal(applyOverrides(localMatch)) : null;
 };
 
 export const getFeaturedCases = async (): Promise<CaseStudy[]> => {
@@ -242,11 +262,11 @@ export const getFeaturedCases = async (): Promise<CaseStudy[]> => {
             .order('created_at', { ascending: false });
 
         if (!error && data && data.length > 0) {
-            return data.map(applyOverrides);
+            return data.map((c) => enrichWithLocal(applyOverrides(c)));
         }
     } catch (error) {
         console.warn('Error fetching featured cases from DB, using local cases:', error);
     }
 
-    return ALL_LOCAL_CASES.slice(0, 6).map(applyOverrides);
+    return ALL_LOCAL_CASES.slice(0, 6).map((c) => enrichWithLocal(applyOverrides(c)));
 };
