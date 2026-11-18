@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import PageLayout from '@/components/layout/PageLayout';
 import BlogHeader from '@/components/blog/BlogHeader';
 import BlogCard from '@/components/blog/BlogCard';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, BookOpen } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import SEO from '@/components/shared/SEO';
-import { contentGcpAdapter } from '@/api/adapters/content-gcp';
 import { getArticleImageBySlug } from '@/components/blog/post/articles/utils/frameworkImages';
 import { blogPosts as staticBlogPosts } from '@/data/blogData';
 
@@ -34,7 +33,7 @@ const Blog = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [postsPerPage] = useState(9);
   const [currentPage, setCurrentPage] = useState(1);
-  const [apiPosts, setApiPosts] = useState<any[]>([]);
+
 
   // Fix author avatar path helper
   const getFixedAuthorAvatar = (path?: string | null) => {
@@ -44,54 +43,9 @@ const Blog = () => {
   };
 
 
-  // Buscar posts do GCP (contentGcpAdapter)
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        // Timeout de 10 segundos (proteção contra requests travados)
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout de rede')), 10000)
-        );
-
-        const fetchPromise = contentGcpAdapter.getBlogArticles();
-        const data = await Promise.race([fetchPromise, timeoutPromise]);
-
-        if (data) {
-          setApiPosts(data);
-        }
-      } catch (err: any) {
-        console.warn('⚠️ [BLOG] Falha ao carregar do GCP (usando offline):', err.message);
-      }
-    };
-
-    fetchPosts();
-  }, []);
   const blogPosts = useMemo(() => {
-    const gcpPosts: BlogPost[] = apiPosts.map(post => ({
-      id: post.id,
-      title: post.title,
-      slug: post.slug,
-      excerpt: post.excerpt || '',
-      content: post.content || '',
-      category: post.category,
-      image: post.image || undefined,
-      author: {
-        name: post.author_name || 'Equipe RevHackers',
-        role: post.author_role || 'Expert Growth',
-        avatar: getFixedAuthorAvatar(post.author_avatar)
-      },
-      date: post.date || post.created_at,
-      readTime: post.read_time || '5 min',
-      featured: post.featured || false
-    }));
-
-    // Slugs already in GCP
-    const gcpSlugs = new Set(gcpPosts.map(p => p.slug));
-
-    // Static posts not yet synced to GCP
-    const staticOnly: BlogPost[] = staticBlogPosts
-      .filter(p => !gcpSlugs.has(p.slug))
-      .map(p => ({
+    return staticBlogPosts
+      .map((p): BlogPost => ({
         id: `static-${p.id}`,
         title: p.title.replace(/<span>|<\/span>/g, ''),
         slug: p.slug,
@@ -107,12 +61,9 @@ const Blog = () => {
         date: p.date,
         readTime: p.readTime,
         featured: p.featured || false
-      }));
-
-    return [...gcpPosts, ...staticOnly].sort((a, b) =>
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-  }, [apiPosts]);
+      }))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, []);
 
   // Filtrar posts com base na categoria e consulta de pesquisa (memoized)
   const filteredPosts = useMemo(() => {
@@ -140,10 +91,7 @@ const Blog = () => {
     [filteredPosts, currentPage, postsPerPage]
   );
 
-  // Carregar mais posts
-  const loadMore = () => {
-    setCurrentPage(prev => prev + 1);
-  };
+
 
   const hasMorePosts = currentPage * postsPerPage < filteredPosts.length;
 
@@ -168,8 +116,6 @@ const Blog = () => {
     if (node) observer.current.observe(node);
   }, [hasMorePosts]);
 
-  // Obter todas as categorias únicas
-  const categories = ['Todos', ...Array.from(new Set(blogPosts.map(post => post.category)))];
 
   return (
     <PageLayout>

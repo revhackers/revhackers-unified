@@ -50,7 +50,7 @@ export default {
 			},
 			fontFamily: {
 				'sans':      ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-				'display':   ['"Outfit"', '"Plus Jakarta Sans"', 'sans-serif'],
+				'display':   ['"Plus Jakarta Sans"', 'sans-serif'],
 				'mono':      ['"JetBrains Mono"', 'monospace'],
 				'mono-tech': ['"JetBrains Mono"', 'monospace'],
 			},
@@ -89,14 +89,14 @@ export default {
 					foreground: 'hsl(var(--card-foreground))'
 				},
 				// ─── Brand action color — SINGLE SOURCE OF TRUTH ───
-				// #00C060 = hsl(150, 100%, 38%)
+				// #00CC6A
 				revgreen: {
-					DEFAULT: '#00C060',
-					hover:   '#00A850',
+					DEFAULT: '#00CC6A',
+					hover:   '#00b35e',
 				},
 				// Alias — components migrating from old brand name
 				revhackers: {
-					DEFAULT: '#00C060',
+					DEFAULT: '#00CC6A',
 				},
 			},
 			borderRadius: {

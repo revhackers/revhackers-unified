@@ -13,7 +13,7 @@ const CasesDetalhe = () => {
   const { slug } = useParams<{ slug: string }>();
 
   const caseRow = slug ? getCaseBySlug(slug) : null;
-  const localCase = slug ? casesData[slug as keyof typeof casesData] : undefined;
+  const localCase = slug && Object.hasOwn(casesData, slug) ? casesData[slug as keyof typeof casesData] : undefined;
 
   const rawTitle = caseRow?.client_name || caseRow?.title || localCase?.title || 'Case de Sucesso';
   const challengeText = (caseRow?.challenge && !caseRow.challenge.includes('não informado'))
@@ -109,13 +109,13 @@ const CasesDetalhe = () => {
                 <p className="text-sm text-zinc-600 leading-relaxed">
                   Projeto de inteligência comercial desenvolvido para <strong>{caseData.title}</strong>, focado em <strong>{caseData.category}</strong>.
                 </p>
-              </div>
                 {(caseData.period || caseData.source) && (
                   <p className="text-xs text-zinc-500 leading-relaxed pt-3 border-t border-zinc-100">
                     {caseData.period && <span className="block"><strong className="text-zinc-700">Período:</strong> {caseData.period}</span>}
                     {caseData.source && <span className="block"><strong className="text-zinc-700">Fonte:</strong> {caseData.source}</span>}
                   </p>
                 )}
+              </div>
 
               {caseData.techStack && caseData.techStack.length > 0 && (
                 <div className="bg-white border border-zinc-200/80 p-6 rounded-2xl space-y-3">

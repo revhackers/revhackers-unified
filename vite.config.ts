@@ -36,6 +36,7 @@ export default defineConfig(({ mode }) => {
             if (id.includes('commonjsHelpers') || id.includes('\0commonjs')) return 'vendor-react';
             if (!id.includes('node_modules')) return undefined;
             if (/node_modules\/(clsx|tailwind-merge|class-variance-authority)\//.test(id)) return 'vendor-react';
+            if (/node_modules\/(fast-equals|tslib)\//.test(id)) return 'vendor-react';
             if (/node_modules\/(react|react-dom|react-router-dom|react-router|scheduler)\//.test(id)) return 'vendor-react';
             if (id.includes('@supabase/supabase-js')) return 'vendor-supabase';
             if (id.includes('@radix-ui/')) return 'vendor-ui';

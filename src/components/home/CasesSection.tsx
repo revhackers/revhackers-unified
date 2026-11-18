@@ -60,6 +60,8 @@ const CasesSection = () => {
                       <img
                         src={anyItem.client_logo || anyItem.logo}
                         alt={anyItem.title || anyItem.client_name}
+                        loading="lazy"
+                        decoding="async"
                         className="max-w-[80%] max-h-[60px] w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-105"
                       />
                     </div>

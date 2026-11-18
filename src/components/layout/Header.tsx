@@ -284,16 +284,16 @@ const Header = ({ variant = 'default' }: HeaderProps) => {
                   <div className="text-xs font-mono-tech text-zinc-400 uppercase mb-3">Auditorias Críticas</div>
                   <div className="space-y-4 pl-2">
                     <Link to="/score" onClick={scrollToTop} className="flex items-center gap-3 text-lg font-medium text-zinc-300 hover:text-[#00CC6A]">
-                      <Activity className="w-4 h-4 text-[#00CC6A]" /> Diagnostico 360
+                      <Activity className="w-4 h-4 text-[#00CC6A]" /> Diagnóstico 360
                     </Link>
                     <Link to="/score-revenue" onClick={scrollToTop} className="flex items-center gap-3 text-lg font-medium text-zinc-300 hover:text-[#00CC6A]">
-                      <TrendingUp className="w-4 h-4 text-[#00CC6A]" /> Diagnostico CRM
+                      <TrendingUp className="w-4 h-4 text-[#00CC6A]" /> Diagnóstico CRM
                     </Link>
                     <Link to="/score-founder" onClick={scrollToTop} className="flex items-center gap-3 text-lg font-medium text-zinc-300 hover:text-[#00CC6A]">
-                      <Users className="w-4 h-4 text-[#00CC6A]" /> Diagnostico do Fundador
+                      <Users className="w-4 h-4 text-[#00CC6A]" /> Diagnóstico do Fundador
                     </Link>
                     <Link to="/score-site" onClick={scrollToTop} className="flex items-center gap-3 text-lg font-medium text-zinc-300 hover:text-[#00CC6A]">
-                      <Globe className="w-4 h-4 text-[#00CC6A]" /> Diagnostico Site / LP
+                      <Globe className="w-4 h-4 text-[#00CC6A]" /> Diagnóstico Site / LP
                     </Link>
                   </div>
                 </div>

@@ -118,7 +118,7 @@ const BlogPostPage = () => {
   // If post not found, redirect to blog page
   useEffect(() => {
     if (!post) {
-      navigate('/blog');
+      navigate('/blog', { replace: true });
     }
   }, [post, navigate]);
 
