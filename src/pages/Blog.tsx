@@ -32,10 +32,8 @@ interface BlogPost {
 const Blog = () => {
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
-  const [displayedPosts, setDisplayedPosts] = useState<BlogPost[]>([]);
   const [postsPerPage] = useState(9);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
   const [apiPosts, setApiPosts] = useState<any[]>([]);
 
   // Fix author avatar path helper
@@ -63,8 +61,6 @@ const Blog = () => {
         }
       } catch (err: any) {
         console.warn('⚠️ [BLOG] Falha ao carregar do GCP (usando offline):', err.message);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -138,11 +134,11 @@ const Blog = () => {
     return filtered;
   }, [blogPosts, activeCategory, searchQuery]);
 
-  // Atualizar posts exibidos com base na paginação
-  useEffect(() => {
-    const endIndex = currentPage * postsPerPage;
-    setDisplayedPosts(filteredPosts.slice(0, endIndex));
-  }, [filteredPosts, currentPage, postsPerPage]);
+  // Posts exibidos conforme a paginação (derivado, sem efeito extra)
+  const displayedPosts = useMemo(
+    () => filteredPosts.slice(0, currentPage * postsPerPage),
+    [filteredPosts, currentPage, postsPerPage]
+  );
 
   // Carregar mais posts
   const loadMore = () => {
@@ -156,7 +152,6 @@ const Blog = () => {
   // Observer for infinite scroll
   const observer = useRef<IntersectionObserver | null>(null);
   const lastPostElementRef = useCallback((node: HTMLDivElement) => {
-    if (isLoading) return;
     if (observer.current) observer.current.disconnect();
 
     observer.current = new IntersectionObserver(entries => {
@@ -171,7 +166,7 @@ const Blog = () => {
     });
 
     if (node) observer.current.observe(node);
-  }, [isLoading, hasMorePosts]);
+  }, [hasMorePosts]);
 
   // Obter todas as categorias únicas
   const categories = ['Todos', ...Array.from(new Set(blogPosts.map(post => post.category)))];
@@ -200,12 +195,7 @@ const Blog = () => {
 
         <div className="container-custom relative z-10">
 
-          {isLoading ? (
-            <div className="text-center py-20">
-              <div className="mx-auto w-16 h-16 rounded-lg border-4 border-zinc-100 border-t-black animate-spin mb-4"></div>
-              <h3 className="text-base md:text-lg font-bold text-zinc-900">Carregando artigos...</h3>
-            </div>
-          ) : filteredPosts.length > 0 ? (
+          {filteredPosts.length > 0 ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {displayedPosts.map((post, index) => {

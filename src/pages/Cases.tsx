@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import PageLayout from '@/components/layout/PageLayout';
 import { Link } from 'react-router-dom';
 import ContactForm from '@/components/shared/ContactForm';
 import Section from '@/components/ui/Section';
-import { Search, Loader2, ArrowRight } from 'lucide-react';
+import { Search, ArrowRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import SEO from '@/components/shared/SEO';
@@ -27,6 +27,10 @@ const CardLogo = ({ logo, title }: { logo?: string; title: string; scale?: numbe
       src={logo}
       alt={title}
       onError={() => setFailed(true)}
+      loading="lazy"
+      decoding="async"
+      width={160}
+      height={65}
       className="max-w-[80%] max-h-[65px] w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-105"
     />
   );
@@ -35,26 +39,7 @@ const CardLogo = ({ logo, title }: { logo?: string; title: string; scale?: numbe
 const Cases = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todos');
-  const [loading, setLoading] = useState(true);
-  const [cases, setCases] = useState<any[]>([]);
-
-  // Buscar cases via API Centralizada (com Overrides)
-  useEffect(() => {
-    const fetchCases = async () => {
-      try {
-        const data = await getAllCases();
-        if (data) {
-          setCases(data);
-        }
-      } catch (err: any) {
-        console.warn('⚠️ [API] Falha ao buscar cases:', err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCases();
-  }, []);
+  const [cases] = useState<any[]>(() => getAllCases());
 
   // Format Database Cases
   const filteredCases = cases.map(dbCase => ({
@@ -112,11 +97,7 @@ const Cases = () => {
         
         <div className="container-custom relative z-10">
 
-          {loading ? (
-            <div className="flex justify-center items-center py-20">
-              <Loader2 className="w-8 h-8 text-black animate-spin" />
-            </div>
-          ) : filteredCases.length === 0 ? (
+          {filteredCases.length === 0 ? (
             <div className="text-center py-20 border border-dashed border-zinc-200 bg-zinc-50/30 rounded-2xl">
               <h3 className="text-base md:text-lg font-bold text-zinc-900">Nenhum case encontrado</h3>
               <Button variant="link" className="text-black font-bold uppercase text-xxs mt-4" onClick={() => { setSearchQuery(''); setActiveCategory('Todos') }}>
