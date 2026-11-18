@@ -47,7 +47,7 @@ const Header = ({ variant = 'default' }: HeaderProps) => {
   const MobileNavLink = ({ to, onClick, children }: { to: string, onClick: () => void, children: React.ReactNode }) => (
     <Link
       to={to}
-      className="text-xl font-medium transition-colors py-2 border-b block text-zinc-800 border-zinc-100 hover:text-[#00CC6A]"
+      className="text-xl font-medium transition-colors py-2 border-b block text-zinc-100 border-zinc-800 hover:text-[#00CC6A]"
       onClick={onClick}
     >
       {children}
@@ -141,7 +141,7 @@ const Header = ({ variant = 'default' }: HeaderProps) => {
                 <div className="w-px h-3 mx-1 bg-zinc-200" />
 
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 rounded-lg focus:outline-none data-[state=open]:text-[#00CC6A] text-zinc-300 hover:text-white hover:bg-white/10">
+                  <DropdownMenuTrigger className="px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00CC6A] data-[state=open]:text-[#00CC6A] text-zinc-300 hover:text-white hover:bg-white/10">
                     Auditoria <ChevronDown className="w-3 h-3" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent sideOffset={8} className="bg-white border border-zinc-200 p-1.5 w-[260px] z-[70] rounded-xl shadow-lg">
@@ -192,7 +192,7 @@ const Header = ({ variant = 'default' }: HeaderProps) => {
           <div className="hidden xl:flex items-center justify-end gap-4 z-10 flex-shrink-0">
             {user ? (
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-2 text-sm font-medium transition-colors focus:outline-none text-zinc-600 hover:text-zinc-900">
+                <DropdownMenuTrigger className="flex items-center gap-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00CC6A] text-zinc-600 hover:text-zinc-900">
                   {avatarUrl ? (
                     <div className="w-8 h-8 rounded-full border border-zinc-200 overflow-hidden">
                       <img src={avatarUrl} alt="User Avatar" className="w-full h-full object-cover" />
@@ -253,22 +253,23 @@ const Header = ({ variant = 'default' }: HeaderProps) => {
           </div>
 
           <button
+            type="button"
             onClick={toggleMenu}
-            className={cn(
-              "xl:hidden p-2 transition-colors ml-auto z-10",
-              scrolled ? "text-zinc-900 hover:text-[#00CC6A]" : "text-white hover:text-[#00CC6A]"
-            )}
+            aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-menu"
+            className="xl:hidden p-2 transition-colors ml-auto z-10 rounded-md text-white hover:text-[#00CC6A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00CC6A]"
           >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMenuOpen ? <X size={24} aria-hidden="true" /> : <Menu size={24} aria-hidden="true" />}
           </button>
         </div>
 
         {/* Mobile menu */}
         {
           isMenuOpen && (
-            <div className="xl:hidden bg-white border-t border-zinc-200 absolute top-full left-0 w-full h-screen animate-fade-in z-50 p-6 overflow-y-auto pb-20">
+            <div id="mobile-menu" className="xl:hidden bg-black border-t border-zinc-800 absolute top-full left-0 w-full h-screen animate-fade-in z-50 p-6 overflow-y-auto pb-20">
               <div className="flex flex-col space-y-6">
-                <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
+                <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
                   <Link to="/" onClick={scrollToTop} className="block">
                     <img
                       src="/brand/revhackers-wordmark-white.png"
@@ -279,20 +280,20 @@ const Header = ({ variant = 'default' }: HeaderProps) => {
                 </div>
                 <MobileNavLink to="/" onClick={scrollToTop}>Home</MobileNavLink>
 
-                <div className="py-2 border-b border-white/5">
-                  <div className="text-xs font-mono-tech text-zinc-500 uppercase mb-3">Auditorias Críticas</div>
+                <div className="py-2 border-b border-zinc-800">
+                  <div className="text-xs font-mono-tech text-zinc-400 uppercase mb-3">Auditorias Críticas</div>
                   <div className="space-y-4 pl-2">
-                    <Link to="/score" onClick={scrollToTop} className="flex items-center gap-3 text-lg font-medium text-zinc-300 hover:text-revgreen">
-                      <Activity className="w-4 h-4 text-revgreen" /> Diagnostico 360
+                    <Link to="/score" onClick={scrollToTop} className="flex items-center gap-3 text-lg font-medium text-zinc-300 hover:text-[#00CC6A]">
+                      <Activity className="w-4 h-4 text-[#00CC6A]" /> Diagnostico 360
                     </Link>
-                    <Link to="/score-revenue" onClick={scrollToTop} className="flex items-center gap-3 text-lg font-medium text-zinc-300 hover:text-revgreen">
-                      <TrendingUp className="w-4 h-4 text-revgreen" /> Diagnostico CRM
+                    <Link to="/score-revenue" onClick={scrollToTop} className="flex items-center gap-3 text-lg font-medium text-zinc-300 hover:text-[#00CC6A]">
+                      <TrendingUp className="w-4 h-4 text-[#00CC6A]" /> Diagnostico CRM
                     </Link>
-                    <Link to="/score-founder" onClick={scrollToTop} className="flex items-center gap-3 text-lg font-medium text-zinc-300 hover:text-revgreen">
-                      <Users className="w-4 h-4 text-revgreen" /> Diagnostico do Fundador
+                    <Link to="/score-founder" onClick={scrollToTop} className="flex items-center gap-3 text-lg font-medium text-zinc-300 hover:text-[#00CC6A]">
+                      <Users className="w-4 h-4 text-[#00CC6A]" /> Diagnostico do Fundador
                     </Link>
-                    <Link to="/score-site" onClick={scrollToTop} className="flex items-center gap-3 text-lg font-medium text-zinc-300 hover:text-revgreen">
-                      <Globe className="w-4 h-4 text-revgreen" /> Diagnostico Site / LP
+                    <Link to="/score-site" onClick={scrollToTop} className="flex items-center gap-3 text-lg font-medium text-zinc-300 hover:text-[#00CC6A]">
+                      <Globe className="w-4 h-4 text-[#00CC6A]" /> Diagnostico Site / LP
                     </Link>
                   </div>
                 </div>
@@ -303,11 +304,11 @@ const Header = ({ variant = 'default' }: HeaderProps) => {
                 <MobileNavLink to="/materiais" onClick={scrollToTop}>Materiais</MobileNavLink>
                 <MobileNavLink to="/blog" onClick={scrollToTop}>Blog</MobileNavLink>
 
-                <div className="py-2 border-b border-white/5 mb-4">
+                <div className="py-2 border-b border-zinc-800 mb-4">
                   <Link
                     to={user ? "/admin" : "/login"}
                     onClick={scrollToTop}
-                    className="text-xl font-medium text-zinc-400 hover:text-white transition-colors block py-2"
+                    className="text-xl font-medium text-zinc-300 hover:text-white transition-colors block py-2"
                   >
                     {user ? "Acessar Admin" : "Login Membros"}
                   </Link>
@@ -317,9 +318,9 @@ const Header = ({ variant = 'default' }: HeaderProps) => {
                   onClick={() => { scrollToTop(); setIsLeadModalOpen(true); }}
                   variant="default"
                   size="lg"
-                  className="w-full font-bold uppercase tracking-widest text-xs"
+                  className="w-full bg-[#00CC6A] text-black hover:bg-[#00b35e] font-bold text-sm h-12 rounded-lg border-none"
                 >
-                  Agendar Integração <ArrowRight className="w-4 h-4 ml-1" strokeWidth={1.5} />
+                  Falar com especialista <ArrowRight className="w-4 h-4 ml-1" strokeWidth={2} />
                 </Button>
               </div>
             </div>
