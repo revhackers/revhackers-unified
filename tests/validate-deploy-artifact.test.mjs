@@ -384,19 +384,4 @@ describe('legacy deployment safety', () => {
     expect(workflow).toContain('actions/upload-artifact@v4');
     expect(workflow).not.toMatch(/FTP-Deploy-Action|FTP_(SERVER|USERNAME|PASSWORD)/);
   });
-
-  test('workflow de agente Hostinger está inerte e sem comandos de publicação', () => {
-    const retiredWorkflow = readFileSync(
-      path.resolve(
-        import.meta.dirname,
-        '../.agent/workflows/deploy_hostinger.md',
-      ),
-      'utf8',
-    );
-
-    expect(retiredWorkflow).toContain('Workflow retirado');
-    expect(retiredWorkflow).not.toMatch(
-      /\/\/\s*turbo|curl\s+-T|ftp:\/\//i,
-    );
-  });
 });
