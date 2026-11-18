@@ -30,6 +30,7 @@ export const enicsCase = {
       label: "Para impulsionar as vendas (Google Ads, Meta Ads, e-mail e WhatsApp)"
     }
   ],
+  period: "Edições 2024 e 2025",
   quote: "A estratégia integrada da RevHackers foi essencial para alcançarmos nossa meta de vendas em um prazo tão curto. A combinação de campanhas segmentadas e automações foi decisiva.",
   author: "Patricia Mendes",
   role: "Diretora Comercial, Innova Steel",

@@ -16,6 +16,7 @@ import { wysionCase } from './wysion';
 import { ideeCase } from './idee';
 import { anhembiMorumbiCase } from './anhembi-morumbi';
 import { bldnCase } from './bldn';
+import { innovaSteelCase } from './innova-steel';
 
 // Type definition for a case study
 export interface CaseStudy {
@@ -41,6 +42,10 @@ export interface CaseStudy {
   featured?: boolean;
   isWideLogo?: boolean;
   logoScale?: number;
+  /** Período da intervenção (ex: "jan–jun/2024"). Exibir só quando preenchido. */
+  period?: string;
+  /** Fonte da medição (ex: "GA4", "relatório de mídia", "CRM do cliente"). */
+  source?: string;
   techStack?: string[];
 }
 
@@ -63,7 +68,8 @@ export const casesData: Record<string, CaseStudy> = {
   "enove": enoveCase,
   "wysion": wysionCase,
   "idee": ideeCase,
-  "bldn": bldnCase
+  "bldn": bldnCase,
+  "innova-steel": innovaSteelCase
 };
 
 export type CaseStudyKey = keyof typeof casesData;

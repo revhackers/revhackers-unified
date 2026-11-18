@@ -30,6 +30,7 @@ export const heinekenCase = {
       label: "Taxa de Compartilhamento"
     }
   ],
+  period: "2022",
   quote: "Os vídeos personalizados criaram uma conexão real com nossos parceiros no interior. Eles se sentiram valorizados e isso refletiu nas vendas. Foi a campanha de trade marketing mais efetiva que já fizemos na região.",
   author: "Marcio",
   role: "Gerente de Vendas, Interior de São Paulo",
