@@ -22,7 +22,7 @@ export const btDigitalCase: CaseStudy = {
     ],
     quote: "A RevHackers transformou nossa operação comercial. Antes perdíamos leads por falta de follow-up e gastávamos muito em mídia sem retorno. Hoje temos automações rodando 24/7, o CAC caiu 40% e o ROI das campanhas triplicou. Foi um divisor de águas.",
     author: "Marcelo Santos",
-    authorImage: "https://i.pravatar.cc/150?u=a042581f4e29026704d",
+    authorImage: "",
     role: "Head de Growth, BT Digital",
     preview_description: "Automação e CRM para Fintech: Implementação de automações de marketing, CRM estruturado e mídia paga otimizada que reduziram o CAC em 40% e geraram ROI de 3.5x.",
     logoScale: 1.5,

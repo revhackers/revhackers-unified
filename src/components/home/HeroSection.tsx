@@ -29,7 +29,7 @@ const HeroSection = () => {
 
       <div className="relative z-10 w-full max-w-4xl mx-auto px-6 flex flex-col items-center text-center">
 
-        {/* Headline — WHY + HOW (Hormozi) */}
+        {/* Headline, WHY + HOW (Hormozi) */}
         <motion.h1
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -42,7 +42,7 @@ const HeroSection = () => {
           </span>
         </motion.h1>
 
-        {/* Subheadline — mecanismo + risk reversal */}
+        {/* Subheadline, mecanismo + risk reversal */}
         <motion.p
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -52,7 +52,7 @@ const HeroSection = () => {
           Construímos a engenharia de GTM e ABM dentro do seu CRM para colocar seus executivos na mesa das maiores contas do seu setor.
         </motion.p>
 
-        {/* Hammer line — confrontação direta */}
+        {/* Hammer line, confrontação direta */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}
@@ -62,8 +62,8 @@ const HeroSection = () => {
           Agência vende relatório em PDF. Nós instalamos código e processos que colocam dinheiro em caixa.
         </motion.p>
 
-        {/* Hammer line — ≤5 palavras, isolada */}
-        {/* Partner logos — alinhamento óptico milimétrico de baseline */}
+        {/* Hammer line, ≤5 palavras, isolada */}
+        {/* Partner logos, alinhamento óptico milimétrico de baseline */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}
@@ -103,7 +103,7 @@ const HeroSection = () => {
           </div>
         </motion.div>
 
-        {/* CTAs — Hormozi: Command CTA com consequência */}
+        {/* CTAs, Hormozi: Command CTA com consequência */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}

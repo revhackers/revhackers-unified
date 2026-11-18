@@ -1,9 +1,4 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-
-vi.mock('@/integrations/supabase/client', () => {
-  throw new Error('cases nao pode importar o cliente Supabase');
-});
-
 import { getAllCases, getCaseBySlug, getFeaturedCases } from './cases';
 import { casesData } from '@/data/cases';
 

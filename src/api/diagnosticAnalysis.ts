@@ -1,4 +1,3 @@
-import { supabase } from '@/integrations/supabase/client';
 import { aiGcpAdapter } from '@/api/adapters/ai-gcp';
 import {
   type EnrichedDiagnosticResult,
@@ -102,9 +101,7 @@ export async function analyzeDiagnosticAI(
     );
 
     if (error || !data) {
-      console.warn('[diagnosticAnalysis] GCP indisponivel, fallback Supabase:', error?.message);
-      const fallback = await fallbackToSupabase(type, answers, totalScore);
-      if (fallback) return enrichFromLegacy(fallback, type, answers, totalScore, options);
+      console.warn('[diagnosticAnalysis] IA indisponível, usando análise local:', error?.message);
       return fallbackMock();
     }
 
@@ -131,28 +128,6 @@ export async function analyzeDiagnosticAI(
   } catch (error) {
     console.error('Erro diagnostic analysis:', error);
     return fallbackMock();
-  }
-}
-
-async function fallbackToSupabase(
-  type: DiagnosticType,
-  answers: number[],
-  totalScore: number,
-): Promise<DiagnosticAnalysisResult | null> {
-  try {
-    const { data, error } = await supabase.functions.invoke('analyze-diagnostic', {
-      body: { type, answers, totalScore },
-    });
-    if (error || !data || typeof data !== 'object') return null;
-    return {
-      archetype: (data as DiagnosticAnalysisResult).archetype ?? 'Operacao',
-      headline: (data as DiagnosticAnalysisResult).headline ?? '',
-      strengths: (data as DiagnosticAnalysisResult).strengths ?? [],
-      gaps: (data as DiagnosticAnalysisResult).gaps ?? [],
-      immediateAction: (data as DiagnosticAnalysisResult).immediateAction ?? '',
-    };
-  } catch {
-    return null;
   }
 }
 

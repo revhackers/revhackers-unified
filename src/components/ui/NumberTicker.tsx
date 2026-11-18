@@ -1,6 +1,6 @@
 /**
- * NumberTicker — animação de contagem numérica inspirada no magicui/NumberTicker.
- * Implementado com Framer Motion (já na stack) — sem dependência adicional.
+ * NumberTicker, animação de contagem numérica inspirada no magicui/NumberTicker.
+ * Implementado com Framer Motion (já na stack), sem dependência adicional.
  *
  * Uso:
  *   <NumberTicker value={47} suffix="+" duration={1.5} />

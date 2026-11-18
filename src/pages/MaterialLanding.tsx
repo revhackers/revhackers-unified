@@ -79,7 +79,7 @@ export default function MaterialLanding() {
                 description={material.subheadline || 'Material gratuito RevHackers'}
                 canonical={`https://revhackers.com.br/materiais/${slug}`}
             />
-            {/* Hero Section — Fundo Black Purificado */}
+            {/* Hero Section, Fundo Black Purificado */}
             <section className="relative min-h-[50vh] flex flex-col justify-center items-center overflow-hidden pt-28 pb-16 bg-black border-b border-zinc-900">
                 <div className="relative z-10 w-full max-w-4xl mx-auto px-6 flex flex-col items-center text-center">
                     
@@ -103,7 +103,7 @@ export default function MaterialLanding() {
                 </div>
             </section>
 
-            {/* Content & Form Section — Fundo 100% Branco Puro com Contexto Rico */}
+            {/* Content & Form Section, Fundo 100% Branco Puro com Contexto Rico */}
             <section className="py-16 md:py-24 bg-white text-zinc-900 border-b border-zinc-200/80">
                 <div className="max-w-6xl mx-auto px-6">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">

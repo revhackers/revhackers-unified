@@ -93,7 +93,7 @@ const ComparisonSection = () => {
           </p>
         </div>
 
-        {/* Comparison Table — Mobile: stacked cards */}
+        {/* Comparison Table, Mobile: stacked cards */}
         <div className="max-w-2xl mx-auto space-y-6 md:hidden">
           {criteria.map((row, i) => (
             <motion.div
@@ -134,13 +134,13 @@ const ComparisonSection = () => {
           ))}
         </div>
 
-        {/* Comparison Table — Desktop: grid */}
+        {/* Comparison Table, Desktop: grid */}
         <div className="max-w-5xl mx-auto overflow-x-auto hidden md:block">
 
           {/* Column Headers */}
           <div className="grid grid-cols-4 gap-0 mb-0">
             <div className="col-span-1" />
-            {/* RevHackers header — highlighted */}
+            {/* RevHackers header, highlighted */}
             <div className="col-span-1 bg-zinc-900 px-6 py-5 text-center rounded-t-sm flex flex-col items-center justify-center">
               <img 
                 src="/brand/revhackers-wordmark-white.png"
@@ -173,7 +173,7 @@ const ComparisonSection = () => {
                 <span className="text-xs font-bold text-zinc-700 leading-snug">{row.label}</span>
               </div>
 
-              {/* RevHackers — highlighted column */}
+              {/* RevHackers, highlighted column */}
               <div className="col-span-1 bg-zinc-900 px-6 py-5 flex items-center gap-3">
                 <StatusIcon value={row.revhackersGood} />
                 <span className="text-xs text-zinc-100 font-medium leading-snug">{row.revhackers}</span>

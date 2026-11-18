@@ -78,7 +78,7 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Partner Badges — com 100% de legibilidade */}
+        {/* Partner Badges, com 100% de legibilidade */}
         <div className="mt-16 pt-8 border-t border-zinc-900">
           <p className="text-zinc-500 text-xs uppercase tracking-wider font-semibold text-center mb-6">
             Technology Partners

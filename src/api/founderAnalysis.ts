@@ -145,7 +145,7 @@ export async function analyzeFounderProfileAI(
     }
 
     const raw = result.data as { result?: unknown } | undefined;
-    const data = (raw?.result as Record<string, unknown>) || raw || {};
+    const data = ((raw?.result as Record<string, unknown>) || raw || {}) as Record<string, unknown>;
 
     const dimensions = buildFounderDimensions(answers, quizScore);
     const topActions = buildFounderActions(dimensions, quizScore);

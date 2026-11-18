@@ -47,7 +47,7 @@ const Metodologia = () => {
                 </div>
             </section>
 
-            {/* --- PILLARS GRID (WHITE SECTION) — Fundo 100% Branco Puro (Sem Caixas de Ícones) --- */}
+            {/* --- PILLARS GRID (WHITE SECTION), Fundo 100% Branco Puro (Sem Caixas de Ícones) --- */}
             <section className="py-20 bg-white text-zinc-900 border-b border-zinc-200/80">
                 <div className="max-w-6xl mx-auto px-6 space-y-12">
                     <div className="max-w-2xl mx-auto text-center space-y-2">

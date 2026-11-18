@@ -43,7 +43,7 @@ const QuemSomos = () => {
         {/* Nossos Valores */}
         <ValuesSection />
 
-        {/* Booking Widget Section — Fundo 100% Branco Puro */}
+        {/* Booking Widget Section, Fundo 100% Branco Puro */}
         <section className="py-20 bg-white border-t border-zinc-200/80">
           <div className="max-w-4xl mx-auto px-6">
             <GhlBookingEmbed calendarId={GHL_CALENDARS.diagnostico} title="Agendar diagnóstico" />

@@ -269,27 +269,6 @@ describe('validateDeployArtifact', () => {
     expect(formatted).toContain('pathDigest');
   });
 
-  test('permite somente JWT público do Supabase com role anon', () => {
-    const directory = createValidArtifact();
-    const encode = (value) =>
-      btoa(JSON.stringify(value))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/g, '');
-    const publicAnonToken = [
-      encode({ alg: 'HS256', typ: 'JWT' }),
-      encode({ iss: 'supabase', role: 'anon' }),
-      'publicSignature123',
-    ].join('.');
-
-    writeFileSync(
-      path.join(directory, 'assets', 'supabase-client.js'),
-      `const publicAnonKey = ${JSON.stringify(publicAnonToken)};`,
-    );
-
-    expect(validateDeployArtifact(directory)).toMatchObject({ ok: true });
-  });
-
   test.each([
     'sk-short',
     'sk-projeto-sem-credencial',

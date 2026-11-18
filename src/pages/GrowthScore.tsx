@@ -177,7 +177,6 @@ const GrowthScore = () => {
  variant={step === 'results' ? 'dark' : 'light'}
  hideHeader={step === 'results'}
  centered={step === 'results'}
- headerVariant="default"
  >
  {step === 'results' && <div className="fixed inset-0 bg-white -z-50 pointer-events-none" />}
  

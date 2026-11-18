@@ -10,7 +10,7 @@
  *
  * Limitations:
  * - This validates the static build and the fixed prerender route set only.
- * - Dynamic Supabase-backed routes are intentionally excluded.
+ * - Dynamic routes that need a backend are intentionally excluded.
  * - It is a macOS validation harness, not the production build/deploy path.
  * - It proves isolation for the child processes launched here; it does not
  *   make the normal `npm run build` offline.
@@ -66,7 +66,7 @@ function childEnvironment(tempRoot, extra = {}) {
   };
 
   for (const name of Object.keys(env)) {
-    if (name.startsWith('VITE_') && !['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'].includes(name)) {
+    if (name.startsWith('VITE_')) {
       throw new Error(`Unexpected Vite variable in isolated child environment: ${name}`);
     }
   }
@@ -151,8 +151,6 @@ try {
   }
 
   const viteEnvironment = childEnvironment(tempRoot, {
-    VITE_SUPABASE_URL: 'http://127.0.0.1:9',
-    VITE_SUPABASE_ANON_KEY: 'offline-placeholder',
     REVHACKERS_OFFLINE_ENV_DIR: envDir,
     REVHACKERS_OFFLINE_OUT_DIR: outDir,
   });

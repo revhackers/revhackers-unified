@@ -45,11 +45,11 @@
   }
 
   :root {
-    /* ─── Surface — Branco Industrial (Anti-Vibecoding) ─── */
+    /* ─── Surface, Branco Industrial (Anti-Vibecoding) ─── */
     --background:   0 0% 100%;    /* #FFFFFF */
     --foreground:   0 0% 7%;      /* #111111 */
 
-    /* ─── Brand Action — GO GREEN ─── */
+    /* ─── Brand Action, GO GREEN ─── */
     --primary:          151 100% 40%;   /* #00CC6A */
     --primary-foreground: 0 0% 0%;      /* #000000 */
 
@@ -82,7 +82,7 @@
     --popover:          0 0% 100%;
     --popover-foreground: 0 0% 7%;
 
-    /* ─── Radius Scale — Funnels/Linear style ─── */
+    /* ─── Radius Scale, Funnels/Linear style ─── */
     --radius-sm: 0.375rem;   /* 6px */
     --radius:    0.5rem;     /* 8px */
     --radius-lg: 0.75rem;   /* 12px */

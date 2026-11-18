@@ -71,7 +71,7 @@ export const SiteScoreResultBenchmark = ({
                 </td>
                 <td className="text-center py-4 px-4">
                   <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold bg-white text-zinc-900">
-                    #{benchmarkResult.ranking.overall} de {benchmarkResult.competitors.length + 1}
+                    #{benchmarkResult.ranking.find((r) => r.url === benchmarkResult.clientSite.url)?.position ?? '-'} de {benchmarkResult.competitors.length + 1}
                   </span>
                 </td>
               </tr>

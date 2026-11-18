@@ -45,7 +45,6 @@ export const SiteScoreResult = ({
       variant="dark"
       hideHeader={true}
       centered={true}
-      headerVariant="default"
     >
       <div className="fixed inset-0 bg-white -z-50 pointer-events-none" />
 

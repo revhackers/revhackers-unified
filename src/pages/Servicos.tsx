@@ -95,7 +95,7 @@ const Servicos = () => {
         ]}
       />
 
-      {/* Hero Section — Alinhamento Total com o Título 'Ecossistema' */}
+      {/* Hero Section, Alinhamento Total com o Título 'Ecossistema' */}
       <section className="relative flex flex-col justify-center items-center overflow-hidden pt-28 pb-12 bg-black border-b border-zinc-900 text-center">
         <ModernTechnicalBackground />
         <div className="relative z-10 w-full max-w-5xl mx-auto px-6 flex flex-col items-center text-center space-y-6">
@@ -167,7 +167,7 @@ const Servicos = () => {
         </div>
       </section>
 
-      {/* Os 4 Motores do Ecossistema — Design System Preto & Verde */}
+      {/* Os 4 Motores do Ecossistema, Design System Preto & Verde */}
       <section className="py-24 bg-white text-zinc-900 border-b border-zinc-200/80">
         <div className="max-w-6xl mx-auto px-6 space-y-16">
           

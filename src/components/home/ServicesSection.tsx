@@ -1,7 +1,7 @@
 
 import { ArrowRight, Workflow, Database, Sliders, GraduationCap } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView, type Variants } from 'framer-motion';
 import { useRef } from 'react';
 
 const services = [
@@ -35,7 +35,7 @@ const services = [
   },
 ];
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 16 },
   visible: (i: number) => ({
     opacity: 1,
@@ -56,7 +56,7 @@ const ServicesSection = () => {
     >
       <div className="max-w-5xl mx-auto px-6">
 
-        {/* Header — Centralizado sem badges pill */}
+        {/* Header, Centralizado sem badges pill */}
         <div className="mb-14 max-w-3xl mx-auto text-center space-y-3">
           <motion.h2
             variants={fadeUp}
@@ -79,7 +79,7 @@ const ServicesSection = () => {
           </motion.p>
         </div>
 
-        {/* Grid 2x2 — High-End SaaS Engineering System */}
+        {/* Grid 2x2, High-End SaaS Engineering System */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {services.map((service, i) => {
             const monoBadges = ["01 // SALES ENGINE", "02 // DATA ARCHITECTURE", "03 // AUTO WORKFLOW", "04 // OPS ENABLEMENT"];

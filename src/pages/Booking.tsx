@@ -81,7 +81,7 @@ const BookingPage = () => {
         </div>
       </section>
 
-      {/* Main Section — Fundo 100% Branco Puro e Minimalista */}
+      {/* Main Section, Fundo 100% Branco Puro e Minimalista */}
       <section className="py-16 sm:py-20 bg-white text-zinc-900 border-b border-zinc-200/80">
         <div className="w-full max-w-5xl mx-auto px-6">
 

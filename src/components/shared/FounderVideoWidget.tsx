@@ -43,11 +43,6 @@ const FounderVideoWidget = () => {
   const [showPills, setShowPills] = useState(true);
   const [extractedData, setExtractedData] = useState<{ company?: string; crm?: string; role?: string; linkedin?: string }>({});
 
-  // Do NOT render widget on admin or internal REI routes
-  const isAdminRoute = 
-    location.pathname.startsWith('/admin') || 
-    location.pathname.startsWith('/rei') || 
-    location.pathname.startsWith('/rei-onboarding');
   // Helper: Extrai o título exato do artigo, material ou case da página atual
   const getCurrentPageTitle = (): string => {
     try {
