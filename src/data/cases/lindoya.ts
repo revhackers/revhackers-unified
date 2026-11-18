@@ -20,6 +20,7 @@ export const lindoyaCase: CaseStudy = {
         { value: "4.5x", label: "ROAS em Campanhas" },
         { value: "35%", label: "Taxa de Recompra" }
     ],
+    period: "2024",
     quote: "A RevHackers transformou a Lindoya Thermal em um produto digital. Saímos do zero para uma operação de ecommerce estruturada vendendo todos os dias. O melhor: não dependemos só de mídia paga, 40% do tráfego vem de SEO orgânico.",
     author: "Amanda Aguiar",
     authorImage: "/uploads/oftw/6965803af8a93b105c0bfc15.png",
